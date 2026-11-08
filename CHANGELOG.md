@@ -298,3 +298,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ### Nachtrag zu 0.20.0
 - Entscheidung von Sascha: Das Wiedereinlesen/Zurückschreiben von Reservierungen (I-058) wird **nicht** gebaut; der NetzScanner ist nur zum Sammeln und Exportieren da, der Import ist Sache des Windows Servers.
+
+## [0.21.0] – 2026-11-08
+### Hinzugefügt
+- **`--diagnose-router <IP>`** (I-055 d, Vorbereitung): Fragt die FRITZ!Box selbst, welche TR-064-Dienste und Aktionen sie anbietet (`tr64desc.xml` und die Beschreibungsdateien, nur HTTP-GET, **ohne Zugangsdaten**). Aktionen, die nach Reservierung/DHCP/Lease/Adresse aussehen, sind mit `<<` markiert. Grund: Ob und wie die Box feste IP-Reservierungen herausgibt, ist **unbekannt** („Ich weiß es nicht“) und die AVM-Doku war nicht erreichbar – statt zu raten, liefert die echte Box die Antwort.
+- Router-Login zeigt zusätzlich **„Adressvergabe laut Router“** (Anzahl je `AddressSource`, z. B. DHCP/Static) – Hinweis, ob die Box feste Zuweisungen anders kennzeichnet.
+### Hinweis
+- Die Reservierungsliste der FRITZ!Box ist **noch nicht** im Reiter „Reservierungen“; sie folgt, sobald die Ausgabe von `--diagnose-router` an der echten Box zeigt, wo die Daten liegen. Die Annahme, dass die Beschreibungsdateien ohne Anmeldung lesbar sind, ist ungeprüft.

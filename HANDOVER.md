@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.20.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.21.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - **Leitlinie:** Der NetzScanner **sammelt und exportiert** Daten (lesend). Kein Zurückschreiben/Importieren in Router oder Server (z. B. DHCP-Reservierungen) – das übernehmen deren eigene Werkzeuge.
@@ -24,6 +24,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
+- **0.21.0 (I-055 d, Teil 1):** `./dist/netzscanner --diagnose-router <FritzBox-IP>` (`internal/router/describe.go`) listet Dienste/Aktionen der echten Box; Router-Login zeigt „Adressvergabe laut Router“. **Sascha: Ausgabe beider Dinge schicken** (v. a. Zeilen mit `<<` und die Summe DHCP/Static). Danach Teil 2: Reservierungen der Box in den Reiter „Reservierungen“ übernehmen (Quelle dort nur Windows-DHCP).
 - **0.20.0 (I-057):** Reiter „Reservierungen“ (`internal/web/reservations.go`, `internal/export/reservations.go`), Export CSV/Markdown. **I-058 (Import/Zurückschreiben) verworfen:** Der Scanner ist nur zum **Sammeln und Exportieren** da, Import macht der Windows Server selbst. Offen: FRITZ!Box-Reservierungen (I-055 d).
 - **0.19.0 (I-056):** Reiter „DHCP & Router“ (Router-Login dorthin verschoben) + Windows-DHCP per WinRM (`internal/dhcp`, `internal/web/dhcp.go`). **Ungeprüft an echtem Server** – Sascha hat derzeit keinen. Offen: FRITZ!Box-Reservierungen (I-055 d), andere Router, Kerberos/HTTPS für WinRM. Keine festen Einzelgeräte-Tabellen (Regel in CLAUDE.md).
 - **0.18.0 (I-052):** `internal/scan/vendor.go` (sysObjectID → Hersteller, Tabelle ungeprüft). Als Nächstes: I-055 (c) Mesh oder I-053 (SNMP v3). 0.17.0 (LLDP) von Sascha bestätigt („läuft“).

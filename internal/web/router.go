@@ -156,12 +156,18 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 			info[m] = e
 		}
 	}
+	sources := map[string]int{} // Wie viele Geraete je "AddressSource" (z. B. DHCP, Static) - Hinweis fuer Reservierungen (I-055 d)
+	for _, e := range list {
+		if e.Source != "" {
+			sources[e.Source]++
+		}
+	}
 	s.mu.Lock()
 	s.routerInfo = info
 	ri := res.Info
 	s.routerData = &ri
 	s.mu.Unlock()
-	writeJSON(w, http.StatusOK, map[string]any{"entries": len(list), "matched": matched, "onlyRouter": only, "info": res.Info})
+	writeJSON(w, http.StatusOK, map[string]any{"entries": len(list), "matched": matched, "onlyRouter": only, "info": res.Info, "sources": sources})
 }
 
 // handleRouterClear verwirft die Router-Angaben (Namen/Verbindungsart).
