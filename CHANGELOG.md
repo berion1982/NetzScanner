@@ -43,6 +43,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [Unreleased]
 ### Hinzugefügt
+- `IDEAS.md`: neue Ideen I-044 (Live-Ergebnisse beim Scan), I-045 (Format-Hinweis am Ziel-Feld), I-046 (Bereichsschreibweise); I-042 (Hilfe) erweitert. Nur Doku.
 - `HANDOVER.md`: Roadmap an die tatsächlich ausgelieferten Versionen angepasst (nur Doku, keine neue Version).
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
