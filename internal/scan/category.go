@@ -56,6 +56,10 @@ func Categorize(h model.Host) string {
 		strings.Contains(osName, "routeros") || strings.Contains(osName, "fritz!os") {
 		return model.CatNetwork
 	}
+	// 1b) Home Assistant (Port 8123) ist ein Server, auch wenn der Chip-Hersteller (z. B. Raspberry Pi) sonst nach IoT aussieht.
+	if hasAnyPort(h, []int{8123}) {
+		return model.CatServer
+	}
 	// 2) IoT: Smart-Home-/Druckerhersteller oder Drucker-/Kamera-Ports.
 	if containsAny(vendor, iotVendors) || hasAnyPort(h, iotPorts) {
 		return model.CatIoT
