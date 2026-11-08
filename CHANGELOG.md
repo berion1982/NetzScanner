@@ -226,3 +226,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Home Assistant erkennen** (I-013): Die Standard-Portliste enthält jetzt 8123 (Weboberfläche von Home Assistant, mit Web-Link und HEAD-Abfrage) und 22222 (SSH von HA OS). Ist 8123 offen, lautet die Betriebssystem-Vermutung „Home Assistant (Linux-basiert, Vermutung aus Port 8123)“; ein Windows-Hinweis aus einem Banner hat Vorrang.
 ### Hinweis
 - Das ist eine Vermutung aus dem Port. Eine genaue HA-/Linux-Version liefert der Scan ohne Login nicht. Im LAN noch nicht geprüft.
+
+## [0.13.3] – 2026-11-08
+### Geändert
+- **Home Assistant → Kategorie „Server“** (I-015): Geräte mit offenem Port 8123 werden automatisch als Server eingeordnet, auch wenn der Chip-Hersteller sonst nach IoT aussieht. Die Wahl im Detail-Panel überschreibt das weiterhin.

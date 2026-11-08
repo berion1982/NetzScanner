@@ -51,3 +51,11 @@ func TestGuessOSHomeAssistant(t *testing.T) {
 		t.Errorf("Windows-Vorrang: %q", got)
 	}
 }
+
+// Home Assistant gilt als Server, auch bei IoT-nahem Hersteller.
+func TestCategorizeHomeAssistant(t *testing.T) {
+	h := model.Host{Vendor: "Philips Lighting", Ports: []model.Port{{Number: 8123}}}
+	if got := Categorize(h); got != model.CatServer {
+		t.Errorf("HA: %q", got)
+	}
+}
