@@ -35,6 +35,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [Unreleased]
 ### Hinzugefügt
+- `HANDOVER.md`: Roadmap an die tatsächlich ausgelieferten Versionen angepasst (nur Doku, keine neue Version).
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
 ## [0.4.0] – 2026-11-08

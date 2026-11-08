@@ -36,12 +36,15 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | Version | Inhalt |
 |---|---|
 | 0.2.0 ✅ | Web-UI (Design A+B), Hilfe, Web-Links, Demo-Daten |
-| 0.3.0 ✅ | Scan-Kern: TCP-Portscan, ARP/MAC, Reverse-DNS, Banner, Scan-API + UI |
-| 0.3.x | mDNS/NetBIOS-Namen, ICMP (mit Rechten), vollständige OUI-Liste, TLS-Zertifikat-Infos |
-| 0.4.0 ✅ | Export CSV + lesbare Tabelle (HTML/Markdown), Benutzername-Feld |
-| 0.5.0 | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute |
-| 0.6.0 | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM |
-| 0.7.0 | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
+| 0.3.0–0.3.3 ✅ | Scan-Kern (TCP-Portscan, ARP/MAC, Reverse-DNS, Banner), Auswahl/Umbenennen, mehrstufige Namenssuche, `--diagnose` |
+| 0.4.0–0.4.3 ✅ | Export CSV/HTML/Markdown, Benutzername, Lesezeichen-Export, TLS-Zertifikatsinfos, OUI-Mechanismus (volle Liste fehlt, I-003) |
+| 0.5.0–0.5.2 ✅ | mDNS/NetBIOS-Namen (I-002), Kennung-Namen abwerten (I-009), Versionsführung |
+| 0.6.0 (Plan) | Weitere Namensquellen (I-008 SSDP/LLMNR), Hersteller in Tabelle/Export (I-007), ICMP mit Rechten, volle OUI-Liste (I-003) |
+| 0.7.0 (Plan) | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute (I-010) |
+| 0.8.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |
+| 0.9.0 (Plan) | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
+
+Die Zeilen mit „(Plan)“ sind Vorschläge; Sascha entscheidet die Reihenfolge, Details in `IDEAS.md`.
 
 ## Erkenntnisse aus dem echten Scan (FritzBox 192.168.178.1)
 - Auf Linux mit systemd-resolved (Stub 127.0.0.53) liefert Reverse-DNS für die Gateway-IP den Pseudonamen `_gateway`. Der richtige Name `fritz.box` kommt erst vom DNS-Server direkt auf dem Gerät (Port 53) – Quelle `dns-geraet` in `internal/scan/names.go`.
@@ -52,7 +55,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - Nummer steht in `VERSION` (Root, nutzt `scripts/build.sh` per ldflags) **und** `internal/version/VERSION` (eingebettet; Fallback, wenn ohne ldflags gebaut wird, z. B. `go run`). Beide gleich anheben – `go test ./...` meldet Abweichungen.
 - Zusätzlich: Kopf in `CHANGELOG.md`, „Stand“ oben in dieser Datei, Status in `IDEAS.md`.
 - Anzeige: `netzscanner --version`, `GET /api/version`, Hilfe-Seite, Export-Kopf. Ohne ldflags zeigt Build-Datum/Commit „unbekannt“, die Nummer stimmt aber.
-- Hinweis: Die Roadmap-Tabelle unten nennt 0.5.0 noch „Topologie“; real ist 0.5.0 die mDNS/NetBIOS-Namenssuche. Die Tabelle ist ein Plan, keine Ist-Liste.
+- Die Roadmap-Tabelle unten ist an die tatsächlich ausgelieferten Versionen angepasst (✅ = ausgeliefert, „Plan“ = Vorschlag).
 
 ## Hinweise
 - Hersteller-Erkennung aus MAC (OUI-Liste) einplanen; Liste lizenzkonform einbetten.
