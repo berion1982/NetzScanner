@@ -92,7 +92,7 @@ func Run(ctx context.Context, opt Options, progress Progress) ([]model.Host, err
 		// Nur belastbare Quellen (DNS, Zertifikat) gelten als "bekannt"; ein HTTP-Titel
 		// ist nur ein Vorschlag und bleibt gelb markiert.
 		src := hosts[i].NameSource
-		hosts[i].Known = hosts[i].Name != "" && (src == "dns" || src == "dns-geraet" || src == "zertifikat")
+		hosts[i].Known = hosts[i].Name != "" && (src == "dns" || src == "dns-geraet" || src == "mdns" || src == "netbios" || src == "zertifikat")
 		if hosts[i].Name == "" {
 			hosts[i].Name = "(unbekannt)"
 		}

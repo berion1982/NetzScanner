@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -190,5 +191,79 @@ func TestParseOUIAndPrefix(t *testing.T) {
 	}
 	if Vendor("") != "" {
 		t.Error("leere MAC darf keinen Hersteller liefern")
+	}
+}
+
+// udpServer startet einen lokalen UDP-Server, der auf jedes Paket mit reply(request) antwortet.
+func udpServer(t *testing.T, reply func(req []byte) []byte) int {
+	t.Helper()
+	pc, err := net.ListenPacket("udp", "127.0.0.1:0")
+	if err != nil {
+		t.Skip("UDP nicht moeglich:", err)
+	}
+	t.Cleanup(func() { pc.Close() })
+	go func() {
+		buf := make([]byte, 1500)
+		for {
+			n, addr, err := pc.ReadFrom(buf)
+			if err != nil {
+				return
+			}
+			pc.WriteTo(reply(buf[:n]), addr)
+		}
+	}()
+	return pc.LocalAddr().(*net.UDPAddr).Port
+}
+
+// mDNS: Antwort mit PTR "annas-iphone.local" (Kompressionszeiger auf die Frage) -> "annas-iphone".
+func TestMDNSName(t *testing.T) {
+	port := udpServer(t, func(req []byte) []byte {
+		resp := append([]byte{}, req...)
+		resp[2], resp[7] = 0x84, 1                               // Antwort-Flags, ANCOUNT = 1
+		resp = append(resp, 0xC0, 12, 0, 12, 0, 1, 0, 0, 0, 120) // Name=Zeiger auf Frage, PTR, IN, TTL
+		rdata := append([]byte{12}, "annas-iphone"...)
+		rdata = append(rdata, 5)
+		rdata = append(rdata, "local"...)
+		rdata = append(rdata, 0)
+		resp = append(resp, byte(len(rdata)>>8), byte(len(rdata)))
+		return append(resp, rdata...)
+	})
+	if got := mdnsName(context.Background(), "127.0.0.1", port); got != "annas-iphone" {
+		t.Errorf("mdnsName = %q", got)
+	}
+}
+
+// NetBIOS: Antwort mit Gruppenname "WORKGROUP" und eindeutigem Namen "DESKTOP-ABC" -> "DESKTOP-ABC".
+func TestNetbiosName(t *testing.T) {
+	entry := func(name string, suffix byte, flags uint16) []byte {
+		e := []byte(name + strings.Repeat(" ", 15-len(name)))
+		return append(e, suffix, byte(flags>>8), byte(flags))
+	}
+	port := udpServer(t, func(req []byte) []byte {
+		resp := make([]byte, 12)
+		resp[7] = 1 // ANCOUNT = 1
+		resp = append(resp, req[12:12+34]...)
+		resp = append(resp, 0, 0x21, 0, 1, 0, 0, 0, 0, 0, 37) // Typ, Klasse, TTL, Laenge
+		resp = append(resp, 2)                                // 2 Namen
+		resp = append(resp, entry("WORKGROUP", 0x00, 0x8400)...)
+		return append(resp, entry("DESKTOP-ABC", 0x00, 0x0400)...)
+	})
+	if got := netbiosName(context.Background(), "127.0.0.1", port); got != "DESKTOP-ABC" {
+		t.Errorf("netbiosName = %q", got)
+	}
+	if len(nbstatQuery()) != 50 {
+		t.Errorf("NBSTAT-Anfrage hat falsche Laenge %d", len(nbstatQuery()))
+	}
+}
+
+// Kaputte/manipulierte Antworten duerfen nicht abstuerzen oder haengen.
+func TestUDPParsersRobust(t *testing.T) {
+	for _, bad := range [][]byte{nil, {1, 2, 3}, make([]byte, 12), append(make([]byte, 12), 0xC0, 12)} {
+		parsePTRAnswer(bad)
+		parseNBSTAT(bad)
+	}
+	loop := append(make([]byte, 12), 0xC0, 12) // Zeiger auf sich selbst
+	if _, ok := readName(loop, 12); ok {
+		t.Error("Zeigerschleife muss abgelehnt werden")
 	}
 }
