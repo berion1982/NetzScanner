@@ -60,6 +60,7 @@ type server struct {
 	dhcpRows   []dhcp.Entry               // alle Zeilen der letzten DHCP-Abfrage (Reiter "Reservierungen", nur im RAM, I-057)
 	dhcpInfo   map[string]dhcpEntry       // Windows-DHCP-Server: normalisierte MAC -> Eintrag (nur im RAM, I-056)
 	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
+	meshLinks  map[string]meshLink        // Mesh der FRITZ!Box: Geraete-IP -> Vorgaenger (nur im RAM, I-055 c)
 	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
 	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
 	macs       map[string]string          // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
@@ -177,6 +178,10 @@ func (s *server) viewLocked() []model.Host {
 			if _, named := s.names[hosts[i].IP]; !named && e.Name != "" && (!hosts[i].Known || hosts[i].NameSource == "hersteller") {
 				hosts[i].Name, hosts[i].Known, hosts[i].NameSource = e.Name, true, "dhcp"
 			}
+		}
+		// Mesh der FRITZ!Box (I-055 c): ersetzt die Sternansicht; SNMP darunter hat weiter Vorrang.
+		if l, ok := s.meshLinks[hosts[i].IP]; ok && l.mac != "" && l.mac == scan.NormMAC(hosts[i].MAC) {
+			hosts[i].Uplink, hosts[i].MeshLink = l.Uplink, l.Label
 		}
 		// Topologie per SNMP (I-010 Teil 2): gilt nur, solange hinter der IP dieselbe MAC steckt.
 		if l, ok := s.snmpLinks[hosts[i].IP]; ok && l.mac != "" && l.mac == scan.NormMAC(hosts[i].MAC) {

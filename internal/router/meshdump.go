@@ -48,14 +48,12 @@ func DumpMesh(ctx context.Context, host, user, pass string, w io.Writer) error {
 	if raw == "" {
 		return errors.New("Box liefert keinen Mesh-Pfad (Feld NewX_AVM-DE_MeshListPath leer)")
 	}
-	// Pfad kann absolut (http://host:port/...) oder relativ sein. Wir nutzen immer unsere Basis,
-	// damit nur die angegebene Box angefragt wird. Die Session-ID (?sid=) wird NICHT ausgegeben.
-	u, err := url.Parse(raw)
-	if err != nil {
+	uri := meshRequestURI(raw)
+	if uri == "" {
 		return errors.New("Mesh-Pfad nicht auswertbar")
 	}
-	fmt.Fprintf(w, "# Mesh-Pfad (ohne Abfrageteil): %s\n", u.Path)
-	body, status, err := c.getPath(ctx, u.RequestURI())
+	fmt.Fprintf(w, "# Mesh-Pfad (ohne Abfrageteil): %s\n", strings.SplitN(uri, "?", 2)[0])
+	body, status, err := c.getPath(ctx, uri)
 	if err != nil {
 		return err
 	}
@@ -96,4 +94,15 @@ func (c *client) getPath(ctx context.Context, uri string) ([]byte, int, error) {
 		c.chal, c.nc = ch, 0
 	}
 	return nil, 0, ErrAuth
+}
+
+// meshRequestURI macht aus dem gelieferten Pfad (absolut oder relativ) den Pfad samt Abfrage.
+// Wir nutzen immer unsere eigene Basis-Adresse, damit nur die angegebene Box angefragt wird.
+// Leer = nicht auswertbar. Die Session-ID (?sid=) wird nie ausgegeben.
+func meshRequestURI(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil || u.Path == "" {
+		return ""
+	}
+	return u.RequestURI()
 }
