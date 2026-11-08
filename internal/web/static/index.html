@@ -119,6 +119,8 @@ function saveName(ip, name, msgEl) {
 function buildDetails(h) {
   const dl = el("dl");
   const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
+  const SRC = { dns: "DNS", "dns-geraet": "DNS des Geräts", zertifikat: "TLS-Zertifikat", "http-titel": "Titel der Webseite (Vermutung)", nutzer: "manuell" };
+  if (h.nameSource) add("Namensquelle", SRC[h.nameSource] || h.nameSource);
   add("IP", h.ip); add("MAC", h.mac); add("Hersteller", h.vendor); add("System (Vermutung)", h.os);
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
   const banners = h.ports.filter(p => p.banner).map(p => p.number + ": " + p.banner).join("\n");

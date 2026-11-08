@@ -2,11 +2,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/berion1982/netzscanner/internal/scan"
 	"github.com/berion1982/netzscanner/internal/version"
 	"github.com/berion1982/netzscanner/internal/web"
 )
@@ -18,10 +21,16 @@ func main() {
 	listen := flag.String("listen", "127.0.0.1:8484", "Adresse:Port des Webservers")
 	demo := flag.Bool("demo", false, "Demo-Daten anzeigen (zum Ansehen der Oberflaeche)")
 	allowPublic := flag.Bool("allow-public", false, "Scans oeffentlicher IP-Adressen erlauben (nur mit Erlaubnis!)")
+	diagnose := flag.String("diagnose", "", "ein Geraet (IP) Schritt fuer Schritt pruefen und Ergebnis ausgeben (Fehlersuche)")
 	flag.Parse()
 
 	if *showVersion {
 		fmt.Println(version.String())
+		return
+	}
+
+	if *diagnose != "" {
+		scan.Diagnose(context.Background(), *diagnose, os.Stdout)
 		return
 	}
 

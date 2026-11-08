@@ -3,6 +3,8 @@ package scan
 import (
 	"context"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 	"time"
@@ -122,10 +124,33 @@ func TestRunCancel(t *testing.T) {
 // normale Namen bleiben erhalten (ohne Punkt am Ende).
 func TestCleanHostName(t *testing.T) {
 	for in, want := range map[string]string{
-		"_gateway": "", "_Gateway.": "", "fritz.box.": "fritz.box", "nas-01": "nas-01", "": "", "a\x00b": "ab",
+		"_gateway": "", "_Gateway.": "", "192.168.1.1": "", "fritz.box.": "fritz.box", "nas-01": "nas-01", "": "", "a\x00b": "ab",
 	} {
 		if got := cleanHostName(in); got != want {
 			t.Errorf("cleanHostName(%q) = %q, erwartet %q", in, got, want)
 		}
+	}
+}
+
+// Zertifikatsname und HTTP-Titel werden von lokalen Test-Servern gelesen.
+// (httptest-Zertifikat enthaelt den DNS-Namen "example.com".)
+func TestCertNameAndTitle(t *testing.T) {
+	tlsSrv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<html><head>\n<TITLE> FRITZ!Box\n 7590 </TITLE></head></html>"))
+	}))
+	defer tlsSrv.Close()
+	port := tlsSrv.Listener.Addr().(*net.TCPAddr).Port
+	ctx := context.Background()
+	if got := certName(ctx, "127.0.0.1", port); got != "example.com" {
+		t.Errorf("certName = %q, erwartet example.com", got)
+	}
+	// httpTitle waehlt https nur fuer bekannte TLS-Ports; hier direkt per Klartext-Server pruefen.
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<title>FRITZ!Box 7590</title>"))
+	}))
+	defer plain.Close()
+	pport := plain.Listener.Addr().(*net.TCPAddr).Port
+	if got := httpTitle(ctx, "127.0.0.1", pport); got != "FRITZ!Box 7590" {
+		t.Errorf("httpTitle = %q", got)
 	}
 }

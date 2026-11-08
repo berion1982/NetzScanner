@@ -89,7 +89,10 @@ func Run(ctx context.Context, opt Options, progress Progress) ([]model.Host, err
 	}
 	resolveNames(ctx, hosts)
 	for i := range hosts {
-		hosts[i].Known = hosts[i].Name != "" && hosts[i].Name != "(unbekannt)"
+		// Nur belastbare Quellen (DNS, Zertifikat) gelten als "bekannt"; ein HTTP-Titel
+		// ist nur ein Vorschlag und bleibt gelb markiert.
+		src := hosts[i].NameSource
+		hosts[i].Known = hosts[i].Name != "" && (src == "dns" || src == "dns-geraet" || src == "zertifikat")
 		if hosts[i].Name == "" {
 			hosts[i].Name = "(unbekannt)"
 		}
@@ -127,56 +130,6 @@ func scanHost(ctx context.Context, ip netip.Addr, ports []int, timeout time.Dura
 	}
 	wg.Wait()
 	return found
-}
-
-// dnsResolver erzwingt den eingebauten Go-Resolver (PreferGo). Der System-Resolver
-// (cgo/NSS) kann lokale Pseudo-Namen liefern, z.B. "_gateway" vom NSS-Modul
-// "myhostname" fuer den Standard-Gateway - das ist dann NICHT der Name des Geraets.
-// Der Go-Resolver fragt dagegen nur /etc/hosts und den konfigurierten DNS-Server.
-var dnsResolver = &net.Resolver{PreferGo: true}
-
-// cleanHostName macht aus einem DNS-Antwortnamen einen Anzeigenamen.
-// Namen mit fuehrendem "_" sind lokale/Dienst-Pseudonamen (z.B. "_gateway") und
-// werden verworfen (Rueckgabe ""), damit stattdessen "(unbekannt)" bzw. ein
-// besserer Name gezeigt wird.
-func cleanHostName(raw string) string {
-	name := sanitize(trimDot(raw))
-	if name == "" || name[0] == '_' {
-		return ""
-	}
-	return name
-}
-
-// resolveNames fragt per Reverse-DNS den Namen je Host ab (parallel, 1,5s Timeout).
-func resolveNames(ctx context.Context, hosts []model.Host) {
-	var wg sync.WaitGroup
-	for i := range hosts {
-		wg.Add(1)
-		go func(h *model.Host) {
-			defer wg.Done()
-			c, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
-			defer cancel()
-			names, err := dnsResolver.LookupAddr(c, h.IP)
-			if err != nil {
-				return
-			}
-			// Ersten brauchbaren Namen nehmen (Pseudonamen wie "_gateway" ueberspringen).
-			for _, n := range names {
-				if name := cleanHostName(n); name != "" {
-					h.Name = name
-					return
-				}
-			}
-		}(&hosts[i])
-	}
-	wg.Wait()
-}
-
-func trimDot(s string) string {
-	if n := len(s); n > 0 && s[n-1] == '.' {
-		return s[:n-1]
-	}
-	return s
 }
 
 // orEmpty macht aus nil ein leeres Slice (JSON: [] statt null).
