@@ -183,3 +183,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.9.1] – 2026-11-08
 ### Geändert
 - **Standort in allen Exporten** (I-014): CSV, HTML, Markdown und PDF-Liste hatten ihn schon; neu steht er auch in den Kästen der **PDF-Topologiekarte** (dritte Zeile, kursiv, nur wenn eingetragen). Lesezeichen enthalten bewusst keinen Standort.
+
+## [0.10.0] – 2026-11-08
+### Hinzugefügt
+- **Topologie-Kategorien** (I-015): Jedes Gerät ist Netzwerkgerät, Server, Client oder IoT. Die Einordnung ist eine **Vermutung** (`internal/scan/category.go`) aus Router-Rolle, Chip-Hersteller, System-Vermutung und offenen Ports; im Detail-Panel überschreibbar („Automatisch“ setzt zurück, nur im RAM, Endpunkt `POST /api/hosts/category`).
+- Karte: Farbe je Kategorie, Gruppierung je Ebene, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus. Spalte „Kategorie“ in der Tabelle.
+- Exporte: CSV (neue Spalte **hinten**, bestehende Reihenfolge unverändert), HTML, Markdown und PDF (Kastenfarben, Legende, Spalte in der Liste). Lesezeichen bleiben unverändert.
+- Hinweis: Die Heuristik ist ungetestet im echten LAN (z. B. TP-Link-Steckdosen gelten als Netzwerkgerät, Raspberry Pi mit SSH als Server).

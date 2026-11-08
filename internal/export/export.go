@@ -25,7 +25,7 @@ type Meta struct {
 }
 
 // csvHeader sind die Spalten der CSV, in der vom Nutzer festgelegten Reihenfolge.
-var csvHeader = []string{"Benutzername", "IP", "MAC", "Hersteller (Chip)", "Gerätename", "Standort", "Offene Ports"}
+var csvHeader = []string{"Benutzername", "IP", "MAC", "Hersteller (Chip)", "Gerätename", "Standort", "Offene Ports", "Kategorie"}
 
 // portList liefert die Portnummern als "22, 80, 443".
 func portList(h model.Host) string {
@@ -47,7 +47,7 @@ func safeCell(s string) string {
 	return s
 }
 
-// WriteCSV schreibt die Geraete als CSV: Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Standort, Offene Ports.
+// WriteCSV schreibt die Geraete als CSV: Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Standort, Offene Ports, Kategorie (neue Spalte hinten, damit die Reihenfolge der alten Spalten gleich bleibt).
 // Der Hersteller ist der Chip-Hersteller laut MAC (nicht zwingend der Geraetehersteller).
 //
 // excelDE=true: Semikolon als Trennzeichen und UTF-8-BOM, damit deutsches Excel Umlaute
@@ -67,7 +67,7 @@ func WriteCSV(w io.Writer, hosts []model.Host, excelDE bool) error {
 		return err
 	}
 	for _, h := range hosts {
-		row := []string{safeCell(h.Username), safeCell(h.IP), safeCell(h.MAC), safeCell(h.Vendor), safeCell(h.Name), safeCell(h.Location), portList(h)}
+		row := []string{safeCell(h.Username), safeCell(h.IP), safeCell(h.MAC), safeCell(h.Vendor), safeCell(h.Name), safeCell(h.Location), portList(h), model.CategoryLabel(h.Category)}
 		if err := cw.Write(row); err != nil {
 			return err
 		}
@@ -94,10 +94,10 @@ func WriteMarkdown(w io.Writer, hosts []model.Host, m Meta) error {
 	fmt.Fprintf(&b, "# NetzScanner – Geräteliste\n\n")
 	fmt.Fprintf(&b, "- Ziel: %s\n- Erstellt: %s\n- Programm: %s\n- Geräte: %d\n\n",
 		mdEscape(m.Target), m.Generated.Format("02.01.2006 15:04"), mdEscape(m.Version), len(hosts))
-	b.WriteString("| Name | IP | MAC | Hersteller (Chip) | Standort | Benutzername | Offene Ports |\n|---|---|---|---|---|---|---|\n")
+	b.WriteString("| Name | IP | MAC | Hersteller (Chip) | Standort | Benutzername | Offene Ports | Kategorie |\n|---|---|---|---|---|---|---|---|\n")
 	for _, h := range hosts {
-		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s | %s |\n", mdEscape(h.Name), mdEscape(h.IP), mdEscape(h.MAC),
-			mdEscape(h.Vendor), mdEscape(h.Location), mdEscape(h.Username), mdEscape(portList(h)))
+		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s | %s | %s |\n", mdEscape(h.Name), mdEscape(h.IP), mdEscape(h.MAC),
+			mdEscape(h.Vendor), mdEscape(h.Location), mdEscape(h.Username), mdEscape(portList(h)), mdEscape(model.CategoryLabel(h.Category)))
 	}
 	b.WriteString("\n" + vendorNote + "\n")
 	_, err := io.WriteString(w, b.String())
@@ -109,7 +109,7 @@ const vendorNote = "Hersteller (Chip): Hersteller laut MAC-Adresse (Netzwerkchip
 
 // htmlPage ist die lesbare Tabelle als eigenstaendige Datei (hell zum Drucken,
 // dunkel bei dunklem Browser-Thema). html/template maskiert alle Werte automatisch.
-var htmlPage = template.Must(template.New("t").Parse(`<!doctype html>
+var htmlPage = template.Must(template.New("t").Funcs(template.FuncMap{"categoryLabel": model.CategoryLabel}).Parse(`<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NetzScanner – Geräteliste</title>
 <style>
@@ -120,8 +120,8 @@ th{background:#f6f8fa}.meta{color:#57606a;margin-bottom:16px}a{color:#0969da}
 </style></head><body>
 <h1>NetzScanner – Geräteliste</h1>
 <div class="meta">Ziel: {{.Meta.Target}} · Erstellt: {{.Generated}} · {{.Meta.Version}} · {{len .Hosts}} Geräte</div>
-<table><thead><tr><th>Name</th><th>IP</th><th>MAC</th><th>Hersteller (Chip)</th><th>Standort</th><th>Benutzername</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody>
-{{range .Hosts}}<tr><td>{{.Name}}</td><td>{{.IP}}</td><td>{{.MAC}}</td><td>{{.Vendor}}</td><td>{{.Location}}</td><td>{{.Username}}</td><td>{{range $i, $p := .Ports}}{{if $i}}, {{end}}{{$p.Number}}{{if $p.Service}} ({{$p.Service}}){{end}}{{end}}</td><td>{{range .WebLinks}}<a href="{{.URL}}" rel="noopener noreferrer">{{.Label}}</a> {{end}}</td></tr>
+<table><thead><tr><th>Name</th><th>IP</th><th>MAC</th><th>Hersteller (Chip)</th><th>Standort</th><th>Benutzername</th><th>Offene Ports</th><th>Kategorie</th><th>Web</th></tr></thead><tbody>
+{{range .Hosts}}<tr><td>{{.Name}}</td><td>{{.IP}}</td><td>{{.MAC}}</td><td>{{.Vendor}}</td><td>{{.Location}}</td><td>{{.Username}}</td><td>{{range $i, $p := .Ports}}{{if $i}}, {{end}}{{$p.Number}}{{if $p.Service}} ({{$p.Service}}){{end}}{{end}}</td><td>{{categoryLabel .Category}}</td><td>{{range .WebLinks}}<a href="{{.URL}}" rel="noopener noreferrer">{{.Label}}</a> {{end}}</td></tr>
 {{end}}</tbody></table>
 <p class="meta">{{.Note}}</p></body></html>
 `))

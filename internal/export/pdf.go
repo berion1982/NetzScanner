@@ -11,6 +11,7 @@ package export
 
 import (
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -68,6 +69,12 @@ func layoutTopology(hosts []model.Host) (map[string]*pdfNode, float64) {
 		if d > maxD {
 			maxD = d
 		}
+	}
+	// Innerhalb einer Ebene nach Kategorie sortieren (stabil: Reihenfolge der Liste bleibt je Kategorie).
+	for _, l := range levels {
+		sort.SliceStable(l, func(i, j int) bool {
+			return model.CategoryRank(l[i].Category) < model.CategoryRank(l[j].Category)
+		})
 	}
 	usableW := pdfPageW - 2*pdfMargin
 	cols := int((usableW + pdfGapX) / (pdfBoxW + pdfGapX)) // Kaesten pro Zeile
@@ -198,7 +205,7 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 
 	nodes, height := layoutTopology(hosts)
 	top := pdf.GetY() + 4
-	availH := pdfPageH - top - 14 // Platz fuer Hinweis und Fusszeile abziehen
+	availH := pdfPageH - top - 20 // Platz fuer Legende, Hinweis und Fusszeile abziehen
 	scale := 1.0
 	if height > availH {
 		scale = availH / height // alles gleichmaessig verkleinern, damit es auf die Seite passt
@@ -226,13 +233,7 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 	}
 	for _, h := range hosts { // Reihenfolge der Liste -> stabile Ausgabe
 		n := nodes[h.IP]
-		fill := [3]int{255, 255, 255}
-		switch h.Role {
-		case "router":
-			fill = [3]int{214, 232, 255}
-		case "switch":
-			fill = [3]int{222, 245, 226}
-		}
+		fill := categoryFill(h.Category)
 		pdf.SetFillColor(fill[0], fill[1], fill[2])
 		pdf.SetDrawColor(90, 90, 90)
 		pdf.RoundedRect(px(n), py(n), bw, bh, 1.2*scale, "1234", "DF")
@@ -255,6 +256,7 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 			pdf.CellFormat(bw, bh*0.26, fitText(pdf, t(h.Location), bw-1), "", 0, "C", false, 0, "")
 		}
 	}
+	drawLegend(pdf, t, hosts)
 	// Hinweis zur Aussagekraft (gleich wie in der Hilfe der Oberflaeche).
 	pdf.SetFont("Helvetica", "I", 7)
 	pdf.SetTextColor(110, 110, 110)
@@ -262,12 +264,46 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 	pdf.CellFormat(0, 4, t("Hinweis: Ohne SNMP/LLDP ist dies eine Sternansicht (Router oben, Geraete im selben Subnetz darunter), keine echte Verkabelung."), "", 0, "L", false, 0, "")
 }
 
+// categoryFill liefert die helle Kastenfarbe (RGB) einer Kategorie; druckfreundlich.
+func categoryFill(c string) [3]int {
+	switch c {
+	case model.CatNetwork:
+		return [3]int{214, 232, 255} // hellblau
+	case model.CatServer:
+		return [3]int{222, 245, 226} // hellgruen
+	case model.CatIoT:
+		return [3]int{255, 236, 204} // hellorange
+	}
+	return [3]int{238, 238, 238} // Clients: hellgrau
+}
+
+// drawLegend zeichnet unter der Karte die Farbzuordnung der Kategorien samt Anzahl.
+func drawLegend(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host) {
+	count := map[string]int{}
+	for _, h := range hosts {
+		count[h.Category]++
+	}
+	x, y := pdfMargin, pdfPageH-20.0
+	pdf.SetFont("Helvetica", "", 8)
+	pdf.SetDrawColor(90, 90, 90)
+	for _, c := range model.Categories {
+		f := categoryFill(c)
+		pdf.SetFillColor(f[0], f[1], f[2])
+		pdf.Rect(x, y, 5, 3.5, "DF")
+		pdf.SetTextColor(20, 20, 20)
+		pdf.SetXY(x+6.5, y-0.3)
+		label := t(model.CategoryLabel(c)) + " (" + strconv.Itoa(count[c]) + ")"
+		pdf.CellFormat(40, 4, label, "", 0, "L", false, 0, "")
+		x += 52
+	}
+}
+
 // Spalten der Geraeteliste: Titel und Breite in mm (Summe = nutzbare Seitenbreite 277 mm).
 var pdfCols = []struct {
 	title string
 	w     float64
 }{
-	{"Name", 46}, {"IP", 26}, {"MAC", 34}, {"Hersteller (Chip)", 44}, {"System (Vermutung)", 50}, {"Standort", 34}, {"Offene Ports", 43},
+	{"Name", 40}, {"IP", 26}, {"MAC", 32}, {"Hersteller (Chip)", 36}, {"Kategorie", 22}, {"System (Vermutung)", 44}, {"Standort", 32}, {"Offene Ports", 45},
 }
 
 // drawDeviceList zeichnet die Geraeteliste ab Seite 2; Zeilen mit langem Text werden umgebrochen.
@@ -289,7 +325,7 @@ func drawDeviceList(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host) {
 	header()
 	pdf.SetFont("Helvetica", "", 8)
 	for _, h := range hosts {
-		cells := []string{h.Name, h.IP, h.MAC, h.Vendor, h.OS, h.Location, portsText(h)}
+		cells := []string{h.Name, h.IP, h.MAC, h.Vendor, model.CategoryLabel(h.Category), h.OS, h.Location, portsText(h)}
 		// Zeilenhoehe = hoechste Zelle (Text je Spalte umbrechen).
 		lines := make([][]string, len(cells))
 		maxLines := 1
