@@ -5,6 +5,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -268,5 +270,66 @@ func TestCategory(t *testing.T) {
 	postJSON(h, "/api/hosts/category", `{"ip":"192.168.1.10","category":"auto"}`)
 	if c, m := cat("192.168.1.10"); c != model.CatServer || m {
 		t.Errorf("zurueckgesetzt: %q %v", c, m)
+	}
+}
+
+// Zwischenspeicher (I-016): Eingaben ueberleben einen Neustart; IP-Wechsel, kaputte Datei, Loeschen.
+func TestStorePersistence(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "sub", "eingaben.json")
+	host := model.Host{IP: "192.168.1.50", Name: "pc", MAC: "AA:BB:CC:00:00:01"}
+	newSrv := func() *server { // wie NewHandler, aber mit Zugriff auf den Server
+		s := &server{opt: Options{DataFile: file}, names: map[string]string{}, users: map[string]string{},
+			locs: map[string]string{}, cats: map[string]string{}, macs: map[string]string{}}
+		s.loadStore()
+		s.hosts = []model.Host{host}
+		return s
+	}
+	s := newSrv()
+	s.mu.Lock()
+	s.claimLocked(host.IP)
+	s.names[host.IP], s.locs[host.IP], s.cats[host.IP] = "Büro-PC", "Raum 2", model.CatClient
+	s.persistLocked()
+	s.mu.Unlock()
+	if st, err := os.Stat(file); err != nil || st.Mode().Perm() != 0o600 {
+		t.Fatalf("Datei fehlt oder Rechte falsch: %v %v", err, st)
+	}
+
+	// Neustart: Eingaben sind wieder da.
+	s2 := newSrv()
+	v := s2.viewLocked()
+	if v[0].Name != "Büro-PC" || v[0].Location != "Raum 2" || v[0].Category != model.CatClient || !v[0].CategoryManual {
+		t.Errorf("nach Neustart: %+v", v[0])
+	}
+	// Anderes Geraet hinter derselben IP: Eingaben gelten nicht.
+	s2.hosts[0].MAC = "AA:BB:CC:00:00:99"
+	if v := s2.viewLocked(); v[0].Location != "" || v[0].Name == "Büro-PC" {
+		t.Errorf("IP-Wechsel nicht erkannt: %+v", v[0])
+	}
+	// Kaputte Datei: wird umbenannt, nichts geladen, kein Absturz.
+	if err := os.WriteFile(file, []byte("{kaputt"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s3 := newSrv()
+	if len(s3.names) != 0 {
+		t.Error("kaputte Datei darf nichts laden")
+	}
+	if _, err := os.Stat(file + ".defekt"); err != nil {
+		t.Errorf("kaputte Datei nicht umbenannt: %v", err)
+	}
+	// Loeschen entfernt RAM und Datei.
+	s2.mu.Lock()
+	s2.persistLocked()
+	s2.clearStoreLocked()
+	s2.mu.Unlock()
+	if _, err := os.Stat(file); !os.IsNotExist(err) || len(s2.names) != 0 {
+		t.Errorf("Loeschen unvollstaendig: %v", err)
+	}
+}
+
+// Ohne DataFile (Standard in Tests, --no-save, Demo) wird nie eine Datei geschrieben.
+func TestNoStoreWithoutFile(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	if rec := postJSON(h, "/api/hosts/location", `{"ip":"192.168.1.10","location":"x"}`); rec.Code != 200 {
+		t.Fatal(rec.Code)
 	}
 }

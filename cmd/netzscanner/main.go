@@ -22,7 +22,13 @@ func main() {
 	demo := flag.Bool("demo", false, "Demo-Daten anzeigen (zum Ansehen der Oberflaeche)")
 	allowPublic := flag.Bool("allow-public", false, "Scans oeffentlicher IP-Adressen erlauben (nur mit Erlaubnis!)")
 	diagnose := flag.String("diagnose", "", "ein Geraet (IP) Schritt fuer Schritt pruefen und Ergebnis ausgeben (Fehlersuche)")
+	dataFile := flag.String("data", web.DefaultStorePath(), "Datei fuer zwischengespeicherte Eingaben (Namen, Benutzernamen, Standorte, Kategorien)")
+	noSave := flag.Bool("no-save", false, "Eingaben nicht auf die Platte speichern (nur im Arbeitsspeicher)")
 	flag.Parse()
+	if *noSave || *demo { // Demo-Daten sind erfunden: nie speichern
+
+		*dataFile = ""
+	}
 
 	if *showVersion {
 		fmt.Println(version.String())
@@ -35,6 +41,9 @@ func main() {
 	}
 
 	fmt.Println(version.String())
+	if *dataFile != "" && !*demo {
+		fmt.Println("Eingaben werden gespeichert in:", *dataFile, "(abschaltbar mit --no-save)")
+	}
 	fmt.Printf("Oberflaeche: http://%s  (Strg+C beendet)\n", *listen)
-	log.Fatal(http.ListenAndServe(*listen, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic})))
+	log.Fatal(http.ListenAndServe(*listen, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile})))
 }
