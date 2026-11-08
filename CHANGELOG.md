@@ -338,3 +338,8 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.23.1] – 2026-11-08
 ### Geändert
 - **Router-Login, Diagnose der Zuordnung:** Nach dem Login zeigt die Meldung Geräte mit **gleicher IP, aber anderer MAC** (Router / Scan, bis zu 8 Beispiele). Anlass: An Saschas Box wurde 0 von 49 Router-Geräten dem Scan zugeordnet, obwohl beide MACs haben; die Ursache ist noch unbekannt. Ohne Zuordnung greift auch die Mesh-Topologie (0.23.0) nicht.
+
+## [0.23.2] – 2026-11-08
+### Behoben
+- **Router-Login während des Scans:** Beim Login lief der Scan noch, die Geräteliste hatte erst Teilergebnisse ohne MAC (ARP wird erst am Ende gelesen) → „0 Geräte zugeordnet“, keine Mesh-Zuordnung. Der Login wird jetzt abgelehnt, solange ein Scan läuft (klare Meldung). Ursache aus Saschas Diagnose (0.23.1) abgeleitet: Scan-MAC war bei den abweichenden Geräten leer.
+- **Mesh-Zuordnung** wird bei jeder Ansicht aus den aktuellen Geräten berechnet (statt einmalig beim Login), passt also auch zu später gefundenen Geräten.

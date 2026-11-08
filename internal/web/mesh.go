@@ -12,11 +12,10 @@ import (
 	"github.com/berion1982/netzscanner/internal/scan"
 )
 
-// meshLink ist das Ergebnis für ein Gerät; mac schützt vor IP-Wechsel (wie bei SNMP).
+// meshLink ist das Ergebnis für ein Gerät (wird bei jeder Ansicht aus den aktuellen Geräten berechnet).
 type meshLink struct {
 	Uplink string // IP des vorgelagerten, gescannten Geräts
 	Label  string // z. B. "WLAN · 195 Mbit/s · -61 dBm"
-	mac    string
 }
 
 // maxMeshDepth begrenzt das Hochwandern in der Kette (Schutz vor Schleifen im Dokument).
@@ -69,7 +68,7 @@ func buildMeshLinks(m router.Mesh, hosts []model.Host) map[string]meshLink {
 		cur := first
 		for depth := 0; depth < maxMeshDepth; depth++ {
 			if up, found := hostOfUID[cur.Parent]; found && up.IP != h.IP {
-				out[h.IP] = meshLink{Uplink: up.IP, Label: meshLabel(first), mac: scan.NormMAC(h.MAC)}
+				out[h.IP] = meshLink{Uplink: up.IP, Label: meshLabel(first)}
 				break
 			}
 			next, more := parent[cur.Parent]

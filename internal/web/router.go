@@ -100,7 +100,13 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 	// Routeradresse: Eingabe oder erkannter Router; muss in der Geraeteliste stehen.
 	s.mu.Lock()
 	hosts := append([]model.Host(nil), s.hosts...)
+	running := s.running
 	s.mu.Unlock()
+	// Waehrend des Scans fehlen noch MACs (ARP wird erst am Ende gelesen) -> Zuordnung waere leer.
+	if running {
+		writeJSON(w, http.StatusConflict, errBody("Scan läuft noch – bitte erst nach Ende des Scans beim Router anmelden (sonst fehlen die MAC-Adressen für die Zuordnung)"))
+		return
+	}
 	host, found := req.Host, false
 	for _, h := range hosts {
 		if host == "" && h.Role == "router" {
@@ -175,7 +181,12 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 	s.routerInfo = info
 	ri := res.Info
 	s.routerData = &ri
-	s.meshLinks = buildMeshLinks(res.Mesh, hosts)
+	if len(res.Mesh.Nodes) > 0 {
+		mesh := res.Mesh
+		s.meshData = &mesh
+	} else {
+		s.meshData = nil
+	}
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, map[string]any{"entries": len(list), "matched": matched, "onlyRouter": only, "info": res.Info, "sources": sources, "macDiff": macDiff})
 }
@@ -183,7 +194,7 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 // handleRouterClear verwirft die Router-Angaben (Namen/Verbindungsart).
 func (s *server) handleRouterClear(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
-	s.routerInfo, s.routerData, s.meshLinks = nil, nil, nil
+	s.routerInfo, s.routerData, s.meshData = nil, nil, nil
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
