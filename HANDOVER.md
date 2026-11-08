@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.22.1 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.22.2 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - **Leitlinie:** Der NetzScanner **sammelt und exportiert** Daten (lesend). Kein Zurückschreiben/Importieren in Router oder Server (z. B. DHCP-Reservierungen) – das übernehmen deren eigene Werkzeuge.
@@ -24,6 +24,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
+- **0.22.2:** FRITZ!Box-Reservierungen **nicht auslesbar** (Static ≠ feste Zuweisung, von Sascha an der Box widerlegt; fest zugewiesener PC `nobara-pc` fehlte in der Static-Liste). Reiter „Reservierungen“ = nur Windows-DHCP. I-055 (d) damit abgeschlossen (nicht machbar per TR-064). Als Nächstes: Mesh (I-055 c) über `X_AVM-DE_GetMeshListPath`.
 - **0.22.1:** Sascha sah nur 2 von 11 „Static“-Einträgen (einer davon der Router selbst). Fix: komplette Router-Liste (`s.routerHosts`) statt MAC-Map; Meldung zeigt „Static ohne IP/MAC“. **Sascha: nochmal Router-Login und Zahl in „Reservierungen“ prüfen.** Falls weiter zu wenige: Ausgabe der Meldung schicken.
 - **0.22.0 (I-055 d):** Router-Geräte mit `AddressSource`=Static (bei Sascha 11 von 49) landen in „Reservierungen“. **Sascha: mit der FRITZ!Box-Oberfläche abgleichen**, ob das genau die festen Zuweisungen sind. Danach: Mesh (I-055 c) über `X_AVM-DE_GetMeshListPath`.
 - **Befund `--diagnose-router` (Sascha, FRITZ!Box 192.168.178.1):** Hosts:1 hat `GetHostNumberOfEntries/GetSpecificHostEntry/GetGenericHostEntry`, `X_AVM-DE_GetHostListPath`, **`X_AVM-DE_GetMeshListPath`**, `X_AVM-DE_GetSpecificHostEntryByIP`, Friendly-Name-/Geräteklasse-Setter – **keine Aktion für feste IP-Reservierungen**. LANHostConfigManagement: `GetAddressRange`, `SetDHCPServerEnable` usw., ebenfalls keine Reservierungsliste. Folgerungen: (d) per TR-064 vermutlich nicht möglich (Rest: `AddressSource`=Static prüfen oder undokumentiertes `data.lua`, fragil); (c) Mesh ist machbar über `GetMeshListPath` (Datei/JSON, Aufbau erst an der Box ansehen). Der Reiter „Reservierungen“ kennt vorerst nur Windows-DHCP.

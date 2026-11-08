@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/berion1982/netzscanner/internal/dhcp"
@@ -21,7 +20,6 @@ import (
 func (s *server) reservations() []export.Reservation {
 	s.mu.Lock()
 	rows := append([]dhcp.Entry(nil), s.dhcpRows...)
-	routerRows := s.routerReservationsLocked()
 	view := s.viewLocked() // Geraete inkl. Namen; MAC -> Name nachschlagen
 	s.mu.Unlock()
 	nameOf := map[string]string{}
@@ -34,17 +32,6 @@ func (s *server) reservations() []export.Reservation {
 	for _, e := range rows {
 		if e.Reserved {
 			out = append(out, export.Reservation{Scope: e.Scope, IP: e.IP, MAC: e.MAC, Name: e.Name, ScanName: nameOf[scan.NormMAC(e.MAC)]})
-		}
-	}
-	// FRITZ!Box: Eintraege mit Adressvergabe "Static", sofern der Windows-Server dieselbe MAC nicht schon nennt.
-	have := map[string]bool{}
-	for _, r := range out {
-		have[scan.NormMAC(r.MAC)] = true
-	}
-	for _, r := range routerRows {
-		if m := scan.NormMAC(r.MAC); m == "" || !have[m] {
-			r.ScanName = nameOf[scan.NormMAC(r.MAC)]
-			out = append(out, r)
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {
@@ -99,18 +86,4 @@ func (s *server) handleReservationsExport(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	_, _ = w.Write(buf.Bytes())
-}
-
-// routerReservationsLocked liefert die Router-Geraete mit Adressvergabe "Static" (s.mu muss gehalten werden).
-// Es zaehlt die komplette Router-Liste: auch Geraete ohne IP (offline) oder ohne MAC bleiben drin,
-// damit nichts verschwindet. Die FRITZ!Box bietet per TR-064 keine eigene Reservierungsliste;
-// "Static" ist eine Vermutung und wurde noch nicht mit den Einstellungen der Box abgeglichen.
-func (s *server) routerReservationsLocked() []export.Reservation {
-	var out []export.Reservation
-	for _, e := range s.routerHosts {
-		if strings.EqualFold(e.Source, "static") {
-			out = append(out, export.Reservation{Scope: "FRITZ!Box (Static)", IP: e.IP, MAC: e.MAC, Name: e.Name})
-		}
-	}
-	return out
 }

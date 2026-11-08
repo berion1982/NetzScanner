@@ -5,7 +5,6 @@ import (
 
 	"github.com/berion1982/netzscanner/internal/dhcp"
 	"github.com/berion1982/netzscanner/internal/model"
-	"github.com/berion1982/netzscanner/internal/router"
 )
 
 // Reservierung hat Vorrang vor Lease; Eintraege ohne Scan-Treffer landen in "onlyDHCP".
@@ -42,30 +41,5 @@ func TestReservationsList(t *testing.T) {
 	}
 	if got[1].ScanName != "Drucker" || got[0].ScanName != "" {
 		t.Errorf("Scan-Namen: %+v", got)
-	}
-}
-
-// FRITZ!Box: Geraete mit "Static" erscheinen in der Liste - auch offline ohne IP; "DHCP" nicht;
-// der Windows-Server hat bei gleicher MAC Vorrang.
-func TestReservationsFromRouter(t *testing.T) {
-	s := &server{
-		routerHosts: []router.Host{
-			{Name: "nas", IP: "192.168.178.20", MAC: "AA:BB:CC:00:11:22", Source: "Static"},
-			{Name: "handy", IP: "192.168.178.30", MAC: "AA:BB:CC:00:11:33", Source: "DHCP"},
-			{Name: "doppelt", IP: "192.168.178.40", MAC: "AA:BB:CC:00:11:44", Source: "Static"},
-			{Name: "offline-geraet", IP: "", MAC: "AA:BB:CC:00:11:55", Source: "Static"},
-		},
-		dhcpRows: []dhcp.Entry{{Scope: "192.168.178.0", IP: "192.168.178.40", MAC: "AA-BB-CC-00-11-44", Name: "doppelt-win", Reserved: true}},
-	}
-	got := s.reservations()
-	if len(got) != 3 {
-		t.Fatalf("erwartet 3 Eintraege, bekam %+v", got)
-	}
-	names := map[string]bool{}
-	for _, r := range got {
-		names[r.Name] = true
-	}
-	if !names["nas"] || !names["offline-geraet"] || !names["doppelt-win"] || names["handy"] || names["doppelt"] {
-		t.Errorf("falsche Auswahl: %+v", got)
 	}
 }
