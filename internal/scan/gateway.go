@@ -113,8 +113,8 @@ func ApplyGateway(hosts []model.Host, gateway string) {
 	}
 }
 
-// isRouterEcho erkennt Scheineintraege: Ein Router (z. B. FRITZ!Box mit WireGuard-VPN) beantwortet ARP auch
-// fuer Adressen, die ihm nicht gehoeren (Proxy-ARP, etwa fuer VPN-Clients). Solche Adressen haben dann die MAC
+// isRouterEcho erkennt Scheineintraege: Ein Router beantwortet ARP manchmal auch fuer Adressen, die ihm
+// nicht gehoeren (Proxy-ARP, z. B. fuer VPN-Clients hinter dem Router). Solche Adressen haben dann die MAC
 // des Routers, ohne dass dort ein eigenes Geraet im LAN steht. Regel (allgemein, keine Geraetetabelle):
 // andere IP als der Gateway, gleiche MAC wie der Gateway und kein einziger offener Port -> kein eigenes Geraet.
 // Ohne bekannten Gateway oder ohne dessen MAC wird nie etwas ausgeblendet.

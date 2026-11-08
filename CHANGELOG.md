@@ -365,4 +365,4 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [0.23.7] – 2026-11-08
 ### Geändert
-- **Scan blendet Scheineinträge des Routers aus:** Adressen mit der MAC des Standard-Gateways und ohne offenen Port (`isRouterEcho` in `internal/scan/gateway.go`), werden nicht mehr als Geräte gelistet. Anlass: Bei Sascha erschienen `.101`, `.103`, `.201`–`.203` („Hyperion“) mit der FritzBox-MAC; laut Sascha sind das die WireGuard-VPN-Verbindungen der FritzBox (die Box beantwortet ARP für sie, `ip neigh` zeigt die Box-MAC). Allgemeine Regel, keine Gerätetabelle; ohne bekannten Gateway oder dessen MAC wird nichts ausgeblendet. Hilfe ergänzt.
+- **Scan blendet Scheineinträge des Routers aus:** Adressen mit der MAC des Standard-Gateways und ohne offenen Port (`isRouterEcho` in `internal/scan/gateway.go`) werden nicht mehr als Geräte gelistet. Hintergrund: Ein Router beantwortet ARP manchmal auch für fremde Adressen (Proxy-ARP, z. B. VPN-Clients hinter dem Router); sie erscheinen sonst als Geräte mit der Router-MAC. Allgemeine Regel ohne Geräte- oder Adresstabelle; ohne bekannten Gateway oder dessen MAC wird nichts ausgeblendet. Hilfe ergänzt.
