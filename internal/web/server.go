@@ -53,6 +53,7 @@ type server struct {
 	users      map[string]string          // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
 	locs       map[string]string          // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
 	cats       map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
+	routerInfo map[string]routerEntry     // Router-Geraeteliste: normalisierte MAC -> Eintrag (nur im RAM, I-024)
 	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
 	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
 	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
@@ -80,6 +81,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
 	mux.HandleFunc("POST /api/hosts/location", s.handleLocation)
 	mux.HandleFunc("POST /api/hosts/category", s.handleCategory)
+	mux.HandleFunc("POST /api/router/fritzbox", s.handleFritzbox)
+	mux.HandleFunc("POST /api/router/clear", s.handleRouterClear)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
 	mux.HandleFunc("POST /api/topology/snmp/clear", s.handleSNMPClear)
 	mux.HandleFunc("GET /api/categories", s.handleCategories)
@@ -148,6 +151,13 @@ func (s *server) viewLocked() []model.Host {
 		if match {
 			hosts[i].Username = s.users[hosts[i].IP]
 			hosts[i].Location = s.locs[hosts[i].IP]
+		}
+		// Router-Geraeteliste (I-024): Name/Verbindungsart ergaenzen; ein unbekannter Name wird ersetzt.
+		if e, ok := s.routerInfo[scan.NormMAC(hosts[i].MAC)]; ok && scan.NormMAC(hosts[i].MAC) != "" {
+			hosts[i].RouterName, hosts[i].Connection = e.Name, e.Iface
+			if _, named := s.names[hosts[i].IP]; !named && e.Name != "" && (!hosts[i].Known || hosts[i].NameSource == "hersteller") {
+				hosts[i].Name, hosts[i].Known, hosts[i].NameSource = e.Name, true, "router"
+			}
 		}
 		// Topologie per SNMP (I-010 Teil 2): gilt nur, solange hinter der IP dieselbe MAC steckt.
 		if l, ok := s.snmpLinks[hosts[i].IP]; ok && l.mac != "" && l.mac == scan.NormMAC(hosts[i].MAC) {

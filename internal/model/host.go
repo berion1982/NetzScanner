@@ -142,6 +142,8 @@ type Host struct {
 	OS             string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
 	Ports          []Port    `json:"ports"`
 	Uplink         string    `json:"uplink,omitempty"`         // Topologie: ID (IP) des vorgelagerten Geraets
+	RouterName     string    `json:"routerName,omitempty"`     // Name laut Router-Geraeteliste (I-024), nur nach Router-Login
+	Connection     string    `json:"connection,omitempty"`     // Verbindungsart laut Router: "WLAN", "LAN (Kabel)" ...
 	UplinkPort     string    `json:"uplinkPort,omitempty"`     // Topologie per SNMP: Port am Uplink-Switch (z. B. "Gi1/0/5")
 	UplinkShared   int       `json:"uplinkShared,omitempty"`   // Topologie per SNMP: wie viele MACs an diesem Port gesehen wurden (>1 = Switch/AP dahinter)
 	Role           string    `json:"role,omitempty"`           // "router", "switch" oder leer
