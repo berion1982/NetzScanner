@@ -343,3 +343,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Behoben
 - **Router-Login während des Scans:** Beim Login lief der Scan noch, die Geräteliste hatte erst Teilergebnisse ohne MAC (ARP wird erst am Ende gelesen) → „0 Geräte zugeordnet“, keine Mesh-Zuordnung. Der Login wird jetzt abgelehnt, solange ein Scan läuft (klare Meldung). Ursache aus Saschas Diagnose (0.23.1) abgeleitet: Scan-MAC war bei den abweichenden Geräten leer.
 - **Mesh-Zuordnung** wird bei jeder Ansicht aus den aktuellen Geräten berechnet (statt einmalig beim Login), passt also auch zu später gefundenen Geräten.
+
+## [0.23.3] – 2026-11-08
+### Geändert
+- **Router-Login nennt den echten Grund:** Statt „nicht lesbar“/„nicht verfügbar“ zeigen die Hinweise jetzt HTTP-Status und UPnP-Fehlercode/-text der Box (z. B. „HTTP 500, UPnP 606 Action not authorized“) bzw. „Anmeldung abgelehnt“. Auch ein abgelehnter Mesh-Abruf wird gemeldet. Anlass: Bei Sascha wurden nach der Zuordnung (32/49 ok) Geräteinfo, WAN, WLAN und Mesh nicht gelesen; Ursache unbekannt (Vermutung, ungeprüft: Benutzer ohne Recht „FRITZ!Box Einstellungen“ oder Anmeldesperre nach mehreren Logins).

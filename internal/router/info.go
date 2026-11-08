@@ -83,9 +83,10 @@ func svcWLAN(n int) service {
 func (c *client) readInfo(ctx context.Context) Info {
 	info := Info{WLANs: []WLAN{}}
 	note := func(what string, err error) {
-		reason := "nicht lesbar"
+		// Fehlertexte aus call() enthalten nie Zugangsdaten; sie nennen den echten Grund (I-055).
+		reason := "nicht lesbar (" + clean(err.Error(), 160) + ")"
 		if errors.Is(err, errUnavailable) {
-			reason = "an dieser Box nicht verfügbar"
+			reason = clean(err.Error(), 160)
 		}
 		info.Notes = append(info.Notes, what+": "+reason)
 	}
