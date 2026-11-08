@@ -328,3 +328,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Diagnose der FRITZ!Box-Mesh-Liste** (I-055 c, Teil 1): `./dist/netzscanner --diagnose-mesh <FritzBox-IP>` ruft `X_AVM-DE_GetMeshListPath` ab und gibt das Mesh-Dokument **roh** aus (`internal/router/meshdump.go`). Zugangsdaten über `NETZSCANNER_ROUTER_USER`/`NETZSCANNER_ROUTER_PASS` oder Abfrage am Terminal (Passwort-Eingabe sichtbar); nichts wird gespeichert oder geloggt, die Session-ID im Pfad wird nicht ausgegeben. Nur lesend.
 ### Hinweis
 - Das Dokumentformat der Box ist **unbekannt** („Ich weiß es nicht“). Der eigentliche Mesh-Parser (Teil 2) folgt, sobald die echte Ausgabe vorliegt.
+
+## [0.23.0] – 2026-11-08
+### Hinzugefügt
+- **Mesh-Topologie der FRITZ!Box** (I-055 c, Teil 2): Der Router-Login liest zusätzlich die Mesh-Liste (`X_AVM-DE_GetMeshListPath`, JSON). Geräte werden dem Knoten zugeordnet, an dem sie laut Box hängen (Repeater/Box; Zuordnung über MAC, sonst IP; nicht gescannte Zwischenknoten werden übersprungen). Das ersetzt die Sternansicht; SNMP hat weiter Vorrang. Detail-Panel zeigt „Mesh-Verbindung“ (WLAN/LAN, Mbit/s, dBm). Code: `internal/router/mesh.go`, `internal/web/mesh.go`; Ergebnis nur im RAM.
+### Hinweis
+- Format und Annahme (node_1 = Vorgänger, Raten in kbit/s) stammen aus der Ausgabe von Saschas Box; andere Modelle sind **ungeprüft**. Fehlt die Mesh-Liste, erscheint ein Hinweis in den Router-Infos, der Login läuft trotzdem.

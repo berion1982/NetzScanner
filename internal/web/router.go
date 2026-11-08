@@ -166,6 +166,7 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 	s.routerInfo = info
 	ri := res.Info
 	s.routerData = &ri
+	s.meshLinks = buildMeshLinks(res.Mesh, hosts)
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, map[string]any{"entries": len(list), "matched": matched, "onlyRouter": only, "info": res.Info, "sources": sources})
 }
@@ -173,7 +174,7 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 // handleRouterClear verwirft die Router-Angaben (Namen/Verbindungsart).
 func (s *server) handleRouterClear(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
-	s.routerInfo, s.routerData = nil, nil
+	s.routerInfo, s.routerData, s.meshLinks = nil, nil, nil
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

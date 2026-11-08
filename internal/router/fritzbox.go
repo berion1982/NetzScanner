@@ -93,6 +93,7 @@ type challenge struct {
 type Result struct {
 	Hosts []Host
 	Info  Info
+	Mesh  Mesh // leer, wenn die Box keine Mesh-Liste liefert (Grund steht dann in Info.Notes)
 }
 
 // ReadFritzbox liest Geraeteliste und Netzwerkdaten der FRITZ!Box unter host (IP-Adresse).
@@ -118,7 +119,13 @@ func ReadFritzbox(ctx context.Context, host, user, pass string) (Result, error) 
 		return Result{Hosts: hosts}, err
 	}
 	info := c.readInfo(ctx) // Fehler einzelner Dienste landen in info.Notes
-	return Result{Hosts: hosts, Info: info}, nil
+	res := Result{Hosts: hosts, Info: info}
+	if mesh, err := c.readMesh(ctx); err == nil {
+		res.Mesh = mesh
+	} else if !errors.Is(err, ErrAuth) { // Mesh ist optional: Grund als Hinweis, kein Abbruch
+		res.Info.Notes = append(res.Info.Notes, "Mesh: "+err.Error())
+	}
+	return res, nil
 }
 
 // readHosts liest die Geraeteliste (Dienst Hosts:1). Hier faellt auch eine falsche Anmeldung auf.

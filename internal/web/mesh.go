@@ -1,0 +1,98 @@
+package web
+
+// Mesh-Zuordnung (I-055 c): Aus dem Mesh-Dokument der FRITZ!Box (siehe internal/router/mesh.go)
+// wird für jedes gescannte Gerät der vorgelagerte Knoten (Uplink) bestimmt, z. B. "Handy hängt am
+// Repeater, der Repeater an der Box". Reine Logik ohne Netzwerk, damit sie testbar ist.
+
+import (
+	"fmt"
+
+	"github.com/berion1982/netzscanner/internal/model"
+	"github.com/berion1982/netzscanner/internal/router"
+	"github.com/berion1982/netzscanner/internal/scan"
+)
+
+// meshLink ist das Ergebnis für ein Gerät; mac schützt vor IP-Wechsel (wie bei SNMP).
+type meshLink struct {
+	Uplink string // IP des vorgelagerten, gescannten Geräts
+	Label  string // z. B. "WLAN · 195 Mbit/s · -61 dBm"
+	mac    string
+}
+
+// maxMeshDepth begrenzt das Hochwandern in der Kette (Schutz vor Schleifen im Dokument).
+const maxMeshDepth = 10
+
+// buildMeshLinks ordnet Mesh-Knoten den gescannten Geräten zu (über MAC, sonst IP) und liefert
+// je Geräte-IP den nächsten gescannten Vorgänger. Nicht gescannte Zwischenknoten werden übersprungen.
+func buildMeshLinks(m router.Mesh, hosts []model.Host) map[string]meshLink {
+	byMAC, byIP := map[string]string{}, map[string]string{} // MAC/IP -> Knoten-UID
+	for _, n := range m.Nodes {
+		for _, mac := range n.MACs {
+			if k := scan.NormMAC(mac); k != "" {
+				byMAC[k] = n.UID
+			}
+		}
+		for _, ip := range n.IPs {
+			byIP[ip] = n.UID
+		}
+	}
+	uidOf := func(h model.Host) string { // MAC hat Vorrang vor IP
+		if k := scan.NormMAC(h.MAC); k != "" {
+			if u, ok := byMAC[k]; ok {
+				return u
+			}
+		}
+		return byIP[h.IP]
+	}
+	hostOfUID := map[string]model.Host{}
+	for _, h := range hosts {
+		if u := uidOf(h); u != "" {
+			if _, dup := hostOfUID[u]; !dup {
+				hostOfUID[u] = h
+			}
+		}
+	}
+	parent := map[string]router.MeshLink{} // Kind-UID -> erste Verbindung nach oben
+	for _, l := range m.Links {
+		if _, ok := parent[l.Child]; !ok {
+			parent[l.Child] = l
+		}
+	}
+	out := map[string]meshLink{}
+	for _, h := range hosts {
+		uid := uidOf(h)
+		first, ok := parent[uid]
+		if uid == "" || !ok {
+			continue
+		}
+		// Nach oben wandern, bis ein gescanntes Gerät gefunden ist.
+		cur := first
+		for depth := 0; depth < maxMeshDepth; depth++ {
+			if up, found := hostOfUID[cur.Parent]; found && up.IP != h.IP {
+				out[h.IP] = meshLink{Uplink: up.IP, Label: meshLabel(first), mac: scan.NormMAC(h.MAC)}
+				break
+			}
+			next, more := parent[cur.Parent]
+			if !more {
+				break
+			}
+			cur = next
+		}
+	}
+	return out
+}
+
+// meshLabel beschreibt die Verbindung des Geräts zu seinem direkten Vorgänger.
+func meshLabel(l router.MeshLink) string {
+	s := l.Type
+	if s == "" {
+		s = "Verbindung"
+	}
+	if l.RateMbit > 0 {
+		s += fmt.Sprintf(" · %d Mbit/s", l.RateMbit)
+	}
+	if l.RCPI != 0 {
+		s += fmt.Sprintf(" · %d dBm", l.RCPI)
+	}
+	return s
+}
