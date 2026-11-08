@@ -14,7 +14,7 @@ main{flex:1;min-width:0;padding:20px}
 section{display:none}section.on{display:block}
 .scanbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px}
 .scanbar input{background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:7px 10px;font:inherit}
-.scanbar input.t{width:200px}.scanbar input.p{width:160px}
+.scanbar input.t{width:260px}.tgt{display:flex;flex-direction:column}.hint{color:var(--mut);font-size:11px;margin-top:3px;max-width:340px;line-height:1.35}.scanbar input.p{width:160px}
 .btn{background:#238636;border:1px solid #2ea043;color:#fff;border-radius:6px;padding:7px 14px;font:inherit;cursor:pointer}
 .btn.stop{background:#8b2a2a;border-color:var(--bad)}.btn:disabled{opacity:.5;cursor:default}
 .prog{flex:1;min-width:160px;color:var(--mut)}
@@ -56,7 +56,7 @@ svg{width:100%;height:auto;display:block}
 .node:hover rect,.node.sel rect{stroke:var(--cy)}
 .node text{fill:var(--txt);font-size:12px;text-anchor:middle}.node .s{fill:var(--mut);font-size:10px}
 line{stroke:#3a4656;stroke-width:1.5}
-.help h2{margin-top:24px}.help{max-width:760px}code{background:#21262d;padding:1px 5px;border-radius:4px}
+.ht td{padding:6px 12px 6px 0;vertical-align:top;border-bottom:1px solid var(--line)}.help h2{margin-top:24px}.help{max-width:760px}code{background:#21262d;padding:1px 5px;border-radius:4px}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
 <nav><b>▣ NetzScanner</b>
@@ -65,7 +65,8 @@ line{stroke:#3a4656;stroke-width:1.5}
 <main>
 <section id="ov" class="on">
  <div class="card scanbar">
-  <label>Ziel <input class="t" id="target" placeholder="192.168.1.0/24"></label>
+  <div class="tgt"><label>Ziel <input class="t" id="target" placeholder="192.168.1.0/24" aria-describedby="thint"></label>
+   <small class="hint" id="thint">Teilbereich: <code>192.168.1.10-50</code> · Netz: <code>192.168.1.0/28</code> · einzeln: <code>192.168.1.5</code> · mehrere mit Komma trennen</small></div>
   <label>Ports <input class="p" id="ports" placeholder="leer = Standardliste"></label>
   <button class="btn" id="go">Scan starten</button>
   <div class="prog" id="prog">Bereit.</div>
@@ -89,7 +90,16 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Gerätename und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Hersteller und Web-Links. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
  <h2>Topologie</h2><p>Zeigt, welches Gerät an welchem hängt (Router → Switch → Geräte). Quelle: Uplink-Angaben (später LLDP/SNMP).</p>
- <h2>Hinweis</h2><p>Ziel eingeben (z. B. <code>192.168.1.0/24</code> oder eine einzelne IP), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
+ <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
+ <table class="ht"><tbody>
+ <tr><td><code>192.168.1.0/24</code></td><td>ganzes Netz (254 Geräte); Netz- und Broadcast-Adresse entfallen. Kleinere Teilnetze: <code>/28</code> = 14, <code>/26</code> = 62 Geräte</td></tr>
+ <tr><td><code>192.168.1.5</code></td><td>eine einzelne Adresse</td></tr>
+ <tr><td><code>192.168.1.10-50</code></td><td>Bereich (Kurzform: nur die letzte Zahl des Endes), Anfang und Ende gehören dazu = 41 Adressen</td></tr>
+ <tr><td><code>192.168.1.250-192.168.2.5</code></td><td>Bereich ausführlich, darf über Netzgrenzen gehen</td></tr>
+ <tr><td><code>192.168.1.5, 192.168.1.20-30</code></td><td>mehrere Angaben, mit Komma getrennt, beliebig gemischt; doppelte Adressen werden nur einmal gescannt</td></tr>
+ </tbody></table>
+ <p>Grenzen: nur IPv4, höchstens 65.536 Adressen je Scan (= /16), öffentliche Adressen sind gesperrt (nur mit Startoption <code>--allow-public</code>). Der Anfang eines Bereichs muss vor dem Ende liegen.</p>
+ <h2>Hinweis</h2><p>Ziel eingeben (siehe oben), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
 </section>
 </main>
 <script>

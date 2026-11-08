@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"strconv"
 	"strings"
 )
 
@@ -12,21 +13,69 @@ import (
 // ein Tippfehler (z.B. 10.0.0.0/8) nicht stundenlang das Netz belastet.
 const MaxTargets = 1 << 16
 
-// ExpandTarget wandelt "192.168.1.0/24" oder "192.168.1.5" in eine IP-Liste um.
-// Nur IPv4. Ohne allowPublic sind nur private/lokale Adressen erlaubt - das Tool
-// ist fuers Onboarding eigener Netze gedacht, nicht zum Scannen des Internets.
+// ExpandTarget wandelt eine Zielangabe in eine IP-Liste um (nur IPv4). Erlaubt sind,
+// auch gemischt und durch Komma getrennt (I-046):
+//   - Netz (CIDR):        192.168.1.0/24        (Netz- und Broadcast-Adresse entfallen bis /30)
+//   - Einzel-IP:          192.168.1.5
+//   - Bereich, kurz:      192.168.1.10-50       (nur die letzte Zahl wiederholt)
+//   - Bereich, ausfuehrlich: 192.168.1.10-192.168.2.20
+//
+// Doppelte Adressen werden entfernt, die Reihenfolge bleibt. Insgesamt sind hoechstens
+// MaxTargets Adressen erlaubt. Ohne allowPublic sind nur private/lokale Adressen erlaubt -
+// das Tool ist fuers Onboarding eigener Netze gedacht, nicht zum Scannen des Internets.
 func ExpandTarget(target string, allowPublic bool) ([]netip.Addr, error) {
-	target = strings.TrimSpace(target)
-	if target == "" {
+	if strings.TrimSpace(target) == "" {
 		return nil, fmt.Errorf("kein Ziel angegeben")
 	}
-	// Einzelne IP wie /32 behandeln.
-	if !strings.Contains(target, "/") {
-		target += "/32"
+	var out []netip.Addr
+	seen := map[netip.Addr]bool{}
+	for _, part := range strings.Split(target, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			return nil, fmt.Errorf("leeres Ziel in der Liste (Komma zu viel?)")
+		}
+		ips, err := expandPart(part)
+		if err != nil {
+			return nil, err
+		}
+		for _, a := range ips {
+			if !allowPublic && !isLocalAddr(a) {
+				return nil, fmt.Errorf("oeffentliche Adresse %s gesperrt (nur private Netze; --allow-public aktiviert sie)", a)
+			}
+			if !seen[a] {
+				seen[a] = true
+				out = append(out, a)
+			}
+		}
+		if len(out) > MaxTargets {
+			return nil, fmt.Errorf("zu viele Adressen (maximal %d)", MaxTargets)
+		}
 	}
-	prefix, err := netip.ParsePrefix(target)
+	return out, nil
+}
+
+// expandPart wertet genau EINE Angabe (Netz, Einzel-IP oder Bereich) aus.
+func expandPart(part string) ([]netip.Addr, error) {
+	switch {
+	case strings.Contains(part, "-"):
+		return expandRange(part)
+	case strings.Contains(part, "/"):
+		return expandPrefix(part)
+	default:
+		return expandPrefix(part + "/32") // Einzel-IP wie /32
+	}
+}
+
+// badTarget ist der einheitliche Fehler fuer nicht lesbare Angaben.
+func badTarget(part string) error {
+	return fmt.Errorf("ungueltiges Ziel %q (erwartet z.B. 192.168.1.0/24, 192.168.1.5 oder 192.168.1.10-50)", part)
+}
+
+// expandPrefix wertet ein Netz in CIDR-Schreibweise aus.
+func expandPrefix(part string) ([]netip.Addr, error) {
+	prefix, err := netip.ParsePrefix(part)
 	if err != nil {
-		return nil, fmt.Errorf("ungueltiges Ziel %q (erwartet z.B. 192.168.1.0/24)", target)
+		return nil, badTarget(strings.TrimSuffix(part, "/32"))
 	}
 	prefix = prefix.Masked()
 	if !prefix.Addr().Is4() {
@@ -34,9 +83,6 @@ func ExpandTarget(target string, allowPublic bool) ([]netip.Addr, error) {
 	}
 	if prefix.Bits() < 16 {
 		return nil, fmt.Errorf("Netz zu gross (maximal /16 erlaubt)")
-	}
-	if !allowPublic && !isLocalAddr(prefix.Addr()) {
-		return nil, fmt.Errorf("oeffentliche Adressen sind gesperrt (nur private Netze; --allow-public aktiviert sie)")
 	}
 	var out []netip.Addr
 	for a := prefix.Addr(); prefix.Contains(a); a = a.Next() {
@@ -47,6 +93,50 @@ func ExpandTarget(target string, allowPublic bool) ([]netip.Addr, error) {
 		out = out[1 : len(out)-1]
 	}
 	return out, nil
+}
+
+// expandRange wertet "a.b.c.10-50" (Kurzform) oder "a.b.c.10-a.b.d.20" aus.
+// Anfang und Ende gehoeren dazu; Anfang muss <= Ende sein.
+func expandRange(part string) ([]netip.Addr, error) {
+	left, right, _ := strings.Cut(part, "-")
+	left, right = strings.TrimSpace(left), strings.TrimSpace(right)
+	start, err := netip.ParseAddr(left)
+	if err != nil || !start.Is4() {
+		return nil, badTarget(part)
+	}
+	var end netip.Addr
+	if n, convErr := strconv.Atoi(right); convErr == nil && !strings.Contains(right, ".") {
+		// Kurzform: nur die letzte Stelle des Endes angegeben.
+		if n < 0 || n > 255 {
+			return nil, badTarget(part)
+		}
+		b := start.As4()
+		b[3] = byte(n)
+		end = netip.AddrFrom4(b)
+	} else if end, err = netip.ParseAddr(right); err != nil || !end.Is4() {
+		return nil, badTarget(part)
+	}
+	if end.Less(start) {
+		return nil, fmt.Errorf("Bereich %q: Anfang liegt hinter dem Ende", part)
+	}
+	// Groesse vorab pruefen, damit kein riesiger Bereich erst aufgebaut wird.
+	if size := addrNumber(end) - addrNumber(start) + 1; size > MaxTargets {
+		return nil, fmt.Errorf("Bereich zu gross (maximal %d Adressen)", MaxTargets)
+	}
+	var out []netip.Addr
+	for a := start; ; a = a.Next() {
+		out = append(out, a)
+		if a == end {
+			break
+		}
+	}
+	return out, nil
+}
+
+// addrNumber macht aus einer IPv4-Adresse eine Zahl (zum Rechnen mit Bereichen).
+func addrNumber(a netip.Addr) int {
+	b := a.As4()
+	return int(b[0])<<24 | int(b[1])<<16 | int(b[2])<<8 | int(b[3])
 }
 
 // isLocalAddr: privat (RFC1918), Loopback oder Link-Local.
