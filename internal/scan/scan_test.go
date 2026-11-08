@@ -128,6 +128,9 @@ func TestRunCancel(t *testing.T) {
 func TestCleanHostName(t *testing.T) {
 	for in, want := range map[string]string{
 		"_gateway": "", "_Gateway.": "", "192.168.1.1": "", "fritz.box.": "fritz.box", "nas-01": "nas-01", "": "", "a\x00b": "ab",
+		// I-009: MAC-/EUI-64-artige Kennungen sind keine Namen.
+		"001788FFFE476CE2": "", "00:17:88:47:6c:e2": "", "001788FFFE476CE2.fritz.box": "", "A1B2C3D4E5F6": "",
+		"hue-bridge": "hue-bridge", "cafe": "cafe", "001788FFFE476CEZ": "001788FFFE476CEZ",
 	} {
 		if got := cleanHostName(in); got != want {
 			t.Errorf("cleanHostName(%q) = %q, erwartet %q", in, got, want)

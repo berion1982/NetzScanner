@@ -17,7 +17,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
 | I-007 | Hersteller aus der MAC (Netzwerkchip) auch in Tabelle und Export anzeigen, mit Hinweis „Chip-Hersteller, nicht zwingend Gerätehersteller“ (Vorschlag Sascha; Basis ist I-003, im Detail-Panel schon vorhanden) | mittel | S | offen |
 | I-008 | Weitere Namensquellen: SSDP/UPnP (TV, Router, Mediaserver), LLMNR, HTTP-Server-Header, SNMP sysName | mittel | M | offen |
-| I-009 | Namen, die nur wie eine Kennung aussehen (z. B. `001788FFFE476CE2` = MAC/EUI-64 einer Hue Bridge), nicht als „bekannt“ werten, sondern als Platzhalter behandeln und besser aus Hersteller (OUI `00:17:88`), mDNS/SSDP oder HTTP-Titel ableiten, z. B. „Philips Hue Bridge (Vorschlag)“ | mittel | S | offen |
+| I-009 | Namen, die nur wie eine Kennung aussehen (z. B. `001788FFFE476CE2` = MAC/EUI-64 einer Hue Bridge), nicht als „bekannt“ werten, sondern als Platzhalter behandeln und besser aus Hersteller (OUI `00:17:88`), mDNS/SSDP oder HTTP-Titel ableiten, z. B. „Philips Hue Bridge (Vorschlag)“ | mittel | S | erledigt (0.5.1) |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
 
 ## WLAN

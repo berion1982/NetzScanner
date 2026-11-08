@@ -17,6 +17,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.1] – 2026-11-08
+### Geändert
+- **Kennung-Namen abgewertet** (I-009): Namen, die nur eine MAC-/EUI-64-Kennung sind (z. B. `001788FFFE476CE2` einer Hue Bridge), gelten nicht mehr als Gerätename; die Namenssuche probiert dann weitere Quellen (mDNS, NetBIOS, Zertifikat, Seitentitel).
+- Findet keine Quelle einen Namen, aber die MAC einen Hersteller, erscheint „<Hersteller> (Vorschlag)“ mit Quelle „Hersteller aus der MAC“. Mit der kleinen Startliste greift das nur selten; erst die volle OUI-Liste (I-003) macht es nützlich.
+
 ## [0.5.0] – 2026-11-08
 ### Hinzugefügt
 - **Bessere Namenssuche** (I-002): Geräte, die bisher „(unbekannt)“ blieben, werden zusätzlich per **mDNS/Bonjour** (UDP 5353, z. B. Apple-Geräte, Drucker, Chromecast) und **NetBIOS** (UDP 137, Windows-PCs, Samba-NAS) nach ihrem Namen gefragt. Beides braucht keine Sonderrechte; pro Gerät eine Anfrage direkt an dessen IP. Reihenfolge: DNS → DNS des Geräts → mDNS → NetBIOS → Zertifikat → Seitentitel. Die Namensquelle steht im Detail-Panel.

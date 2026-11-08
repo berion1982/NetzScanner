@@ -21,6 +21,7 @@ import (
 //     "mdns" / "netbios" Name per mDNS (UDP 5353) bzw. NetBIOS (UDP 137), siehe udpnames.go
 //  3. "zertifikat" Name im TLS-Zertifikat (Port 443 u.a.)
 //  4. "http-titel" Titel der Weboberflaeche (nur Vorschlag, unsicher)
+//  5. "hersteller" letzter Ausweg (I-009): Herstellername aus der MAC als Vorschlag
 
 // httpsPorts liefern Weboberflaechen per TLS.
 var httpsPorts = map[int]bool{443: true, 5001: true, 8443: true}
@@ -33,12 +34,35 @@ var dnsResolver = &net.Resolver{PreferGo: true}
 // trimDot entfernt den Punkt am Ende eines DNS-Namens ("fritz.box." -> "fritz.box").
 func trimDot(s string) string { return strings.TrimSuffix(s, ".") }
 
+// looksLikeIdentifier erkennt Namen, die nur eine MAC-/EUI-64-Kennung sind
+// (I-009), z.B. "001788FFFE476CE2" (Hue Bridge) oder "00:17:88:47:6c:e2".
+// Gemeint ist das erste Namensteil (vor dem ersten Punkt): nach Entfernen von
+// ":" und "-" genau 12 (MAC-48) oder 16 (EUI-64) Hex-Zeichen. Solche Namen
+// sagen nichts ueber das Geraet und zaehlen daher NICHT als "bekannt".
+func looksLikeIdentifier(name string) bool {
+	label := name
+	if i := strings.IndexByte(label, '.'); i >= 0 {
+		label = label[:i]
+	}
+	label = strings.NewReplacer(":", "", "-", "").Replace(label)
+	if len(label) != 12 && len(label) != 16 {
+		return false
+	}
+	for _, c := range label {
+		isHex := (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+		if !isHex {
+			return false
+		}
+	}
+	return true
+}
+
 // cleanHostName macht aus einem Antwortnamen einen Anzeigenamen. Namen mit
 // fuehrendem "_" (z.B. "_gateway") sind lokale Pseudonamen -> "" (verwerfen).
-// IP-Adressen sind keine Namen -> ebenfalls "".
+// IP-Adressen und MAC-artige Kennungen (I-009) sind keine Namen -> ebenfalls "".
 func cleanHostName(raw string) string {
 	name := sanitize(trimDot(raw))
-	if name == "" || name[0] == '_' || net.ParseIP(name) != nil {
+	if name == "" || name[0] == '_' || net.ParseIP(name) != nil || looksLikeIdentifier(name) {
 		return ""
 	}
 	return name
@@ -91,6 +115,10 @@ func findName(ctx context.Context, h *model.Host) (name, source string) {
 				return n, "http-titel"
 			}
 		}
+	}
+	// Letzter Ausweg (I-009): Hersteller aus der MAC als Vorschlag, klar als solcher markiert.
+	if h.Vendor != "" {
+		return h.Vendor + " (Vorschlag)", "hersteller"
 	}
 	return "", ""
 }
