@@ -95,6 +95,8 @@ func Run(ctx context.Context, opt Options, progress Progress) ([]model.Host, err
 		hosts = append(hosts, newHost(ip.String(), mac, ps))
 		emit(opt.OnHost, hosts[len(hosts)-1]) // Teilergebnis 2: jetzt mit MAC und Hersteller
 	}
+	// Topologie (I-010): Router und Uplink aus dem Standard-Gateway ableiten.
+	ApplyGateway(hosts, DefaultGateway())
 	// Teilergebnis 3: Namen werden parallel ermittelt; jedes Geraet wird gemeldet, sobald es fertig ist.
 	resolveNames(ctx, hosts, func(h model.Host) { emit(opt.OnHost, FinishHost(h)) })
 	for i := range hosts {

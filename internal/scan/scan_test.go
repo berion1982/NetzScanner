@@ -349,3 +349,42 @@ func TestRunPartialResults(t *testing.T) {
 		t.Error("Endergebnis darf nicht Pending sein")
 	}
 }
+
+// Gateway-Erkennung (I-010): Beispieltexte der drei Betriebssysteme.
+func TestGatewayParsers(t *testing.T) {
+	linux := "Iface\tDestination\tGateway\tFlags\tRefCnt\tUse\tMetric\tMask\nwlan0\t00000000\t0101A8C0\t0003\t0\t0\t600\t00000000\nwlan0\t0001A8C0\t00000000\t0001\t0\t0\t600\t00FFFFFF\n"
+	if g := parseLinuxRoute(linux); g != "192.168.1.1" {
+		t.Errorf("Linux: %q", g)
+	}
+	win := "Active Routes:\nNetwork Destination        Netmask          Gateway       Interface  Metric\n          0.0.0.0          0.0.0.0      192.168.178.1  192.168.178.20     25\n"
+	if g := parseWindowsRoute(win); g != "192.168.178.1" {
+		t.Errorf("Windows: %q", g)
+	}
+	mac := "   route to: default\ndestination: default\n       mask: default\n    gateway: 10.0.0.1\n  interface: en0\n"
+	if g := parseDarwinRoute(mac); g != "10.0.0.1" {
+		t.Errorf("macOS: %q", g)
+	}
+	if g := parseLinuxRoute("Iface\tDestination\n"); g != "" {
+		t.Errorf("leer: %q", g)
+	}
+}
+
+func TestApplyGateway(t *testing.T) {
+	hs := []model.Host{{IP: "192.168.1.1", MAC: "AA"}, {IP: "192.168.1.5", MAC: "BB"}, {IP: "10.0.0.9"}}
+	ApplyGateway(hs, "192.168.1.1")
+	if hs[0].Role != "router" || hs[0].Uplink != "" {
+		t.Errorf("Router falsch: %+v", hs[0])
+	}
+	if hs[1].Uplink != "192.168.1.1" {
+		t.Errorf("Uplink fehlt: %+v", hs[1])
+	}
+	if hs[2].Uplink != "" {
+		t.Errorf("Geraet ohne MAC darf keinen Uplink haben: %+v", hs[2])
+	}
+	// Gateway nicht gefunden -> nichts aendern.
+	hs2 := []model.Host{{IP: "192.168.1.5", MAC: "BB"}}
+	ApplyGateway(hs2, "192.168.1.1")
+	if hs2[0].Uplink != "" {
+		t.Errorf("ohne Router kein Uplink: %+v", hs2[0])
+	}
+}

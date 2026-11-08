@@ -35,7 +35,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 ## Topologie
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
-| I-010 | LLDP/CDP und SNMP (ARP-/MAC-/Interface-Tabellen) für echte Uplinks | hoch | L | geplant (0.4.0) |
+| I-010 | LLDP/CDP und SNMP (ARP-/MAC-/Interface-Tabellen) für echte Uplinks | hoch | L | teilweise (0.5.7: Stern unter Standard-Gateway; offen: LLDP/CDP, SNMP) |
 | I-011 | Traceroute für Segmente hinter Routern | niedrig | M | offen |
 
 ## Zugangsdaten und Login-Test
