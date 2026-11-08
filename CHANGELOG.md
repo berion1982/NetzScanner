@@ -295,3 +295,6 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Export der Liste** (`internal/export/reservations.go`): CSV (Excel Deutsch mit Semikolon und BOM oder Standard mit Komma) und lesbares Markdown. Die ersten vier CSV-Spalten (Netz, IP, MAC, Name) sind stabil gehalten, damit die Datei später wieder eingelesen werden kann; Zellen sind gegen Formel-Einschleusung geschützt.
 ### Hinweis
 - Das **Wiedereinlesen** (Import in den Scanner bzw. Schreiben zurück zum DHCP-Server) ist **noch nicht gebaut**, siehe I-058 in IDEAS.md. Die Liste stammt wie die DHCP-Abfrage aus 0.19.0 und ist nicht an einem echten Windows Server geprüft.
+
+### Nachtrag zu 0.20.0
+- Entscheidung von Sascha: Das Wiedereinlesen/Zurückschreiben von Reservierungen (I-058) wird **nicht** gebaut; der NetzScanner ist nur zum Sammeln und Exportieren da, der Import ist Sache des Windows Servers.

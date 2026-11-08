@@ -31,6 +31,7 @@ Zuerst `HANDOVER.md` lesen – dort steht der aktuelle Stand und der nächste Sc
 - Raw-Sockets/ICMP brauchen Rechte → immer Fallback (TCP-Connect) einbauen und dokumentieren.
 - Zugangsdaten (Router, Domain-Admin) nie loggen, nie in Exporte schreiben, nie einchecken.
 - **Keine festen Werte für einzelne Geräte/Hersteller in Tabellen** (kein „Gerät X = Marke Y“): Der Scanner soll Geräte aus Quellen erkennen (Router-Liste, mDNS, SSDP, Zertifikate …), nicht aus handgepflegten Einzelfällen. Allgemeine Regeln (z. B. IEEE-Liste, Enterprise-Nummern) sind ok.
+- **Nur lesen, sammeln, exportieren:** Der Scanner schreibt nichts in Router, Server oder DHCP zurück (kein Import/Anlegen von Reservierungen o. Ä.); das erledigen deren eigene Werkzeuge.
 - Unsicheres klar benennen („Ich weiß es nicht“), nichts erfinden.
 
 ## Befehle
