@@ -6,6 +6,16 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
+## [0.4.0] – 2026-11-08
+### Hinzugefügt
+- **Export der ausgewählten Geräte** (I-030, I-031): CSV (Excel Deutsch mit Semikolon + BOM, oder Standard mit Komma) mit den Spalten Benutzername, IP, MAC, Gerätename, Offene Ports – **ohne Passwörter**; lesbare Tabelle als HTML (hell/dunkel, mit Web-Links) und Markdown. Dateiname `netzscanner-JJJJMMTT-HHMM.<endung>`.
+- Optionales Feld **Benutzername** je Gerät im Detail-Panel (nur Name, kein Passwort; nur im RAM) – API `POST /api/hosts/user`, `POST /api/export`.
+### Sicherheit
+- Schutz vor CSV-Injection: Werte, die mit `= + - @` (oder Tab/Zeilenumbruch) beginnen, bekommen ein `'` vorangestellt.
+- Namen werden in Markdown und HTML maskiert; die Exportdatei wird mit `nosniff` ausgeliefert.
+### Geändert
+- Roadmap: Topologie jetzt 0.5.0, Logins 0.6.0.
+
 ## [0.3.3] – 2026-11-08
 ### Hinzugefügt
 - Diagnose-Kommando `netzscanner --diagnose <IP>`: prüft ein Gerät Schritt für Schritt (DNS-Konfiguration, offene Ports, ARP/MAC, Reverse-DNS über drei Wege, TLS-Zertifikat, Web-Startseite, Ergebnis der Namenssuche) und zeigt jede Fehlermeldung. Zum Kopieren für die Fehlersuche; enthält keine Zugangsdaten.
