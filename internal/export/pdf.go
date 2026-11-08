@@ -73,6 +73,7 @@ type pdfFrame struct {
 // "Sammelschiene" links neben den Gruppen der Ebene, damit keine Linie eine andere Gruppe kreuzt.
 type pdfLink struct {
 	from         string  // IP des Uplinks
+	srcLvl       int     // Ebene des Uplinks (fuer den linken Rand, an dem die Linie herausgefuehrt wird)
 	trunkX, busY float64 // senkrechte Schiene / waagerechte Hoehe unter dem Uplink
 	toX, toY     float64 // Ziel: linke Kante der Einheit
 }
@@ -82,7 +83,10 @@ type pdfLayout struct {
 	nodes  map[string]*pdfNode
 	frames []pdfFrame
 	links  []pdfLink
-	height float64
+	// levelMinX: linker Rand je Ebene. Steht ein Uplink INNERHALB einer Gruppe (z. B. Repeater unter "Clients"),
+	// wird seine Linie erst nach links aus der Gruppe herausgefuehrt, damit sie keine fremden Geraete kreuzt.
+	levelMinX map[int]float64
+	height    float64
 }
 
 // pdfUnit ist eine Gruppe (>= 2 Geraete) oder ein Einzelgeraet beim Layouten.
@@ -112,7 +116,7 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 		}
 	}
 	usableW := pdfPageW - 2*pdfMargin
-	lay := pdfLayout{nodes: make(map[string]*pdfNode, len(hosts))}
+	lay := pdfLayout{nodes: make(map[string]*pdfNode, len(hosts)), levelMinX: map[int]float64{}}
 	y := 0.0
 	for d := 0; d <= maxD; d++ {
 		list := levels[d]
@@ -200,12 +204,13 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 					minX = x
 				}
 				if _, ok := byIP[first.Uplink]; ok && first.Uplink != "" && first.Uplink != first.IP {
-					lay.links = append(lay.links, pdfLink{from: first.Uplink, toX: x, toY: toY})
+					lay.links = append(lay.links, pdfLink{from: first.Uplink, srcLvl: pdfDepth(byIP[first.Uplink], byIP), toX: x, toY: toY})
 				}
 				x += u.w + pdfUnitGap
 			}
 			y += rowH + pdfRowGap
 		}
+		lay.levelMinX[d] = minX
 		// Sammelschiene dieser Ebene: links neben den Einheiten, waagerechter Abschnitt knapp ueber der Ebene.
 		for i := firstLink; i < len(lay.links); i++ {
 			lay.links[i].trunkX = minX - pdfGapX
@@ -387,8 +392,14 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 			continue
 		}
 		ux, uy := px(up)+bw/2, py(up)+bh
-		pdf.Line(ux, uy, ux, sy(l.busY))                            // vom Uplink nach unten
-		pdf.Line(ux, sy(l.busY), sx(l.trunkX), sy(l.busY))          // waagerecht zur Sammelschiene
+		// Vom Uplink kurz nach unten (Luecke unter dem Geraet), waagerecht nach links aus der Gruppe heraus,
+		// dort senkrecht bis zur Hoehe der Sammelschiene, dann weiter wie gehabt.
+		gy := uy + pdfGapX*scale/2
+		gx := sx(lay.levelMinX[l.srcLvl] - 2*pdfGapX)
+		pdf.Line(ux, uy, ux, gy)
+		pdf.Line(ux, gy, gx, gy)
+		pdf.Line(gx, gy, gx, sy(l.busY))
+		pdf.Line(gx, sy(l.busY), sx(l.trunkX), sy(l.busY))          // waagerecht zur Sammelschiene
 		pdf.Line(sx(l.trunkX), sy(l.busY), sx(l.trunkX), sy(l.toY)) // senkrecht zur Einheit
 		pdf.Line(sx(l.trunkX), sy(l.toY), sx(l.toX), sy(l.toY))     // kurz hinein
 	}
@@ -441,7 +452,27 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 	pdf.SetFont("Helvetica", "I", 7)
 	pdf.SetTextColor(110, 110, 110)
 	pdf.SetXY(pdfMargin, pdfPageH-14)
-	pdf.CellFormat(0, 4, t("Hinweis: Ohne SNMP/LLDP ist dies eine Sternansicht (Router oben, Geraete im selben Subnetz darunter), keine echte Verkabelung."), "", 0, "L", false, 0, "")
+	pdf.CellFormat(0, 4, t(topologyNote(hosts)), "", 0, "L", false, 0, "")
+}
+
+// topologyNote liefert den Hinweis unter der Karte passend zur Datenquelle der Verbindungen:
+// Mesh-Liste der FRITZ!Box (Host.MeshLink) und/oder SNMP (Host.UplinkPort). Ohne beides: Sternansicht.
+// Ausschliesslich ASCII, weil die PDF-Schrift nur Windows-1252 kann.
+func topologyNote(hosts []model.Host) string {
+	mesh, snmp := false, false
+	for _, h := range hosts {
+		mesh = mesh || h.MeshLink != ""
+		snmp = snmp || h.UplinkPort != ""
+	}
+	switch {
+	case mesh && snmp:
+		return "Hinweis: Verbindungen laut Mesh-Liste der FRITZ!Box und SNMP (Switch-Ports); alle uebrigen Geraete haengen vereinfacht am Router."
+	case mesh:
+		return "Hinweis: Verbindungen laut Mesh-Liste der FRITZ!Box (Box/Repeater); Geraete ohne Mesh-Eintrag haengen vereinfacht am Router (Sternansicht)."
+	case snmp:
+		return "Hinweis: Verbindungen laut SNMP (MAC-Tabellen der Switches, Vermutung); Geraete ohne Zuordnung haengen vereinfacht am Router."
+	}
+	return "Hinweis: Ohne SNMP/LLDP ist dies eine Sternansicht (Router oben, Geraete im selben Subnetz darunter), keine echte Verkabelung."
 }
 
 // categoryFill liefert die helle Kastenfarbe (RGB) einer Kategorie; druckfreundlich.

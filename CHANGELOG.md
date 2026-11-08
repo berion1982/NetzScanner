@@ -352,3 +352,13 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Behoben
 - **Mesh-Zuordnung:** Ein Gerät mit alter/fremder IP im Mesh-Dokument (Nachbareintrag) konnte einem Repeater den Knoten wegnehmen – bei Sascha hingen dadurch drei Shelly-Stecker unter einem iPhone. Zuordnung jetzt in Stufen: MAC, dann eigene IP des Knotens (Merkmal `MANAGEMENT`), dann beliebige IP; jeder Knoten wird nur einmal vergeben. (Ursache aus den Screenshots abgeleitet, am echten Mesh-Dokument ungeprüft.)
 - **Karte:** Linien von einem Uplink, der innerhalb einer Gruppe steht (Repeater unter „Clients“), laufen nicht mehr senkrecht durch andere Geräte/Gruppen, sondern gehen zuerst nach links aus der Gruppe heraus. Der Rand der Zeichnung wurde dafür um 30 Pixel erweitert. Das PDF nutzt noch die alte Führung.
+
+## [0.23.5] – 2026-11-08
+### Behoben
+- **Topologie-PDF:** Linien von einem Uplink innerhalb einer Gruppe (Repeater unter „Clients“) laufen nicht mehr senkrecht durch fremde Geräte und Gruppen, sondern gehen zuerst nach links aus der Gruppe heraus – wie in der Web-Karte seit 0.23.4 (`levelMinX` in `internal/export/pdf.go`). Anlass: Saschas PDF, in dem die Linie vom Repeater durch die IoT-Gruppe lief.
+### Hinweis
+- Der Hinweis unter der PDF-Karte („Sternansicht … keine echte Verkabelung“) gilt bei Mesh-/SNMP-Daten nicht mehr uneingeschränkt; Text noch unverändert (offen).
+
+## [0.23.6] – 2026-11-08
+### Geändert
+- **Topologie-PDF, Hinweis unter der Karte:** Der Text richtet sich nach der Datenquelle der Verbindungen (`topologyNote` in `internal/export/pdf.go`): Mesh-Liste der FRITZ!Box, SNMP, beides oder – ohne beides – wie bisher „Sternansicht“. Vorher stand auch bei Mesh-/SNMP-Daten „keine echte Verkabelung“.
