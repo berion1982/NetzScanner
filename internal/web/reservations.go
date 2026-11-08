@@ -42,7 +42,7 @@ func (s *server) reservations() []export.Reservation {
 		have[scan.NormMAC(r.MAC)] = true
 	}
 	for _, r := range routerRows {
-		if !have[scan.NormMAC(r.MAC)] {
+		if m := scan.NormMAC(r.MAC); m == "" || !have[m] {
 			r.ScanName = nameOf[scan.NormMAC(r.MAC)]
 			out = append(out, r)
 		}
@@ -102,23 +102,15 @@ func (s *server) handleReservationsExport(w http.ResponseWriter, r *http.Request
 }
 
 // routerReservationsLocked liefert die Router-Geraete mit Adressvergabe "Static" (s.mu muss gehalten werden).
-// Die FRITZ!Box bietet per TR-064 keine eigene Reservierungsliste; "Static" ist eine Vermutung und
-// wurde noch nicht mit den Einstellungen der Box abgeglichen.
+// Es zaehlt die komplette Router-Liste: auch Geraete ohne IP (offline) oder ohne MAC bleiben drin,
+// damit nichts verschwindet. Die FRITZ!Box bietet per TR-064 keine eigene Reservierungsliste;
+// "Static" ist eine Vermutung und wurde noch nicht mit den Einstellungen der Box abgeglichen.
 func (s *server) routerReservationsLocked() []export.Reservation {
 	var out []export.Reservation
-	for m, e := range s.routerInfo {
-		if strings.EqualFold(e.Source, "static") && e.IP != "" {
-			out = append(out, export.Reservation{Scope: "FRITZ!Box (Static)", IP: e.IP, MAC: macColon(m), Name: e.Name})
+	for _, e := range s.routerHosts {
+		if strings.EqualFold(e.Source, "static") {
+			out = append(out, export.Reservation{Scope: "FRITZ!Box (Static)", IP: e.IP, MAC: e.MAC, Name: e.Name})
 		}
 	}
 	return out
-}
-
-// macColon macht aus "aabbcc001122" wieder "AA:BB:CC:00:11:22" (lesbare Anzeige).
-func macColon(m string) string {
-	if len(m) != 12 {
-		return m
-	}
-	up := strings.ToUpper(m)
-	return up[0:2] + ":" + up[2:4] + ":" + up[4:6] + ":" + up[6:8] + ":" + up[8:10] + ":" + up[10:12]
 }

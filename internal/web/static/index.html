@@ -409,7 +409,7 @@ document.getElementById("rtgo").addEventListener("click", () => {
   post("/api/router/fritzbox", body).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
     if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
     const only = (b.onlyRouter || []).map(x => "  • " + (x.name || "(ohne Name)") + (x.ip ? " – " + x.ip : "") + (x.active ? "" : " (offline)")).join("\n");
-    msg.textContent = b.entries + " Geräte beim Router, " + b.matched + " davon im Scan zugeordnet." + (b.sources && Object.keys(b.sources).length ? "\nAdressvergabe laut Router: " + Object.entries(b.sources).map(([k, v]) => k + " " + v).join(", ") : "") + (only ? "\nNur beim Router bekannt (nicht gescannt):\n" + only : "");
+    msg.textContent = b.entries + " Geräte beim Router, " + b.matched + " davon im Scan zugeordnet." + (b.sources && Object.keys(b.sources).length ? "\nAdressvergabe laut Router: " + Object.entries(b.sources).map(([k, v]) => k + " " + v).join(", ") + (b.staticNoIP || b.staticNoMAC ? " (Static ohne IP: " + (b.staticNoIP || 0) + ", ohne MAC: " + (b.staticNoMAC || 0) + ")" : "") : "") + (only ? "\nNur beim Router bekannt (nicht gescannt):\n" + only : "");
     renderRouterInfo(b.info);
     loadHosts();
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Abfrage fehlgeschlagen."; });
