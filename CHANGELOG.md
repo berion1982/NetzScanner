@@ -257,3 +257,13 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Zugangsdaten nur im Arbeitsspeicher: nie gespeichert, nie protokolliert, nie in Fehlertexten, Antworten oder Exporten; das Passwortfeld wird sofort geleert. Ein Klick = **ein** Anmeldeversuch (bei Ablehnung sofortiger Abbruch, kein Wiederholen → keine Sperre). Der Endpunkt akzeptiert nur Anfragen von diesem Rechner (Loopback) und nur Router-Adressen aus der Geräteliste; keine Weiterleitungen, Antworten begrenzt.
 ### Grenzen
 - Nur mit einem Test-Server geprüft, **nicht an einer echten FRITZ!Box**. Voraussetzung: „Zugriff für Anwendungen“ (TR-064) aktiv, Benutzer mit Recht „FRITZ!Box Einstellungen“. Die Antworten (Geräte-Namen) laufen bei HTTP unverschlüsselt im LAN. Nicht unterstützt: andere Router, Windows-DHCP, feste IP-Reservierungen, Mesh-Zuordnung.
+
+## [0.16.0] – 2026-11-08
+### Hinzugefügt
+- **Router-Info und WLAN der FRITZ!Box** (I-055): Der Router-Login liest jetzt zusätzlich (nur lesend, TR-064) **Router-Info** (Modell, Firmware, Laufzeit, Internet-Status/-Zugang, Leitungsrate, DHCP-Bereich, Gateway/DNS) und die **WLAN-Netze** (Name/SSID, aktiv, Band und Kanal, Standard, Verschlüsselungsart; ein **offenes WLAN wird farbig markiert**) samt **WLAN-Clients mit Signalstärke und Geschwindigkeit**. Die Angaben erscheinen als Karte „Router und WLAN“ unter dem Login; im Detail-Panel eines Geräts steht „WLAN (Router)“ mit SSID, Signal und Tempo.
+- **Eigene Datei:** „Als Markdown speichern“ (Router, WLAN-Netze, WLAN-Clients) und „WLANs als CSV speichern“ (Excel-freundlich, Formel-Schutz). **Nicht enthalten:** externe IP, Zugangsdaten; der WLAN-Schlüssel wird nie gelesen.
+- Neue Endpunkte `GET /api/router/info`, `POST /api/router/export`. Fehlende Dienste/Felder (je Modell und FRITZ!OS verschieden) werden übersprungen und unter „Nicht gelesen“ genannt.
+### Behoben
+- **Wichtig:** Die Knöpfe „Topologie als PDF“, „SNMP lesen“ und „Router lesen“ wurden bei jedem Auswählen/Neuzeichnen der Tabelle **erneut registriert** (der Code stand versehentlich in `updateSelection`). Ein Klick konnte dadurch **mehrere gleiche Anfragen** auslösen – beim Router-Login also mehrere Anmeldeversuche. Die Handler werden jetzt einmalig registriert.
+### Sicherheit / Grenzen
+- Es werden nur `Get*`-Aktionen benutzt (ein Test stellt sicher, dass weder Schlüssel gelesen noch etwas gesetzt wird). Nur gegen einen Test-Server geprüft, **nicht an einer echten FRITZ!Box**; Feldnamen stammen aus dem TR-064-Standard bzw. dem Gedächtnis und können je Modell abweichen. Mesh-Topologie und IP-Reservierungen (I-055 c/d) sind noch offen.

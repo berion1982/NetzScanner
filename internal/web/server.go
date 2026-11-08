@@ -20,6 +20,7 @@ import (
 
 	"github.com/berion1982/netzscanner/internal/export"
 	"github.com/berion1982/netzscanner/internal/model"
+	"github.com/berion1982/netzscanner/internal/router"
 	"github.com/berion1982/netzscanner/internal/scan"
 	"github.com/berion1982/netzscanner/internal/version"
 )
@@ -53,6 +54,7 @@ type server struct {
 	users      map[string]string          // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
 	locs       map[string]string          // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
 	cats       map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
+	routerData *router.Info               // Router-Info und WLANs der letzten Abfrage (nur im RAM, I-055)
 	routerInfo map[string]routerEntry     // Router-Geraeteliste: normalisierte MAC -> Eintrag (nur im RAM, I-024)
 	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
 	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
@@ -83,6 +85,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/category", s.handleCategory)
 	mux.HandleFunc("POST /api/router/fritzbox", s.handleFritzbox)
 	mux.HandleFunc("POST /api/router/clear", s.handleRouterClear)
+	mux.HandleFunc("GET /api/router/info", s.handleRouterInfo)
+	mux.HandleFunc("POST /api/router/export", s.handleRouterExport)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
 	mux.HandleFunc("POST /api/topology/snmp/clear", s.handleSNMPClear)
 	mux.HandleFunc("GET /api/categories", s.handleCategories)
@@ -155,6 +159,7 @@ func (s *server) viewLocked() []model.Host {
 		// Router-Geraeteliste (I-024): Name/Verbindungsart ergaenzen; ein unbekannter Name wird ersetzt.
 		if e, ok := s.routerInfo[scan.NormMAC(hosts[i].MAC)]; ok && scan.NormMAC(hosts[i].MAC) != "" {
 			hosts[i].RouterName, hosts[i].Connection = e.Name, e.Iface
+			hosts[i].WifiSSID, hosts[i].WifiSignal, hosts[i].WifiSpeed = e.SSID, e.Signal, e.Speed
 			if _, named := s.names[hosts[i].IP]; !named && e.Name != "" && (!hosts[i].Known || hosts[i].NameSource == "hersteller") {
 				hosts[i].Name, hosts[i].Known, hosts[i].NameSource = e.Name, true, "router"
 			}

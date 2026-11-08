@@ -41,7 +41,8 @@ tr.chk{background:#1a2638}
 .tbl{flex:3 1 520px;overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-td.webcol{white-space:nowrap}td.cut{max-width:150px;overflow:hidden;text-overflow:ellipsis}td.ports{white-space:normal;max-width:170px}
+td.webcol{white-space:nowrap}#rtinfo dl{display:grid;grid-template-columns:max-content 1fr;gap:2px 16px;margin:0 0 10px}#rtinfo dd{margin:0}#rtinfo dt{color:var(--mut)}
+td.cut{max-width:150px;overflow:hidden;text-overflow:ellipsis}td.ports{white-space:normal;max-width:170px}
 a.web.mini{padding:1px 6px;margin:0 3px 0 0}.noweb{color:var(--mut)}
 th{color:var(--mut);font-weight:500}tr.r{cursor:pointer}tr.r:hover,tr.sel{background:#1c2330}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%}
@@ -82,7 +83,8 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <details class="card" style="margin-bottom:12px"><summary style="cursor:pointer">Router-Login: Geräteliste der FRITZ!Box lesen (optional)</summary>
   <p style="color:var(--mut);margin:6px 0">Die FRITZ!Box kennt alle Geräte im Heimnetz mit Namen und Verbindungsart (WLAN/Kabel). Damit bekommen unbekannte Geräte einen Namen. Voraussetzung an der Box: „Zugriff für Anwendungen“ (TR-064) aktiv und ein Benutzer mit dem Recht „FRITZ!Box Einstellungen“. Der Router muss mitgescannt worden sein. <b>Zugangsdaten bleiben nur im Arbeitsspeicher</b>, werden nie gespeichert oder exportiert; ein Klick = ein Anmeldeversuch. Nur von diesem Rechner aus möglich.</p>
   <div class="rename"><input id="rthost" placeholder="Router-IP (leer = erkannter Router)" aria-label="Router-Adresse" autocomplete="off"><input id="rtuser" placeholder="Benutzer" aria-label="Router-Benutzer" autocomplete="off"><input id="rtpass" type="password" placeholder="Passwort" aria-label="Router-Passwort" autocomplete="off"><button id="rtgo" class="ok" type="button">Lesen</button><button id="rtclr" type="button">Zurücksetzen</button></div>
-  <div class="msg" id="rtmsg" style="white-space:pre-wrap"></div></details>
+  <div class="msg" id="rtmsg" style="white-space:pre-wrap"></div>
+  <div id="rtinfo"></div></details>
  <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button><span style="flex:1"></span>
   <select id="fmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="html">Lesbare Tabelle (HTML)</option><option value="md">Lesbare Tabelle (Markdown)</option><option value="bookmarks">Lesezeichen (Firefox/Chrome, Leiste)</option><option value="bookmarks-folder">Lesezeichen (Ordner „NetzScanner“)</option></select>
   <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th title="Geräte mit Weboberfläche haben hier Knöpfe (Port); Klick öffnet sie in neuem Tab">Web</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th title="Vermutung aus Hersteller, System und Ports – im Detail-Panel änderbar">Kategorie</th><th>Standort</th><th>Offene Ports</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
@@ -135,7 +137,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <h2>Hersteller (MAC-Präfix)</h2><p>Die Spalte „Hersteller (Chip)“ in Tabelle, Details und lesbarem Export nennt den Hersteller des <b>Netzwerkchips</b> – bei einem Fernseher kann hier z. B. der WLAN-Chip-Hersteller stehen, nicht Samsung oder LG. Der Hersteller wird aus den ersten drei Byte der MAC-Adresse (OUI) bestimmt. Die eingebaute Liste ist derzeit nur klein; Geräte mit unbekanntem Präfix haben deshalb keinen Hersteller. MACs gibt es nur im eigenen Subnetz (ARP-Tabelle); manche Geräte nutzen zufällige (private) MACs, dann passt der Hersteller nicht.</p>
  <h2>Ports und Risiken</h2><p>Geprüft wird eine Standardliste häufiger Dienste (oder deine eigene Portliste). Der Dienstname ist nur eine Vermutung anhand der Portnummer, kein Beweis. Als <b>Risiko-Ports</b> (rot) zählen derzeit <code>21</code> (FTP), <code>23</code> (Telnet), <code>445</code> (SMB) und <code>3389</code> (RDP) – unverschlüsselte oder oft angegriffene Dienste, die man sich genauer ansehen sollte. „Risiko“ heißt nicht „unsicher“, sondern „prüfen“. Bei HTTPS-Ports zeigt das Detail-Panel Zertifikat-Inhaber, Aussteller und Ablauf („ABGELAUFEN“ / „läuft bald ab“); das Zertifikat wird nur gelesen, nicht geprüft.</p>
  <h2>Rechte und Fallback</h2><p>Der Scan läuft ohne Administrator-Rechte: Geräte werden per TCP-Verbindung gefunden, die MAC kommt aus der ARP-Tabelle des Betriebssystems. Echte ICMP-Pings (Raw-Sockets) bräuchten Rechte und sind noch nicht eingebaut. Geräte ohne offene Ports und ohne ARP-Eintrag (z. B. Firewall-geschützte) bleiben unsichtbar.</p>
- <h2>Router-Login (FRITZ!Box)</h2><p>Im Bereich „Router-Login“ auf der Übersicht liest der NetzScanner die <b>Geräteliste der FRITZ!Box</b> (TR-064, Port 49000): Name, MAC, Verbindungsart (WLAN/Kabel) und ob das Gerät aktiv ist. Geräte, die der Scan nicht benennen konnte, bekommen den Namen aus der Box (Quelle „Router-Geräteliste“); im Detail-Panel stehen „Verbindung (Router)“ und „Name laut Router“. Geräte, die nur die Box kennt (z. B. gerade aus), werden nach dem Lesen aufgelistet. <b>Voraussetzungen:</b> Router mitscannen; an der Box „Zugriff für Anwendungen“ aktivieren und einen Benutzer mit dem Recht „FRITZ!Box Einstellungen“ verwenden. <b>Sicherheit:</b> Zugangsdaten bleiben nur im Arbeitsspeicher (nie gespeichert, geloggt oder exportiert), ein Klick macht genau einen Anmeldeversuch (keine Sperre durch Wiederholungen), die Eingabe geht nur von diesem Rechner aus. Die Anmeldung läuft per Digest (das Passwort wird nicht im Klartext gesendet), die Antworten sind unverschlüsselt im LAN lesbar. Andere Router und Windows-DHCP sind noch nicht unterstützt.</p>
+ <h2>Router-Login (FRITZ!Box)</h2><p>Im Bereich „Router-Login“ auf der Übersicht liest der NetzScanner die <b>Geräteliste der FRITZ!Box</b> (TR-064, Port 49000): Name, MAC, Verbindungsart (WLAN/Kabel) und ob das Gerät aktiv ist. Geräte, die der Scan nicht benennen konnte, bekommen den Namen aus der Box (Quelle „Router-Geräteliste“); im Detail-Panel stehen „Verbindung (Router)“ und „Name laut Router“. Geräte, die nur die Box kennt (z. B. gerade aus), werden nach dem Lesen aufgelistet. <b>Voraussetzungen:</b> Router mitscannen; an der Box „Zugriff für Anwendungen“ aktivieren und einen Benutzer mit dem Recht „FRITZ!Box Einstellungen“ verwenden. <b>Sicherheit:</b> Zugangsdaten bleiben nur im Arbeitsspeicher (nie gespeichert, geloggt oder exportiert), ein Klick macht genau einen Anmeldeversuch (keine Sperre durch Wiederholungen), die Eingabe geht nur von diesem Rechner aus. Die Anmeldung läuft per Digest (das Passwort wird nicht im Klartext gesendet), die Antworten sind unverschlüsselt im LAN lesbar. Zusätzlich liest er (nur lesend) <b>Router-Info</b> (Modell, Firmware, Laufzeit, Internet-Status, DHCP-Bereich) und die <b>WLAN-Netze</b> der Box (Name, Band/Kanal, Standard, Verschlüsselung; ein offenes WLAN wird farbig markiert) samt <b>WLAN-Clients mit Signalstärke</b>; im Detail-Panel eines Geräts steht dann sein WLAN. „Als Markdown/CSV speichern“ legt Router und WLANs in eine eigene Datei – ohne externe IP. Den <b>WLAN-Schlüssel liest der NetzScanner nie</b>, und es wird nichts am Router verändert. Welche Angaben kommen, hängt von Modell und FRITZ!OS ab; Fehlendes wird unter „Nicht gelesen“ genannt. Andere Router und Windows-DHCP sind noch nicht unterstützt.</p>
  <h2>Datenschutz und Zwischenspeicher</h2><p>Deine Eingaben (Anzeigename, Benutzername, Standort, Kategorie) werden nach jeder Änderung in einer kleinen Datei <b>zwischengespeichert</b> und beim nächsten Start wieder geladen – so geht nichts verloren, wenn du das Programm schließt. Standardpfad: im Konfigurationsordner deines Benutzers (<code>netzscanner/eingaben.json</code>, nur für dich lesbar); eigener Pfad mit <code>--data</code>, abschalten mit <code>--no-save</code>. Gespeichert wird <b>nichts anderes</b>: keine Scan-Ergebnisse und <b>nie Passwörter</b>. Die Datei ist <b>nicht verschlüsselt</b> (Benutzernamen und Standorte stehen im Klartext). Die Zuordnung läuft über die IP; merkt der Scan, dass hinter einer IP ein anderes Gerät (andere MAC) steckt, werden die alten Eingaben dort nicht angezeigt. Scan-Ergebnisse liegen weiterhin nur im Arbeitsspeicher. Es gehen keine Daten ins Internet; der Server hört standardmäßig nur auf diesem Rechner.</p>
  <p><span id="inpinfo" style="color:var(--mut)"></span> <button class="btn" id="inpclear" type="button">Gespeicherte Eingaben löschen</button></p>
  <h2>Lesezeichen für den Browser</h2><p>Im Export gibt es „Lesezeichen“: eine HTML-Datei mit den Web-Links der ausgewählten Geräte zum Importieren in Firefox oder Chrome/Edge (zwei Varianten: Ordner in der Lesezeichenleiste oder normaler Ordner „NetzScanner“). Enthalten sind nur URLs, keine Zugangsdaten. Ob die Leisten-Variante in beiden Browsern greift, ist noch nicht bestätigt.</p>
@@ -264,6 +266,7 @@ function buildDetails(h) {
   if (h.nameSource) add("Namensquelle", SRC[h.nameSource] || h.nameSource);
   add("IP", h.ip); add("MAC", h.mac); add("Hersteller (Chip)", h.vendor ? h.vendor + " – nicht zwingend der Gerätehersteller" : ""); add("System (Vermutung)", h.os);
   if (h.connection) add("Verbindung (Router)", h.connection);
+  if (h.wifiSSID) add("WLAN (Router)", h.wifiSSID + (h.wifiSignal ? ", Signal " + h.wifiSignal + " %" : "") + (h.wifiSpeed ? ", " + h.wifiSpeed + " Mbit/s" : ""));
   if (h.routerName && h.routerName !== h.name) add("Name laut Router", h.routerName);
   if (h.uplinkPort) add("Anschluss (SNMP)", h.uplink + ", Port " + h.uplinkPort + (h.uplinkShared > 1 ? " (" + h.uplinkShared + " Geräte an diesem Port – evtl. Switch/AP dahinter)" : ""));
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
@@ -345,10 +348,41 @@ function showDetails(h) {
 }
 
 // Auswahl: Zaehler, Alle-Checkbox, Hervorhebung in Tabelle und Topologie aktualisieren.
-function updateSelection() {
-  document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
-  // Topologie als PDF (alle Geraete, Karte + Liste): Server erzeugt die Datei, Browser speichert sie.
+// Knoepfe der Topologie/Router (einmalig registrieren - NICHT in updateSelection, sonst haeufen sich die Listener).
+// Topologie als PDF (alle Geraete, Karte + Liste): Server erzeugt die Datei, Browser speichert sie.
 // SNMP: Switches abfragen (Community nur im Anfragekoerper; das Feld wird danach geleert).
+// Router-Info und WLANs (I-055) als kleine Karte anzeigen. Texte kommen vom Router -> nur per textContent.
+const fmtDur = sec => { if (!sec) return ""; const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60); return (d ? d + " Tage " : "") + (h ? h + " Std " : "") + m + " Min"; };
+function renderRouterInfo(i) {
+  const box = document.getElementById("rtinfo");
+  if (!i) { box.replaceChildren(); return; }
+  const dl = el("dl");
+  const add = (k, v) => { if (v) dl.append(el("dt", { text: k }), el("dd", { text: v })); };
+  add("Modell", i.model); add("Firmware", i.firmware); add("Laufzeit", fmtDur(i.uptimeSec));
+  add("Internet", [i.wanStatus, i.wanAccess, i.wanUptimeSec ? "seit " + fmtDur(i.wanUptimeSec) : ""].filter(Boolean).join(" · "));
+  add("Leitung (max.)", i.downKbps || i.upKbps ? Math.round(i.downKbps / 1000) + " / " + Math.round(i.upKbps / 1000) + " Mbit/s (Down/Up)" : "");
+  add("Externe IP (nur Anzeige, nicht im Export)", i.externalIP);
+  add("DHCP", i.dhcpEnabled ? i.dhcpFrom + " – " + i.dhcpTo : "aus"); add("Gateway / DNS", [i.gateway, i.dns].filter(Boolean).join(" / "));
+  const rows = (i.wlans || []).map(w => el("tr", {}, [
+    el("td", { text: String(w.index) }), el("td", { text: w.ssid }), el("td", { text: w.enabled ? "ja" : "nein" }),
+    el("td", { text: [w.band, w.channel ? "Kanal " + w.channel : ""].filter(Boolean).join(", ") }), el("td", { text: w.standard || "" }),
+    el("td", { text: w.encryption || "", style: w.open && w.enabled ? "color:var(--warn);font-weight:600" : "", title: w.open && w.enabled ? "Offenes WLAN ohne Verschlüsselung (bei einem Gast-WLAN evtl. gewollt)" : "" }),
+    el("td", { text: String(w.clients.length) })]));
+  const tbl = el("table", {}, [el("thead", {}, [el("tr", {}, ["Nr.", "Name (SSID)", "Aktiv", "Band", "Standard", "Verschlüsselung", "Clients"].map(t => el("th", { text: t })))]), el("tbody", {}, rows)]);
+  const notes = (i.notes || []).length ? el("div", { class: "msg", text: "Nicht gelesen: " + i.notes.join("; ") }) : null;
+  const exp = (fmt, label) => { const b = el("button", { type: "button", text: label }); b.addEventListener("click", () => exportRouter(fmt)); return b; };
+  box.replaceChildren(el("h3", { text: "Router und WLAN" }), dl, tbl, ...(notes ? [notes] : []), el("div", { class: "rename" }, [exp("md", "Als Markdown speichern"), exp("csv", "WLANs als CSV speichern")]));
+}
+function exportRouter(format) {
+  post("/api/router/export", { format }).then(async r => {
+    if (!r.ok) { const b = await r.json(); document.getElementById("rtmsg").className = "msg err"; document.getElementById("rtmsg").textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-router." + format });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  });
+}
+fetch("/api/router/info").then(r => r.json()).then(renderRouterInfo).catch(() => {});
+
 // Router-Login (I-024): Passwort nur im Anfragekoerper; Feld wird sofort geleert.
 document.getElementById("rtgo").addEventListener("click", () => {
   const msg = document.getElementById("rtmsg"), pw = document.getElementById("rtpass");
@@ -359,11 +393,12 @@ document.getElementById("rtgo").addEventListener("click", () => {
     if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
     const only = (b.onlyRouter || []).map(x => "  • " + (x.name || "(ohne Name)") + (x.ip ? " – " + x.ip : "") + (x.active ? "" : " (offline)")).join("\n");
     msg.textContent = b.entries + " Geräte beim Router, " + b.matched + " davon im Scan zugeordnet." + (only ? "\nNur beim Router bekannt (nicht gescannt):\n" + only : "");
+    renderRouterInfo(b.info);
     loadHosts();
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Abfrage fehlgeschlagen."; });
 });
 document.getElementById("rtclr").addEventListener("click", () => {
-  post("/api/router/clear", {}).then(() => { document.getElementById("rtmsg").textContent = "Router-Angaben entfernt."; loadHosts(); });
+  post("/api/router/clear", {}).then(() => { document.getElementById("rtmsg").textContent = "Router-Angaben entfernt."; renderRouterInfo(null); loadHosts(); });
 });
 document.getElementById("snmpbtn").addEventListener("click", () => {
   const msg = document.getElementById("snmpmsg"), comm = document.getElementById("snmpcomm");
@@ -391,7 +426,9 @@ document.getElementById("pdfbtn").addEventListener("click", () => {
     msg.textContent = "PDF gespeichert.";
   }).catch(() => { msg.className = "msg err"; msg.textContent = "PDF-Export fehlgeschlagen."; });
 });
-document.getElementById("selnone").disabled = selected.size === 0;
+function updateSelection() {
+  document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
+  document.getElementById("selnone").disabled = selected.size === 0;
   document.getElementById("exp").disabled = selected.size === 0;
   const all = document.getElementById("selall");
   all.checked = hostsCache.length > 0 && selected.size === hostsCache.length;
@@ -530,7 +567,7 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
 }));
 
 // Signatur eines Geraets: aendert sie sich, muss das Detail-Panel neu aufgebaut werden.
-const sig = h => JSON.stringify([h.routerName, h.connection, h.uplink, h.uplinkPort, h.name, h.mac, h.vendor, h.location, h.category, h.known, h.pending, h.ports.map(p => p.number)]);
+const sig = h => JSON.stringify([h.wifiSSID, h.wifiSignal, h.routerName, h.connection, h.uplink, h.uplinkPort, h.name, h.mac, h.vendor, h.location, h.category, h.known, h.pending, h.ports.map(p => p.number)]);
 function loadHosts() {
   return fetch("/api/hosts").then(r => r.json()).then(h => {
     const old = hostsCache.find(x => x.ip === currentIp);

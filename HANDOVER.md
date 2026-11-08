@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.15.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.16.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -15,7 +15,7 @@
 - **Kategorien** (I-015): Vermutung `internal/scan/category.go` (Rolle → Hersteller → Ports/System), Nutzerwahl überschreibt; Karte (Web `renderMap` in `index.html`, PDF `layoutTopology`) bildet Gruppen je (Uplink, Kategorie), Linien über Sammelschiene.
 - **Eigene Kategorien** (I-017): Schlüssel `custom:<Name>` (`model.CustomKey`, `CategoryHue` für die Farbe), Liste im Server (`customCats`), Endpunkte `/api/categories[/delete]`, gespeichert in `eingaben.json` (`customCategories`). Im LAN prüfen: Anlegen/Zuweisen/Löschen, Farbe in Karte und PDF.
 - **SNMP-Topologie** (I-010 Teil 2, 0.14.0): `internal/scan/snmp.go` (`QuerySwitch` per gosnmp, `BuildLinks` reine Logik), `internal/web/snmp.go` (`POST /api/topology/snmp[/clear]`, Ergebnis nur im RAM, Overlay in `viewLocked`). Community nie gespeichert/geloggt. **Im LAN prüfen** (Switch mit SNMP v2c nötig): stimmen Switch/Port-Zuordnungen? Offen: SNMP v3, LLDP/CDP, VLAN-Communities.
-- **Router-Login** (I-024, 0.15.0): `internal/router/fritzbox.go` (TR-064 `Hosts:1`, Digest, genau ein Anmeldeversuch), `internal/web/router.go` (`POST /api/router/fritzbox|clear`, nur Loopback, Ergebnis nur im RAM als `routerInfo` nach MAC, Overlay in `viewLocked`). Nur gegen Test-Fake geprüft → **Sascha: an der echten FritzBox testen** („Zugriff für Anwendungen“ an, Benutzer mit Recht „FRITZ!Box Einstellungen“). Offen: andere Router, Windows-DHCP, IP-Reservierungen, Mesh/Uplink aus der Box, HTTPS (49443).
+- **Router-Login** (I-024, 0.15.0): `internal/router/fritzbox.go` (TR-064 `Hosts:1`, Digest, genau ein Anmeldeversuch), `internal/web/router.go` (`POST /api/router/fritzbox|clear`, nur Loopback, Ergebnis nur im RAM als `routerInfo` nach MAC, Overlay in `viewLocked`). Nur gegen Test-Fake geprüft → **Sascha: an der echten FritzBox testen** („Zugriff für Anwendungen“ an, Benutzer mit Recht „FRITZ!Box Einstellungen“). **0.16.0 (I-055 a+b):** `internal/router/info.go` (DeviceInfo, WANIP/PPP, WANCommon, LANHostConfigMgm, WLANConfiguration 1–4; nur `Get*`, nie `GetSecurityKeys`), `internal/export/routerinfo.go` (Markdown/CSV, ohne externe IP), `GET /api/router/info`, `POST /api/router/export`; WLAN-Client-Angaben (SSID/Signal/Tempo) als Overlay am Gerät. Feldnamen aus Standard/Gedächtnis → an der echten Box prüfen. Offen: Mesh-Topologie (I-055 c), IP-Reservierungen (d), andere Router, Windows-DHCP, HTTPS (49443).
 - **Modell** `internal/model` (Host, Port, WebLink, Kategorien), **Version** `internal/version`.
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, Design-Konzepte in `docs/design/`.
 
@@ -25,7 +25,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 ## Nächster Schritt (Vorschlag)
 - **Empfehlung: I-051 (LLDP-MIB per SNMP)** – herstellerneutral, nennt die echte Verkabelung inkl. Access Points; danach I-052 (Hersteller/Modell aus `sysObjectID`), I-053 (SNMP v3), I-054 (VLAN-Communities). Saschas Geräte: **LANCOM und Netgear** (Annahme: Standard-BRIDGE-MIB reicht, ungeprüft; unverwaltete Netgear-Switches haben kein SNMP). Danach Logins (I-020/I-022) → I-024.
 - **Zuletzt erledigt (0.13.0–0.14.2):** eigene Kategorien (I-017), OS-Spalte in CSV/HTML/Markdown, Home Assistant (Port 8123/22222 → „Home Assistant (Linux-basiert)“, Kategorie Server), SNMP-Topologie (I-010 Teil 2), Tabelle kompakter (Web-Knöpfe „🌐 Port“ hinter dem Namen, Hersteller gekürzt, **System-Spalte aus der Tabelle entfernt** – bleibt in Details, PDF und Exporten).
-- **Neu in 0.6.0–0.15.0 (alles nur lokal/mit Tests geprüft, im LAN noch nicht):** CSV mit Hersteller (0.6.0, I-007), **Topologie-PDF** (0.7.0, I-012), **Betriebssystem-Vermutung** (0.8.0, I-013, teilweise: Banner/Ports), **Standort** (0.9.0, I-014), **Kategorien** (0.10.0, I-015: Vermutung in `internal/scan/category.go`, im LAN prüfen, ob sie bei deinen Geräten stimmt). Sascha bitte im LAN testen: PDF-Button, OS-Vermutung bei Linux-Servern/Windows-Servern, Standort eintragen und in CSV prüfen, Karte mit vielen Geräten (Sammelgruppen) in Web und PDF, Neustart behält Eingaben.
+- **Neu in 0.6.0–0.16.0 (alles nur lokal/mit Tests geprüft, im LAN noch nicht):** CSV mit Hersteller (0.6.0, I-007), **Topologie-PDF** (0.7.0, I-012), **Betriebssystem-Vermutung** (0.8.0, I-013, teilweise: Banner/Ports), **Standort** (0.9.0, I-014), **Kategorien** (0.10.0, I-015: Vermutung in `internal/scan/category.go`, im LAN prüfen, ob sie bei deinen Geräten stimmt). Sascha bitte im LAN testen: PDF-Button, OS-Vermutung bei Linux-Servern/Windows-Servern, Standort eintragen und in CSV prüfen, Karte mit vielen Geräten (Sammelgruppen) in Web und PDF, Neustart behält Eingaben.
 - **I-013 Rest (offen):** Windows-Version per SMB/NTLM, SNMP sysDescr (Community nötig), TTL-Fingerprint (ICMP-Rechte), SSDP-SERVER-Header. (OS-Spalte in Tabelle/CSV/HTML/Markdown seit 0.13.1 erledigt.)
 - **I-014 Folgeidee erledigt (0.11.0, I-016):** Eingaben liegen in `eingaben.json` (`internal/web/store.go`); im LAN prüfen: Neustart behält Namen/Standorte? Offen: Verschlüsselung der Datei, Export/Import.
 - **I-003 erledigt (0.5.9):** volle IEEE-Liste (~40.000 Einträge) ist eingebettet. Im LAN prüfen: erscheinen Hersteller bei den Geräten (z. B. AVM bei `0C:72:74`)? Zufällige MACs bleiben ohne Hersteller.
@@ -45,7 +45,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).
 - Weitere Geräte im LAN prüfen: fehlen welche, sind MACs/Namen falsch? (I-005)
-- **Neue Funktionen im LAN prüfen (0.6.0–0.15.0):** Funktioniert „Topologie als PDF“ (Karte lesbar, Liste vollständig)? Stimmt die OS-Vermutung bei deinen Servern? Passt die neue CSV-Spaltenreihenfolge (Hersteller nach MAC, Standort nach Gerätename) zum Zielprogramm?
+- **Neue Funktionen im LAN prüfen (0.6.0–0.16.0):** Funktioniert „Topologie als PDF“ (Karte lesbar, Liste vollständig)? Stimmt die OS-Vermutung bei deinen Servern? Passt die neue CSV-Spaltenreihenfolge (Hersteller nach MAC, Standort nach Gerätename) zum Zielprogramm?
 - Mag das Zielprogramm die zusätzliche letzte CSV-Spalte „Betriebssystem (Vermutung)“? Passt die Home-Assistant-Erkennung (läuft er auf Port 8123)? Soll die Eingaben-Datei verschlüsselt werden oder ein Export/Import der Eingaben kommen?
 - WLAN-Idee I-050: nur eigene Umgebung oder alle sichtbaren WLANs?
 
@@ -75,6 +75,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.14.1 ✅ | Tabelle kompakter, Web-Spalte vorn |
 | 0.14.2 ✅ | System-Spalte aus der Tabelle (bleibt in Details/Exporten) |
 | 0.15.0 ✅ | Router-Login FRITZ!Box per TR-064 (I-024, Teil) |
+| 0.16.0 ✅ | Router-Info + WLAN der FRITZ!Box (I-055 a+b), Listener-Fix |
 | nächste (Plan) | I-051 LLDP-MIB per SNMP, I-052 `sysObjectID`-Erkennung, I-053 SNMP v3, I-054 VLAN-Communities |
 | später (Plan) | Rest von I-008 (SNMP sysName), ICMP mit Rechten, Rest von I-013 (SMB/TTL), Traceroute |
 | 0.15.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |
