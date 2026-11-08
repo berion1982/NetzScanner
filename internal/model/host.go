@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net"
 	"sort"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // Port ist ein offener TCP-Port eines Geraets.
@@ -42,7 +45,46 @@ const (
 // Categories listet alle Kategorien in der Reihenfolge der Anzeige (Karte, Legende, Liste).
 var Categories = []string{CatNetwork, CatServer, CatClient, CatIoT}
 
+// CustomPrefix kennzeichnet eigene Kategorien (I-017): Der Schluessel ist "custom:" + frei gewaehlter Name.
+// So braucht jede Stelle (Karte, Exporte, PDF) keine Nachschlagetabelle: der Name steckt im Schluessel.
+const CustomPrefix = "custom:"
+
+// MaxCustomLabelRunes begrenzt die Laenge des Namens einer eigenen Kategorie.
+const MaxCustomLabelRunes = 30
+
+// MaxCustomCategories begrenzt die Anzahl eigener Kategorien (Schutz vor Missbrauch / ueberlangen Legenden).
+const MaxCustomCategories = 20
+
+// IsCustom sagt, ob c eine eigene (vom Nutzer angelegte) Kategorie ist.
+func IsCustom(c string) bool { return strings.HasPrefix(c, CustomPrefix) }
+
+// CleanCustomLabel prueft und bereinigt den Namen einer eigenen Kategorie.
+// Rueckgabe: bereinigter Name und true, wenn er benutzbar ist (nicht leer, nicht zu lang,
+// keine Steuerzeichen, kein Doppelgaenger einer eingebauten Kategorie).
+func CleanCustomLabel(s string) (string, bool) {
+	s = strings.Join(strings.Fields(s), " ") // Leerraum zusammenfassen und kuerzen
+	n := utf8.RuneCountInString(s)
+	if n == 0 || n > MaxCustomLabelRunes {
+		return "", false
+	}
+	for _, r := range s {
+		if unicode.IsControl(r) {
+			return "", false
+		}
+	}
+	for _, c := range Categories { // "Server" o. ae. waere verwirrend doppelt
+		if strings.EqualFold(CategoryLabel(c), s) {
+			return "", false
+		}
+	}
+	return s, true
+}
+
+// CustomKey baut den Schluessel einer eigenen Kategorie aus dem (bereinigten) Namen.
+func CustomKey(label string) string { return CustomPrefix + label }
+
 // CategoryLabel liefert die deutsche Bezeichnung einer Kategorie (unbekannt -> "").
+// Bei eigenen Kategorien ist das der Name hinter dem Praefix.
 func CategoryLabel(c string) string {
 	switch c {
 	case CatNetwork:
@@ -54,13 +96,18 @@ func CategoryLabel(c string) string {
 	case CatIoT:
 		return "IoT"
 	}
+	if IsCustom(c) {
+		if l, ok := CleanCustomLabel(strings.TrimPrefix(c, CustomPrefix)); ok {
+			return l
+		}
+	}
 	return ""
 }
 
-// ValidCategory prueft, ob c einer der festen Kategorie-Schluessel ist.
+// ValidCategory prueft, ob c eine eingebaute oder eine gueltige eigene Kategorie ist.
 func ValidCategory(c string) bool { return CategoryLabel(c) != "" }
 
-// CategoryRank liefert die Sortierposition einer Kategorie (unbekannt -> hinten).
+// CategoryRank liefert die Sortierposition einer Kategorie (eigene stehen hinter den eingebauten).
 func CategoryRank(c string) int {
 	for i, k := range Categories {
 		if k == c {
@@ -68,6 +115,18 @@ func CategoryRank(c string) int {
 		}
 	}
 	return len(Categories)
+}
+
+// CategoryHue liefert fuer eine eigene Kategorie einen festen Farbton (0-359 Grad) aus dem Namen
+// (FNV-1a-Hash). Gleicher Name = gleiche Farbe in Karte, Legende und PDF. Der Goldene Winkel
+// (137) streut aehnliche Namen weit auseinander.
+func CategoryHue(c string) int {
+	h := uint32(2166136261)
+	for _, b := range []byte(c) {
+		h ^= uint32(b)
+		h *= 16777619
+	}
+	return int(h%360+137) % 360
 }
 
 // Host ist ein gefundenes Geraet im Netz.

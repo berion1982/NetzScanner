@@ -56,6 +56,7 @@ svg{width:100%;height:auto;display:block}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}.legend button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:14px;color:var(--txt);font-size:12px}
 .legend button.off{opacity:.45;text-decoration:line-through}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .cat-network{--c:#58a6ff}.cat-server{--c:#3fb950}.cat-client{--c:#8b949e}.cat-iot{--c:#d29922}.legend i,.catdot{background:var(--c)}
+.node.cat-custom rect{fill:color-mix(in srgb,var(--c) 22%,#0d1117);stroke:var(--c)}
 .grp rect{fill:var(--c);fill-opacity:.07;stroke:var(--c);stroke-opacity:.6;stroke-dasharray:5 4}.grp text{fill:var(--c);font-size:11px;font-weight:600}
 .node{cursor:pointer}.node rect{fill:#1b2430;stroke:var(--line);stroke-width:1.5}
 .node:hover rect,.node.sel rect{stroke:var(--cy)}
@@ -96,7 +97,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen werden zwischengespeichert (siehe „Datenschutz und Zwischenspeicher“).</p>
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort, offene Ports und Kategorie – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
- <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Geräte mit gleichem Uplink und gleicher Kategorie sind in einer <b>Sammelgruppe</b> (gestrichelter Rahmen mit Anzahl) zusammengefasst; eine Linie führt vom Router zur Gruppe. Einzelne Geräte stehen ohne Rahmen. Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
+ <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Geräte mit gleichem Uplink und gleicher Kategorie sind in einer <b>Sammelgruppe</b> (gestrichelter Rahmen mit Anzahl) zusammengefasst; eine Linie führt vom Router zur Gruppe. Einzelne Geräte stehen ohne Rahmen. Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Über „+ Eigene Kategorie anlegen …“ erfindest du eigene Kategorien (z. B. „Drucker“, „Gäste“; Name bis 30 Zeichen, bis zu 20 Stück). Sie bekommen automatisch eine Farbe, erscheinen in Legende, Karte, Tabelle, Exporten und PDF und werden mit den Eingaben gespeichert. Mit „Kategorie … löschen“ entfernst du eine eigene Kategorie wieder; betroffene Geräte werden dann automatisch eingeordnet. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
  <table class="ht"><tbody>
  <tr><td><code>192.168.1.0/24</code></td><td>ganzes Netz (254 Geräte); Netz- und Broadcast-Adresse entfallen. Kleinere Teilnetze: <code>/28</code> = 14, <code>/26</code> = 62 Geräte</td></tr>
@@ -181,6 +182,22 @@ function saveUser(ip, user, msgEl) {
 // Kategorien (Schluessel wie im Server, siehe internal/model): Reihenfolge = Anzeige.
 const CATS = ["network", "server", "client", "iot"];
 const CAT_LABEL = { network: "Netzwerkgeräte", server: "Server", client: "Clients", iot: "IoT" };
+// Eigene Kategorien (I-017): Schluessel "custom:<Name>", vom Server geliefert ({key, label, hue}).
+let customCats = [];
+const isCustom = c => typeof c === "string" && c.startsWith("custom:");
+const catLabel = c => CAT_LABEL[c] || (isCustom(c) ? c.slice(7) : "");
+const allCats = () => CATS.concat(customCats.map(c => c.key));
+// CSS-Klasse und Farbe einer Kategorie: feste per Klasse, eigene per inline gesetzter Farbe (--c).
+const catClass = c => isCustom(c) ? "cat-custom" : "cat-" + c;
+function catColor(c) { const x = customCats.find(k => k.key === c); const hue = x ? x.hue : 200; return "hsl(" + hue + " 60% 60%)"; }
+function catStyle(node, c) { if (isCustom(c)) node.style.setProperty("--c", catColor(c)); return node; }
+// Reihenfolge: feste Kategorien zuerst, eigene danach alphabetisch (gleiche Kategorien stehen nebeneinander).
+const catRank = c => CATS.indexOf(c) >= 0 ? CATS.indexOf(c) : CATS.length;
+const catCompare = (a, b) => catRank(a) - catRank(b) || (a < b ? -1 : a > b ? 1 : 0);
+// Liste der eigenen Kategorien laden; danach Ansichten neu zeichnen.
+function loadCustomCats() {
+  return fetch("/api/categories").then(r => r.json()).then(l => { customCats = l; });
+}
 // Zwischenspeicher: Status anzeigen und auf Wunsch alles loeschen (mit Rueckfrage).
 function loadInputsInfo() {
   fetch("/api/inputs").then(r => r.json()).then(i => {
@@ -189,7 +206,7 @@ function loadInputsInfo() {
 }
 document.getElementById("inpclear").addEventListener("click", () => {
   if (!confirm("Alle gespeicherten Namen, Benutzernamen, Standorte und Kategorien löschen?")) return;
-  post("/api/inputs/clear", {}).then(() => { loadInputsInfo(); loadHosts(); });
+  post("/api/inputs/clear", {}).then(() => { loadInputsInfo(); loadCustomCats().then(loadHosts); });
 });
 loadInputsInfo();
 const hiddenCats = new Set(); // in der Topologie ausgeblendete Kategorien (nur im Browser, nicht gespeichert)
@@ -265,12 +282,29 @@ function buildDetails(h) {
   const lRow = el("div", { class: "rename" }, [lInput, lSave]);
   // Kategorie: "Automatisch" = Vermutung des Scans; sonst feste Wahl.
   const cSel = el("select", { "aria-label": "Kategorie" }, [el("option", { value: "auto", text: "Automatisch (" + (CAT_LABEL[h.category] || "?") + ", Vermutung)" }),
-    ...CATS.map(c => el("option", { value: c, text: CAT_LABEL[c] }))]);
+    ...CATS.map(c => el("option", { value: c, text: CAT_LABEL[c] })),
+    ...customCats.map(c => el("option", { value: c.key, text: c.label + " (eigene)" })),
+    el("option", { value: "__new", text: "+ Eigene Kategorie anlegen …" })]);
   cSel.value = h.categoryManual ? h.category : "auto";
   const cMsg = el("div", { class: "msg" });
-  cSel.addEventListener("change", () => saveCategory(h.ip, cSel.value, cMsg));
+  cSel.addEventListener("change", () => {
+    if (cSel.value !== "__new") { saveCategory(h.ip, cSel.value, cMsg); return; }
+    // Neue eigene Kategorie: Namen erfragen, anlegen, dann dem Geraet zuweisen.
+    const name = prompt("Name der neuen Kategorie (max. 30 Zeichen):");
+    if (!name || !name.trim()) { cSel.value = h.categoryManual ? h.category : "auto"; return; }
+    post("/api/categories", { name }).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
+      if (!ok) { cMsg.className = "msg err"; cMsg.textContent = b.error; cSel.value = h.categoryManual ? h.category : "auto"; return; }
+      loadCustomCats().then(() => saveCategory(h.ip, b.key, cMsg));
+    });
+  });
+  // Eigene Kategorie dieses Geraets wieder entfernen (Geraete darin fallen auf "Automatisch" zurueck).
+  const cDel = !(h.categoryManual && isCustom(h.category)) ? null : el("button", { class: "btn", text: "Kategorie „" + catLabel(h.category) + "“ löschen", title: "Entfernt die eigene Kategorie; betroffene Geräte werden wieder automatisch eingeordnet" });
+  if (cDel) cDel.addEventListener("click", () => {
+    if (!confirm("Eigene Kategorie „" + catLabel(h.category) + "“ löschen? Betroffene Geräte werden wieder automatisch eingeordnet.")) return;
+    post("/api/categories/delete", { key: h.category }).then(() => loadCustomCats().then(() => loadHosts().then(() => { const x = hostsCache.find(y => y.ip === h.ip); if (x) showDetails(x); })));
+  });
   return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg,
-    el("small", { style: "color:var(--mut)", text: "Kategorie" }), el("div", { class: "rename" }, [cSel]), cMsg,
+    el("small", { style: "color:var(--mut)", text: "Kategorie" }), el("div", { class: "rename" }, cDel ? [cSel, cDel] : [cSel]), cMsg,
     el("small", { style: "color:var(--mut)", text: "Standort (optional)" }), lRow, lMsg,
     el("small", { style: "color:var(--mut)", text: "Benutzername (optional, kein Passwort)" }), uRow, uMsg, dl];
 }
@@ -326,7 +360,7 @@ function renderTable(hosts) {
       el("td", {}, [cb]),
       el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.pending ? "--mut" : h.known ? "--ok" : "--warn") + ")" })]),
       el("td", { text: h.ip }), el("td", { text: h.name, style: h.pending ? "color:var(--mut);font-style:italic" : "" }), el("td", { text: h.mac }), el("td", { text: h.vendor || "", title: "Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)" }),
-      el("td", { text: CAT_LABEL[h.category] || "", title: h.categoryManual ? "von dir gesetzt" : "Vermutung" }),
+      el("td", { text: catLabel(h.category), title: h.categoryManual ? "von dir gesetzt" : "Vermutung" }),
       el("td", { text: h.location || "" }),
       el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
       el("td", { class: "webcol" }, linkButtons(h)));
@@ -340,9 +374,9 @@ function renderTable(hosts) {
 
 // Topologie: Ebene = Abstand zum Router (ueber "uplink"), Knoten je Ebene gleichmaessig verteilt.
 function renderLegend(all) {
-  document.getElementById("legend").replaceChildren(...CATS.map(c => {
-    const b = el("button", { type: "button", class: "cat-" + c + (hiddenCats.has(c) ? " off" : ""), title: "Kategorie ein-/ausblenden" },
-      [el("i"), document.createTextNode(CAT_LABEL[c] + " (" + all.filter(h => h.category === c).length + ")")]);
+  document.getElementById("legend").replaceChildren(...allCats().map(c => {
+    const b = catStyle(el("button", { type: "button", class: catClass(c) + (hiddenCats.has(c) ? " off" : ""), title: "Kategorie ein-/ausblenden" },
+      [el("i"), document.createTextNode(catLabel(c) + " (" + all.filter(h => h.category === c).length + ")")]), c);
     b.addEventListener("click", () => { hiddenCats.has(c) ? hiddenCats.delete(c) : hiddenCats.add(c); renderMap(hostsCache); });
     return b;
   }));
@@ -355,7 +389,7 @@ function renderMap(allHosts) {
   if (!hosts.length) { document.getElementById("map").replaceChildren(); return; }
   const depth = h => { let d = 0, c = h; while (c.uplink && byIp[c.uplink] && d < 10) { c = byIp[c.uplink]; d++; } return d; };
   const levels = {}; hosts.forEach(h => (levels[depth(h)] ||= []).push(h));
-  Object.values(levels).forEach(l => l.sort((a, b) => CATS.indexOf(a.category) - CATS.indexOf(b.category))); // je Ebene nach Kategorie gruppiert (stabil)
+  Object.values(levels).forEach(l => l.sort((a, b) => catCompare(a.category, b.category))); // je Ebene nach Kategorie gruppiert (stabil)
   const pos = {}, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("map");
   const cut = (t, n) => t.length > n ? t.slice(0, n - 1) + "…" : t; // lange Namen kuerzen, voller Name steht im Tooltip
   const mk = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
@@ -388,7 +422,7 @@ function renderMap(allHosts) {
       line.forEach(u => {
         const first = u.list[0];
         if (u.group) {
-          frames.push({ x, y, w: u.w, h: u.h, cat: first.category, label: CAT_LABEL[first.category] + " (" + u.list.length + ")" });
+          frames.push({ x, y, w: u.w, h: u.h, cat: first.category, label: catLabel(first.category) + " (" + u.list.length + ")" });
           u.list.forEach((h, i) => { pos[h.ip] = { x: x + GAP + BW / 2 + (i % u.cols) * (BW + GAP), y: y + TITLE + Math.floor(i / u.cols) * (BH + GAP) }; });
         } else {
           pos[first.ip] = { x: x + BW / 2, y };
@@ -411,13 +445,13 @@ function renderMap(allHosts) {
     out.push(mk("path", { class: "lnk", d: "M" + f.x + " " + (f.y + BH) + " V" + l.busY + " H" + l.trunk + " V" + l.y + " H" + l.x }));
   });
   frames.forEach(f => {
-    const g = mk("g", { class: "grp cat-" + f.cat });
+    const g = catStyle(mk("g", { class: "grp " + catClass(f.cat) }), f.cat);
     g.append(mk("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 10 }));
     const t = mk("text", { x: f.x + 10, y: f.y + 15 }); t.textContent = f.label;
     g.append(t); out.push(g);
   });
   hosts.forEach(h => {
-    const p = pos[h.ip], g = mk("g", { class: "node cat-" + h.category, "data-ip": h.ip });
+    const p = pos[h.ip], g = catStyle(mk("g", { class: "node " + catClass(h.category), "data-ip": h.ip }), h.category);
     g.append(mk("rect", { x: p.x - 60, y: p.y, width: 120, height: 44, rx: 8 }));
     const t1 = mk("text", { x: p.x, y: p.y + 20 }); t1.textContent = cut(h.name, 15);
     const t2 = mk("text", { class: "s", x: p.x, y: p.y + 35 }); t2.textContent = h.ip;
@@ -502,8 +536,8 @@ goBtn.addEventListener("click", () => {
     .then(({ ok, b }) => { if (!ok) { progEl.replaceChildren(el("span", { class: "err", text: b.error })); } else { startPolling(); } });
 });
 
-// Start: Daten laden, Netzvorschlag eintragen, laufenden Scan ggf. weiter anzeigen.
-loadHosts();
+// Start: eigene Kategorien + Daten laden, Netzvorschlag eintragen, laufenden Scan ggf. weiter anzeigen.
+loadCustomCats().catch(() => {}).then(loadHosts);
 fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
 poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
 fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });

@@ -120,7 +120,11 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 			continue
 		}
 		sort.SliceStable(list, func(i, j int) bool {
-			return model.CategoryRank(list[i].Category) < model.CategoryRank(list[j].Category)
+			ri, rj := model.CategoryRank(list[i].Category), model.CategoryRank(list[j].Category)
+			if ri != rj {
+				return ri < rj
+			}
+			return list[i].Category < list[j].Category // eigene Kategorien: gleiche nebeneinander
 		})
 		// 1) Einheiten bilden: Schluessel = Uplink + Kategorie (Reihenfolge des ersten Auftretens).
 		var order []string
@@ -222,8 +226,37 @@ func categoryStroke(c string) [3]int {
 		return [3]int{50, 140, 70}
 	case model.CatIoT:
 		return [3]int{200, 130, 20}
+	case model.CatClient:
+		return [3]int{120, 120, 120}
+	}
+	if model.IsCustom(c) { // eigene Kategorie: Farbton aus dem Namen
+		return hslToRGB(model.CategoryHue(c), 0.55, 0.40)
 	}
 	return [3]int{120, 120, 120}
+}
+
+// hslToRGB wandelt Farbton (0-359), Saettigung und Helligkeit (0-1) in RGB (0-255).
+func hslToRGB(h int, s, l float64) [3]int {
+	c := (1 - math.Abs(2*l-1)) * s
+	hp := float64(h) / 60
+	x := c * (1 - math.Abs(math.Mod(hp, 2)-1))
+	var r, g, b float64
+	switch int(hp) {
+	case 0:
+		r, g, b = c, x, 0
+	case 1:
+		r, g, b = x, c, 0
+	case 2:
+		r, g, b = 0, c, x
+	case 3:
+		r, g, b = 0, x, c
+	case 4:
+		r, g, b = x, 0, c
+	default:
+		r, g, b = c, 0, x
+	}
+	m := l - c/2
+	return [3]int{int((r + m) * 255), int((g + m) * 255), int((b + m) * 255)}
 }
 
 // pdfText macht aus einem UTF-8-Text einen Text fuer die Standardschrift (Windows-1252).
@@ -330,7 +363,7 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 	lay := layoutTopology(hosts)
 	nodes, height := lay.nodes, lay.height
 	top := pdf.GetY() + 4
-	availH := pdfPageH - top - 20 // Platz fuer Legende, Hinweis und Fusszeile abziehen
+	availH := pdfPageH - top - 20 - 5*float64(legendRows(hosts)-1) // Platz fuer Legende, Hinweis und Fusszeile abziehen
 	scale := 1.0
 	if height > availH {
 		scale = availH / height // alles gleichmaessig verkleinern, damit es auf die Seite passt
@@ -421,7 +454,31 @@ func categoryFill(c string) [3]int {
 	case model.CatIoT:
 		return [3]int{255, 236, 204} // hellorange
 	}
+	if model.IsCustom(c) { // eigene Kategorie: heller Ton passend zur Rahmenfarbe
+		return hslToRGB(model.CategoryHue(c), 0.60, 0.90)
+	}
 	return [3]int{238, 238, 238} // Clients: hellgrau
+}
+
+// legendCategories: feste Kategorien immer, eigene nur wenn ein Geraet sie hat (sortiert, damit die Reihenfolge stabil bleibt).
+func legendCategories(hosts []model.Host) []string {
+	cats := append([]string{}, model.Categories...)
+	seen := map[string]bool{}
+	var custom []string
+	for _, h := range hosts {
+		if model.IsCustom(h.Category) && !seen[h.Category] {
+			seen[h.Category] = true
+			custom = append(custom, h.Category)
+		}
+	}
+	sort.Strings(custom)
+	return append(cats, custom...)
+}
+
+// legendRows: wie viele Zeilen die Legende braucht (je Eintrag 52 mm Breite).
+func legendRows(hosts []model.Host) int {
+	perRow := int(math.Floor((pdfPageW - 2*pdfMargin) / 52))
+	return (len(legendCategories(hosts)) + perRow - 1) / perRow
 }
 
 // drawLegend zeichnet unter der Karte die Farbzuordnung der Kategorien samt Anzahl.
@@ -433,7 +490,11 @@ func drawLegend(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host) {
 	x, y := pdfMargin, pdfPageH-20.0
 	pdf.SetFont("Helvetica", "", 8)
 	pdf.SetDrawColor(90, 90, 90)
-	for _, c := range model.Categories {
+	cats := legendCategories(hosts)
+	for _, c := range cats {
+		if x+52 > pdfPageW-pdfMargin { // Zeile voll -> naechste Zeile (Legende waechst nach oben, 5 mm je Zeile)
+			x, y = pdfMargin, y-5
+		}
 		f := categoryFill(c)
 		pdf.SetFillColor(f[0], f[1], f[2])
 		pdf.Rect(x, y, 5, 3.5, "DF")

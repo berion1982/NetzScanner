@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.12.1 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.13.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -13,6 +13,7 @@
 - **Web** (`internal/web`): Server, Scan-API, Umbenennen, Benutzername, **Standort** und **Kategorie** (Maps `names`/`users`/`locs`/`cats`/`macs` in `server.go`, Endpunkte `/api/hosts/name|user|location|category`), **Zwischenspeicher** `store.go` (`eingaben.json`, 0600, MAC-Schutz bei IP-Wechsel, `GET /api/inputs`, `POST /api/inputs/clear`), Export-API, Oberfläche `static/index.html` (Übersicht, Topologie, Hilfe, Auswahl per Häkchen).
 - **Export** (`internal/export`): CSV (Excel Deutsch / Standard; Spalten: Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Standort, Offene Ports, Kategorie – neue Spalte hinten), HTML, Markdown (beide mit Kategorie), **Topologie-PDF** (`pdf.go`, Lib `go-pdf/fpdf`, Endpunkt `POST /api/export/topology-pdf`, alle Geräte, Seite 1 Karte mit **Sammelgruppen je Kategorie** und Legende, danach Liste mit System und Standort; Zeichen außerhalb Windows-1252 erscheinen als „.“) – ohne Passwörter, mit Schutz vor CSV-Injection.
 - **Kategorien** (I-015): Vermutung `internal/scan/category.go` (Rolle → Hersteller → Ports/System), Nutzerwahl überschreibt; Karte (Web `renderMap` in `index.html`, PDF `layoutTopology`) bildet Gruppen je (Uplink, Kategorie), Linien über Sammelschiene.
+- **Eigene Kategorien** (I-017): Schlüssel `custom:<Name>` (`model.CustomKey`, `CategoryHue` für die Farbe), Liste im Server (`customCats`), Endpunkte `/api/categories[/delete]`, gespeichert in `eingaben.json` (`customCategories`). Im LAN prüfen: Anlegen/Zuweisen/Löschen, Farbe in Karte und PDF.
 - **Modell** `internal/model` (Host, Port, WebLink, Kategorien), **Version** `internal/version`.
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, Design-Konzepte in `docs/design/`.
 
@@ -20,7 +21,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
-- **Neu in 0.6.0–0.12.1 (alles nur lokal/mit Tests geprüft, im LAN noch nicht):** CSV mit Hersteller (0.6.0, I-007), **Topologie-PDF** (0.7.0, I-012), **Betriebssystem-Vermutung** (0.8.0, I-013, teilweise: Banner/Ports), **Standort** (0.9.0, I-014), **Kategorien** (0.10.0, I-015: Vermutung in `internal/scan/category.go`, im LAN prüfen, ob sie bei deinen Geräten stimmt). Sascha bitte im LAN testen: PDF-Button, OS-Vermutung bei Linux-Servern/Windows-Servern, Standort eintragen und in CSV prüfen, Karte mit vielen Geräten (Sammelgruppen) in Web und PDF, Neustart behält Eingaben.
+- **Neu in 0.6.0–0.13.0 (alles nur lokal/mit Tests geprüft, im LAN noch nicht):** CSV mit Hersteller (0.6.0, I-007), **Topologie-PDF** (0.7.0, I-012), **Betriebssystem-Vermutung** (0.8.0, I-013, teilweise: Banner/Ports), **Standort** (0.9.0, I-014), **Kategorien** (0.10.0, I-015: Vermutung in `internal/scan/category.go`, im LAN prüfen, ob sie bei deinen Geräten stimmt). Sascha bitte im LAN testen: PDF-Button, OS-Vermutung bei Linux-Servern/Windows-Servern, Standort eintragen und in CSV prüfen, Karte mit vielen Geräten (Sammelgruppen) in Web und PDF, Neustart behält Eingaben.
 - **I-013 Rest (offen):** Windows-Version per SMB/NTLM, SNMP sysDescr (Community nötig), TTL-Fingerprint (ICMP-Rechte), SSDP-SERVER-Header; OS-Spalte in Tabelle/CSV/HTML (bisher nur Detail-Panel und PDF-Liste).
 - **I-014 Folgeidee erledigt (0.11.0, I-016):** Eingaben liegen in `eingaben.json` (`internal/web/store.go`); im LAN prüfen: Neustart behält Namen/Standorte? Offen: Verschlüsselung der Datei, Export/Import.
 - **I-003 erledigt (0.5.9):** volle IEEE-Liste (~40.000 Einträge) ist eingebettet. Im LAN prüfen: erscheinen Hersteller bei den Geräten (z. B. AVM bei `0C:72:74`)? Zufällige MACs bleiben ohne Hersteller.
@@ -40,7 +41,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).
 - Weitere Geräte im LAN prüfen: fehlen welche, sind MACs/Namen falsch? (I-005)
-- **Neue Funktionen im LAN prüfen (0.6.0–0.12.1):** Funktioniert „Topologie als PDF“ (Karte lesbar, Liste vollständig)? Stimmt die OS-Vermutung bei deinen Servern? Passt die neue CSV-Spaltenreihenfolge (Hersteller nach MAC, Standort nach Gerätename) zum Zielprogramm?
+- **Neue Funktionen im LAN prüfen (0.6.0–0.13.0):** Funktioniert „Topologie als PDF“ (Karte lesbar, Liste vollständig)? Stimmt die OS-Vermutung bei deinen Servern? Passt die neue CSV-Spaltenreihenfolge (Hersteller nach MAC, Standort nach Gerätename) zum Zielprogramm?
 - Wünschst du die OS-Spalte auch in Tabelle/CSV/HTML? Soll die Eingaben-Datei verschlüsselt werden oder ein Export/Import der Eingaben kommen?
 - WLAN-Idee I-050: nur eigene Umgebung oder alle sichtbaren WLANs?
 
@@ -62,6 +63,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.11.1 ✅ | Fix: Karte bricht bei vielen Geräten um, Namen gekürzt |
 | 0.12.0 ✅ | Karte: Sammelgruppen je Kategorie (Web) |
 | 0.12.1 ✅ | PDF-Karte mit Sammelgruppen |
+| 0.13.0 ✅ | Eigene Kategorien (I-017) |
 | 0.13.0 (Plan) | Rest von I-008 (SNMP sysName), ICMP mit Rechten, Rest von I-013 (SMB/SNMP/TTL) |
 | 0.14.0 (Plan) | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute (I-010) |
 | 0.15.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |

@@ -211,3 +211,8 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.12.1] – 2026-11-08
 ### Geändert
 - **PDF-Karte mit Sammelgruppen** (wie die Weboberfläche seit 0.12.0): gestrichelter Rahmen je Gruppe in Kategoriefarbe mit Titel und Anzahl, eine Linie pro Gruppe über eine Sammelschiene, Einzelgeräte ohne Rahmen. Bis zu 6 Kästen pro Zeile in einer Gruppe; bei vielen Geräten wird die Karte wie bisher verkleinert.
+
+## [0.13.0] – 2026-11-08
+### Hinzugefügt
+- **Eigene Kategorien** (I-017): Im Detail-Panel gibt es unter „Kategorie“ den Eintrag „+ Eigene Kategorie anlegen …“ (Name bis 30 Zeichen, bis zu 20 Stück, nicht wie eine feste Kategorie). Eigene Kategorien bekommen automatisch eine feste Farbe (aus dem Namen), erscheinen in Legende (ein-/ausblendbar), Karte mit Sammelgruppen, Tabelle, CSV/HTML/Markdown und im Topologie-PDF (Legende bricht bei vielen Kategorien um). „Kategorie … löschen“ entfernt sie wieder; betroffene Geräte fallen auf die automatische Vermutung zurück (es werden keine Geräte gelöscht).
+- Neue Endpunkte `GET/POST /api/categories` und `POST /api/categories/delete`; die Liste steht in `eingaben.json` (Feld `customCategories`) und überlebt Neustarts auch ohne zugeordnete Geräte. Intern ist der Schlüssel `custom:<Name>`.

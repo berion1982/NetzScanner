@@ -41,20 +41,21 @@ type Options struct {
 type server struct {
 	opt Options
 
-	mu       sync.Mutex
-	running  bool
-	cancel   context.CancelFunc
-	target   string
-	done     int
-	total    int
-	errMsg   string
-	hosts    []model.Host
-	names    map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
-	users    map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
-	locs     map[string]string // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
-	cats     map[string]string // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
-	macs     map[string]string // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
-	finished time.Time
+	mu         sync.Mutex
+	running    bool
+	cancel     context.CancelFunc
+	target     string
+	done       int
+	total      int
+	errMsg     string
+	hosts      []model.Host
+	names      map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
+	users      map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
+	locs       map[string]string // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
+	cats       map[string]string // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
+	customCats []string          // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
+	macs       map[string]string // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
+	finished   time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
@@ -77,6 +78,9 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
 	mux.HandleFunc("POST /api/hosts/location", s.handleLocation)
 	mux.HandleFunc("POST /api/hosts/category", s.handleCategory)
+	mux.HandleFunc("GET /api/categories", s.handleCategories)
+	mux.HandleFunc("POST /api/categories", s.handleCategoryAdd)
+	mux.HandleFunc("POST /api/categories/delete", s.handleCategoryDelete)
 	mux.HandleFunc("POST /api/inputs/clear", s.handleClearInputs)
 	mux.HandleFunc("GET /api/inputs", s.handleInputsInfo)
 	mux.HandleFunc("POST /api/export", s.handleExport)
@@ -393,6 +397,11 @@ func (s *server) handleCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	// Eigene Kategorien muessen vorher angelegt worden sein (sonst waeren Tippfehler stille Neuanlagen).
+	if !auto && model.IsCustom(req.Category) && !s.hasCustomLocked(req.Category) {
+		writeJSON(w, http.StatusBadRequest, errBody("eigene Kategorie existiert nicht - bitte zuerst anlegen"))
+		return
+	}
 	if !s.hasHostLocked(req.IP) {
 		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
 		return
@@ -402,6 +411,90 @@ func (s *server) handleCategory(w http.ResponseWriter, r *http.Request) {
 		delete(s.cats, req.IP)
 	} else {
 		s.cats[req.IP] = req.Category
+	}
+	s.persistLocked()
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// hasCustomLocked: gibt es diese eigene Kategorie? Aufrufer haelt s.mu.
+func (s *server) hasCustomLocked(key string) bool {
+	for _, k := range s.customCats {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
+// customInfo ist ein Eintrag der Kategorienliste fuer die Oberflaeche.
+type customInfo struct {
+	Key   string `json:"key"`
+	Label string `json:"label"`
+	Hue   int    `json:"hue"` // Farbton 0-359, siehe model.CategoryHue
+}
+
+// handleCategories liefert die eigenen Kategorien (Anlege-Reihenfolge).
+func (s *server) handleCategories(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]customInfo, 0, len(s.customCats))
+	for _, k := range s.customCats {
+		out = append(out, customInfo{Key: k, Label: model.CategoryLabel(k), Hue: model.CategoryHue(k)})
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// handleCategoryAdd legt eine eigene Kategorie an (Name wird bereinigt; Doppelte werden ignoriert).
+func (s *server) handleCategoryAdd(w http.ResponseWriter, r *http.Request) {
+	var req struct{ Name string }
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	label, ok := model.CleanCustomLabel(req.Name)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, errBody(fmt.Sprintf("ungültiger Name (1–%d Zeichen, ohne Steuerzeichen, nicht wie eine feste Kategorie)", model.MaxCustomLabelRunes)))
+		return
+	}
+	key := model.CustomKey(label)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.hasCustomLocked(key) {
+		if len(s.customCats) >= model.MaxCustomCategories {
+			writeJSON(w, http.StatusBadRequest, errBody(fmt.Sprintf("maximal %d eigene Kategorien", model.MaxCustomCategories)))
+			return
+		}
+		s.customCats = append(s.customCats, key)
+		s.persistLocked()
+	}
+	writeJSON(w, http.StatusOK, customInfo{Key: key, Label: label, Hue: model.CategoryHue(key)})
+}
+
+// handleCategoryDelete entfernt eine eigene Kategorie. Geraete, die sie hatten, fallen zurueck
+// auf die automatische Vermutung (ihre Wahl wird entfernt) - es werden keine Geraete geloescht.
+func (s *server) handleCategoryDelete(w http.ResponseWriter, r *http.Request) {
+	var req struct{ Key string }
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.hasCustomLocked(req.Key) {
+		writeJSON(w, http.StatusNotFound, errBody("eigene Kategorie nicht gefunden"))
+		return
+	}
+	kept := s.customCats[:0:0]
+	for _, k := range s.customCats {
+		if k != req.Key {
+			kept = append(kept, k)
+		}
+	}
+	s.customCats = kept
+	for ip, c := range s.cats {
+		if c == req.Key {
+			delete(s.cats, ip)
+		}
 	}
 	s.persistLocked()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})

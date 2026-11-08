@@ -107,6 +107,9 @@ func TestWritePDF(t *testing.T) {
 		hosts = append(hosts, model.Host{IP: "192.168.1." + strconv.Itoa(i+20), Name: "gerät-" + strconv.Itoa(i), MAC: "AA:BB:CC:00:00:01",
 			Vendor: "Hersteller GmbH & Co. KG", Uplink: "192.168.1.10", Ports: []model.Port{{Number: 22, Service: "ssh"}, {Number: 80, Service: "http"}}})
 	}
+	for i := 0; i < 12; i++ { // viele eigene Kategorien (I-017): Legende muss umbrechen, Farben muessen gueltig sein
+		hosts[i+1].Category = model.CustomKey("Eigene " + strconv.Itoa(i))
+	}
 	for _, hs := range [][]model.Host{nil, sample(), hosts} {
 		var b bytes.Buffer
 		if err := WritePDF(&b, hs, meta); err != nil {
