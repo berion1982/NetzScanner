@@ -43,3 +43,30 @@ func TestReservationsList(t *testing.T) {
 		t.Errorf("Scan-Namen: %+v", got)
 	}
 }
+
+// FRITZ!Box: Geraete mit "Static" erscheinen in der Liste, "DHCP" nicht; der Windows-Server hat bei gleicher MAC Vorrang.
+func TestReservationsFromRouter(t *testing.T) {
+	s := &server{
+		routerInfo: map[string]routerEntry{
+			"aabbcc001122": {Name: "nas", IP: "192.168.178.20", Source: "Static"},
+			"aabbcc001133": {Name: "handy", IP: "192.168.178.30", Source: "DHCP"},
+			"aabbcc001144": {Name: "doppelt", IP: "192.168.178.40", Source: "Static"},
+		},
+		dhcpRows: []dhcp.Entry{{Scope: "192.168.178.0", IP: "192.168.178.40", MAC: "AA-BB-CC-00-11-44", Name: "doppelt-win", Reserved: true}},
+	}
+	got := s.reservations()
+	if len(got) != 2 {
+		t.Fatalf("erwartet 2 Eintraege, bekam %+v", got)
+	}
+	for _, r := range got {
+		if r.IP == "192.168.178.30" {
+			t.Error("DHCP-Geraet darf nicht in der Liste stehen")
+		}
+		if r.IP == "192.168.178.40" && r.Name != "doppelt-win" {
+			t.Errorf("Windows-Server hat Vorrang: %+v", r)
+		}
+		if r.IP == "192.168.178.20" && r.MAC != "AA:BB:CC:00:11:22" {
+			t.Errorf("MAC-Anzeige: %q", r.MAC)
+		}
+	}
+}

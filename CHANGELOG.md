@@ -305,3 +305,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Router-Login zeigt zusätzlich **„Adressvergabe laut Router“** (Anzahl je `AddressSource`, z. B. DHCP/Static) – Hinweis, ob die Box feste Zuweisungen anders kennzeichnet.
 ### Hinweis
 - Die Reservierungsliste der FRITZ!Box ist **noch nicht** im Reiter „Reservierungen“; sie folgt, sobald die Ausgabe von `--diagnose-router` an der echten Box zeigt, wo die Daten liegen. Die Annahme, dass die Beschreibungsdateien ohne Anmeldung lesbar sind, ist ungeprüft.
+
+## [0.22.0] – 2026-11-08
+### Hinzugefügt
+- **FRITZ!Box-Zuweisungen im Reiter „Reservierungen“** (I-055 d): Geräte, die der Router mit Adressvergabe „Static“ meldet (bei Sascha 11 von 49), erscheinen in der Liste (Netz „FRITZ!Box (Static)“) und im Export. Hat der Windows-DHCP-Server dieselbe MAC, gilt dessen Eintrag.
+### Hinweis
+- Die FRITZ!Box bietet per TR-064 **keine** Reservierungsliste (Befund `--diagnose-router`). „Static“ als feste Zuweisung ist eine **Vermutung**: Bitte mit „Heimnetz → Netzwerk“ der Box abgleichen (Option „Diesem Netzwerkgerät immer die gleiche IPv4-Adresse zuweisen“).
