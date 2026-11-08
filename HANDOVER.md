@@ -30,7 +30,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Offen für Sascha
 - **Entscheidung I-003:** volle OUI-Liste per `scripts/update-oui.sh` selbst erzeugen, Host `standards-oui.ieee.org` freigeben, oder nmap-Liste trotz Lizenzfrage?
-- Scan im LAN wiederholen: Wie viele Geräte bleiben nach I-002 (mDNS/NetBIOS) noch „(unbekannt)“?
+- Scan im LAN wiederholen: Wie viele Geräte bleiben nach I-002/I-008 (mDNS, NetBIOS, LLMNR, SSDP) noch „(unbekannt)“? Bekommt die Hue Bridge einen sinnvollen Namen (I-009)?
+- Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).
 - Weitere Geräte im LAN prüfen: fehlen welche, sind MACs/Namen falsch? (I-005)
 - WLAN-Idee I-050: nur eigene Umgebung oder alle sichtbaren WLANs?
@@ -41,8 +42,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.2.0 ✅ | Web-UI (Design A+B), Hilfe, Web-Links, Demo-Daten |
 | 0.3.0–0.3.3 ✅ | Scan-Kern (TCP-Portscan, ARP/MAC, Reverse-DNS, Banner), Auswahl/Umbenennen, mehrstufige Namenssuche, `--diagnose` |
 | 0.4.0–0.4.3 ✅ | Export CSV/HTML/Markdown, Benutzername, Lesezeichen-Export, TLS-Zertifikatsinfos, OUI-Mechanismus (volle Liste fehlt, I-003) |
-| 0.5.0–0.5.2 ✅ | mDNS/NetBIOS-Namen (I-002), Kennung-Namen abwerten (I-009), Versionsführung |
-| 0.6.0 (Plan) | Weitere Namensquellen (I-008 SSDP/LLMNR), Hersteller in Tabelle/Export (I-007), ICMP mit Rechten, volle OUI-Liste (I-003) |
+| 0.5.0–0.5.5 ✅ | mDNS/NetBIOS (I-002), Kennung-Namen abwerten (I-009), Versionsführung, LLMNR/SSDP (I-008, teilweise), Live-Ergebnisse (I-044), Bereiche + Format-Hinweis (I-045/I-046) |
+| 0.6.0 (Plan) | Rest von I-008 (SNMP sysName, HTTP-Server-Header), Hilfe vollständig (I-042), Hersteller in Tabelle/Export (I-007), ICMP mit Rechten, volle OUI-Liste (I-003) |
 | 0.7.0 (Plan) | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute (I-010) |
 | 0.8.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |
 | 0.9.0 (Plan) | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
