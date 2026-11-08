@@ -20,7 +20,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
 - **I-003 halb fertig (0.4.3):** Mechanismus (`internal/scan/oui.go`, `data/oui.txt`) und `scripts/update-oui.sh` stehen; die **volle IEEE-Liste fehlt**, weil `standards-oui.ieee.org` in der Cloud-Umgebung gesperrt ist. Auf Saschas PC: `scripts/update-oui.sh`, Ergebnis prüfen (IEEE-Nutzungsbedingungen!), committen. Alternative: Host in der Umgebung freigeben. Die nmap-Liste (`nmap-mac-prefixes`) wäre erreichbar, ihre Lizenz (NPSL) ist aber unklar → nicht eingebettet.
-- **I-002 umgesetzt (0.5.0):** mDNS + NetBIOS in `internal/scan/udpnames.go`; nur mit lokalen Test-Servern geprüft → Sascha bitte im LAN testen: weniger „(unbekannt)“? Neue Ideen: I-007 (Hersteller in Tabelle/Export), I-008 (SSDP/LLMNR/SNMP).
+- **I-002 umgesetzt (0.5.0):** mDNS + NetBIOS in `internal/scan/udpnames.go`; nur mit lokalen Test-Servern geprüft → Sascha bitte im LAN testen: weniger „(unbekannt)“? Folgeidee I-008 (SSDP/LLMNR/SNMP) ist teilweise umgesetzt.
 - **I-008 teilweise (0.5.3):** LLMNR + SSDP/UPnP in `internal/scan/ssdp.go` (nur lokal getestet) → Sascha bitte im LAN testen (TV, Router, Mediaserver). Offen: SNMP sysName (braucht Community, später mit Logins), HTTP-Server-Header.
 - **I-044 umgesetzt (0.5.4):** Live-Ergebnisse (`Options.OnHost`, `upsertHost` im Server, Feld `pending`, Polling lädt die Liste jede Sekunde). Im LAN prüfen, ob es flüssig wirkt (Tabelle wird je Sekunde neu gezeichnet).
 - **I-045/I-046 umgesetzt (0.5.5):** Ziel-Feld versteht Bereiche (`a.b.c.10-50`, `a.b.c.1-a.b.d.9`) und Komma-Listen (`ExpandTarget` in `targets.go`); Format-Hinweis unter dem Feld, Hilfe mit Tabelle. **I-042 umgesetzt (0.5.6):** Hilfe deckt jetzt Namensquellen, Hersteller, Risiko-Ports, Rechte/Fallback, Datenschutz, Lesezeichen und Startoptionen ab; bei neuen Funktionen weiter mitpflegen.
@@ -31,6 +31,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - Empfohlene Reihenfolge: I-010 Teil 2 → Logins (I-020/I-022) → I-024.
 
 ## Offen für Sascha
+- **Topologie (I-010 Teil 1) im LAN prüfen:** Steht die FritzBox oben, hängen die Geräte darunter? Für Teil 2 entscheiden: SNMP (Community des Switches nötig) oder LLDP/CDP (braucht Rechte)?
+- **Hersteller auch in die CSV?** (I-007: bisher bewusst nur in HTML/Markdown, damit der CSV-Import nicht bricht.)
 - **Entscheidung I-003:** volle OUI-Liste per `scripts/update-oui.sh` selbst erzeugen, Host `standards-oui.ieee.org` freigeben, oder nmap-Liste trotz Lizenzfrage?
 - Scan im LAN wiederholen: Wie viele Geräte bleiben nach I-002/I-008 (mDNS, NetBIOS, LLMNR, SSDP) noch „(unbekannt)“? Bekommt die Hue Bridge einen sinnvollen Namen (I-009)?
 - Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
@@ -44,8 +46,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.2.0 ✅ | Web-UI (Design A+B), Hilfe, Web-Links, Demo-Daten |
 | 0.3.0–0.3.3 ✅ | Scan-Kern (TCP-Portscan, ARP/MAC, Reverse-DNS, Banner), Auswahl/Umbenennen, mehrstufige Namenssuche, `--diagnose` |
 | 0.4.0–0.4.3 ✅ | Export CSV/HTML/Markdown, Benutzername, Lesezeichen-Export, TLS-Zertifikatsinfos, OUI-Mechanismus (volle Liste fehlt, I-003) |
-| 0.5.0–0.5.5 ✅ | mDNS/NetBIOS (I-002), Kennung-Namen abwerten (I-009), Versionsführung, LLMNR/SSDP (I-008, teilweise), Live-Ergebnisse (I-044), Bereiche + Format-Hinweis (I-045/I-046) |
-| 0.6.0 (Plan) | Rest von I-008 (SNMP sysName, HTTP-Server-Header), Hersteller in Tabelle/Export (I-007), ICMP mit Rechten, volle OUI-Liste (I-003) |
+| 0.5.0–0.5.8 ✅ | mDNS/NetBIOS (I-002), Kennung-Namen abwerten (I-009), Versionsführung, LLMNR/SSDP (I-008, teilweise), Live-Ergebnisse (I-044), Bereiche + Format-Hinweis (I-045/I-046), Hilfe vollständig (I-042), Topologie-Stern unter Gateway (I-010 Teil 1), Hersteller-Spalte (I-007) |
+| 0.6.0 (Plan) | Rest von I-008 (SNMP sysName, HTTP-Server-Header), ICMP mit Rechten, volle OUI-Liste (I-003) |
 | 0.7.0 (Plan) | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute (I-010) |
 | 0.8.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |
 | 0.9.0 (Plan) | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
