@@ -423,3 +423,37 @@ func TestSNMPValidation(t *testing.T) {
 		t.Errorf("clear: %d", rec.Code)
 	}
 }
+
+// Router-Login (I-024): nur von Loopback, Eingaben werden geprueft, Zugangsdaten nie in der Antwort.
+func TestFritzboxGuards(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	post := func(remote, body string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest("POST", "/api/router/fritzbox", strings.NewReader(body))
+		r.Header.Set("Content-Type", "application/json")
+		r.RemoteAddr = remote
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, r)
+		return rec
+	}
+	ok := `{"host":"192.168.1.1","user":"u-4711","password":"pw-geheim"}`
+	if rec := post("192.0.2.9:5555", ok); rec.Code != 403 { // fremder Rechner
+		t.Errorf("fremde Herkunft: %d", rec.Code)
+	}
+	cases := map[string]int{
+		`{"host":"192.168.1.1","user":"","password":"pw-geheim"}`:   400, // Benutzer fehlt
+		`{"host":"8.8.8.8","user":"u-4711","password":"pw-geheim"}`: 400, // nicht in der Geraeteliste
+		`{"host":"192.168.1.1","user":"a\u0001b","password":"x"}`:   400, // Steuerzeichen
+	}
+	for body, want := range cases {
+		rec := post("127.0.0.1:5555", body)
+		if rec.Code != want {
+			t.Errorf("%s: %d, erwartet %d", body, rec.Code, want)
+		}
+		if strings.Contains(rec.Body.String(), "pw-geheim") || strings.Contains(rec.Body.String(), "u-4711") {
+			t.Errorf("Zugangsdaten in der Antwort: %s", rec.Body.String())
+		}
+	}
+	if rec := postJSON(h, "/api/router/clear", `{}`); rec.Code != 200 {
+		t.Errorf("clear: %d", rec.Code)
+	}
+}

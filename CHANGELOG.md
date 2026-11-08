@@ -248,3 +248,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.14.2] – 2026-11-08
 ### Geändert
 - **Spalte „System (Vermutung)“ aus der Tabelle entfernt** (Wunsch Sascha, Tabelle zu breit). Die Vermutung steht weiter im Detail-Panel, im PDF sowie in CSV/HTML/Markdown.
+
+## [0.15.0] – 2026-11-08
+### Hinzugefügt
+- **Router-Login für die FRITZ!Box** (I-024, Teil): Auf der Übersicht gibt es den Bereich „Router-Login“. Mit Benutzer und Passwort liest der NetzScanner per TR-064 (Dienst `Hosts:1`, Port 49000, HTTP-Digest) die Geräteliste der Box: Name, MAC, Verbindungsart (WLAN/Kabel), aktiv/inaktiv. Die Zuordnung zu den Scan-Ergebnissen läuft über die MAC; unbekannte Geräte bekommen den Namen aus der Box (Quelle „Router-Geräteliste“), das Detail-Panel zeigt „Verbindung (Router)“ und „Name laut Router“. Geräte, die nur die Box kennt, werden nach dem Lesen aufgelistet. „Zurücksetzen“ entfernt die Angaben.
+- Neues Paket `internal/router`, Endpunkte `POST /api/router/fritzbox` und `/api/router/clear`.
+### Sicherheit
+- Zugangsdaten nur im Arbeitsspeicher: nie gespeichert, nie protokolliert, nie in Fehlertexten, Antworten oder Exporten; das Passwortfeld wird sofort geleert. Ein Klick = **ein** Anmeldeversuch (bei Ablehnung sofortiger Abbruch, kein Wiederholen → keine Sperre). Der Endpunkt akzeptiert nur Anfragen von diesem Rechner (Loopback) und nur Router-Adressen aus der Geräteliste; keine Weiterleitungen, Antworten begrenzt.
+### Grenzen
+- Nur mit einem Test-Server geprüft, **nicht an einer echten FRITZ!Box**. Voraussetzung: „Zugriff für Anwendungen“ (TR-064) aktiv, Benutzer mit Recht „FRITZ!Box Einstellungen“. Die Antworten (Geräte-Namen) laufen bei HTTP unverschlüsselt im LAN. Nicht unterstützt: andere Router, Windows-DHCP, feste IP-Reservierungen, Mesh-Zuordnung.
