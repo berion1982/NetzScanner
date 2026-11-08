@@ -11,6 +11,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinzugefügt
 - **TLS-Zertifikatsinfos** (I-004): Bei HTTPS-Ports (443, 5001, 8443) liest der Scan Inhaber, Aussteller, Ablaufdatum und „selbst signiert“; das Detail-Panel zeigt sie samt Hinweis „ABGELAUFEN“ bzw. „läuft bald ab“ (< 30 Tage). Das Zertifikat wird nur gelesen, nicht geprüft; Texte werden bereinigt.
 
+## [0.4.3] – 2026-11-08
+### Geändert
+- **Hersteller-Erkennung aus MAC** (I-003, Vorbereitung): Die Herstellerliste liegt jetzt als eingebettete Datei `internal/scan/data/oui.txt` (statt im Code) und wird beim ersten Zugriff geladen; MAC-Schreibweisen mit `:`, `-`, `.` oder ohne Trenner werden erkannt. Neues Skript `scripts/update-oui.sh` erzeugt die Datei aus der IEEE-Registry (`oui.csv`).
+### Hinweis
+- Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
+
 ## [Unreleased]
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.

@@ -12,7 +12,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 |---|---|---|---|---|
 | I-001 | ICMP-Ping (mit Rechten) für Geräte ohne offene Ports; Fallback TCP bleibt | mittel | M | offen |
 | I-002 | Namen per mDNS und NetBIOS | mittel | M | offen |
-| I-003 | Vollständige IEEE-OUI-Herstellerliste einbetten (Lizenz/Quelle prüfen) | mittel | S | offen |
+| I-003 | Vollständige IEEE-OUI-Herstellerliste einbetten (Lizenz/Quelle prüfen) | mittel | S | teilweise (0.4.3): Mechanismus + Skript fertig, volle Liste fehlt |
 | I-004 | TLS-Zertifikatsinfos (CN, Ablauf) bei HTTPS-Ports | niedrig | S | erledigt (0.4.2) |
 | I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
