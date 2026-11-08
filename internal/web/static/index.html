@@ -41,7 +41,8 @@ tr.chk{background:#1a2638}
 .tbl{flex:3 1 520px;overflow-x:auto}
 table{width:100%;border-collapse:collapse}
 th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-td.webcol{white-space:normal;min-width:200px}
+td.webcol{white-space:nowrap}td.cut{max-width:150px;overflow:hidden;text-overflow:ellipsis}td.ports{white-space:normal;max-width:170px}
+a.web.mini{padding:1px 6px;margin:0 3px 0 0}.noweb{color:var(--mut)}
 th{color:var(--mut);font-weight:500}tr.r{cursor:pointer}tr.r:hover,tr.sel{background:#1c2330}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%}
 .tag{background:#21262d;border-radius:5px;padding:1px 6px;margin-right:4px;font-size:12px}
@@ -80,7 +81,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <div class="tiles" id="tiles"></div>
  <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button><span style="flex:1"></span>
   <select id="fmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="html">Lesbare Tabelle (HTML)</option><option value="md">Lesbare Tabelle (Markdown)</option><option value="bookmarks">Lesezeichen (Firefox/Chrome, Leiste)</option><option value="bookmarks-folder">Lesezeichen (Ordner „NetzScanner“)</option></select>
-  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th title="Vermutung aus Hersteller, System und Ports – im Detail-Panel änderbar">Kategorie</th><th title="Vermutung aus SSH-Banner, HTTP-Server-Header und Ports – kann falsch sein">System (Vermutung)</th><th>Standort</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
+  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th title="Geräte mit Weboberfläche haben hier Knöpfe (Port); Klick öffnet sie in neuem Tab">Web</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th title="Vermutung aus Hersteller, System und Ports – im Detail-Panel änderbar">Kategorie</th><th title="Vermutung aus SSH-Banner, HTTP-Server-Header und Ports – kann falsch sein">System (Vermutung)</th><th>Standort</th><th>Offene Ports</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
@@ -156,6 +157,22 @@ function el(tag, props = {}, kids = []) {
 }
 const RISKY = [23, 21, 445, 3389]; // Ports, die im Onboarding genauer angesehen werden sollten
 
+// Hersteller kuerzen: Rechtsform-Zusaetze weg, Rest auf 18 Zeichen (voller Name steht im Tooltip).
+function shortVendor(v) {
+  if (!v) return "";
+  const short = v.replace(/[,.]/g, " ").replace(/\b(co|corp|corporation|inc|incorporated|ltd|limited|llc|gmbh|ag|kg|sa|bv|oy|ab|plc|technologies|technology|electronics|international|communications|systems|group|holdings?)\b/gi, " ").replace(/\s+/g, " ").trim() || v;
+  return short.length > 18 ? short.slice(0, 17) + "…" : short;
+}
+// Kurzer Text mit Auslassung (voller Text im Tooltip).
+const cutText = (t, n) => !t ? "" : (t.length > n ? t.slice(0, n - 1) + "…" : t);
+// Kompakte Web-Knoepfe fuer die Tabelle: "🌐 80" je Web-Zugang; ohne Weboberflaeche ein grauer Strich.
+function webChips(h) {
+  if (!h.webLinks.length) return [el("span", { class: "noweb", text: "–", title: "keine Weboberfläche gefunden" })];
+  return h.webLinks.map(l => {
+    let port = ""; try { const u = new URL(l.url); port = u.port || (u.protocol === "https:" ? "443" : "80"); } catch (e) {}
+    return el("a", { class: "web mini", href: l.url, target: "_blank", rel: "noopener noreferrer", text: "🌐" + (port ? " " + port : ""), title: l.label + " öffnen (" + l.url + ")" });
+  });
+}
 // Web-Links als Buttons; target=_blank + noopener: neuer Tab ohne Zugriff auf diese Seite.
 function linkButtons(h) {
   return h.webLinks.map(l => el("a", { class: "web", href: l.url, target: "_blank", rel: "noopener noreferrer", text: l.label + " ↗" }));
@@ -380,12 +397,11 @@ function renderTable(hosts) {
     tr.append(
       el("td", {}, [cb]),
       el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.pending ? "--mut" : h.known ? "--ok" : "--warn") + ")" })]),
-      el("td", { text: h.ip }), el("td", { text: h.name, style: h.pending ? "color:var(--mut);font-style:italic" : "" }), el("td", { text: h.mac }), el("td", { text: h.vendor || "", title: "Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)" }),
+      el("td", { text: h.ip }), el("td", { class: "cut", text: h.name, title: h.name, style: h.pending ? "color:var(--mut);font-style:italic" : "" }), el("td", { class: "webcol" }, webChips(h)), el("td", { text: h.mac }), el("td", { text: shortVendor(h.vendor), title: (h.vendor ? h.vendor + " – " : "") + "Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)" }),
       el("td", { text: catLabel(h.category), title: h.categoryManual ? "von dir gesetzt" : "Vermutung" }),
-      el("td", { text: h.os || "", title: "Vermutung" }),
-      el("td", { text: h.location || "" }),
-      el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
-      el("td", { class: "webcol" }, linkButtons(h)));
+      el("td", { class: "cut", text: cutText(h.os, 26), title: h.os ? h.os + " (Vermutung)" : "" }),
+      el("td", { class: "cut", text: h.location || "", title: h.location || "" }),
+      el("td", { class: "ports" }, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))));
     tr.addEventListener("click", e => {
       if (e.target.closest("a") || e.target.closest("input")) return; // Link/Haekchen: eigene Aktion
       document.querySelectorAll("tr.sel").forEach(x => x.classList.remove("sel")); tr.classList.add("sel"); showDetails(h);
