@@ -13,7 +13,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-001 | ICMP-Ping (mit Rechten) für Geräte ohne offene Ports; Fallback TCP bleibt | mittel | M | offen |
 | I-002 | Namen per mDNS und NetBIOS | mittel | M | offen |
 | I-003 | Vollständige IEEE-OUI-Herstellerliste einbetten (Lizenz/Quelle prüfen) | mittel | S | offen |
-| I-004 | TLS-Zertifikatsinfos (CN, Ablauf) bei HTTPS-Ports | niedrig | S | offen |
+| I-004 | TLS-Zertifikatsinfos (CN, Ablauf) bei HTTPS-Ports | niedrig | S | erledigt (0.4.2) |
 | I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
 
@@ -54,13 +54,13 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 |---|---|---|---|---|
 | I-030 | CSV der **vom Nutzer ausgewählten** Geräte: Benutzername, IP, MAC, Gerätename, offene Ports – **ohne Passwörter** (Passwörter werden separat beim Import eingegeben, außerhalb dieses Programms) | hoch | M | erledigt (0.4.0) |
 | I-031 | Lesbare Tabelle (HTML/Markdown) zusätzlich zur CSV | hoch | S | erledigt (0.4.0) |
-| I-032 | Lesezeichen-Datei (Netscape-Bookmark-HTML) für Firefox und Chrome mit den ausgewählten Geräten (Web-Links); Ordner als Lesezeichenleiste markiert (`PERSONAL_TOOLBAR_FOLDER="true"`) | mittel | M | umgesetzt (0.4.1), Browser-Import-Test offen |
+| I-032 | Lesezeichen-Datei (Netscape-Bookmark-HTML) für Firefox und Chrome mit den ausgewählten Geräten (Web-Links); Ordner als Lesezeichenleiste markiert (`PERSONAL_TOOLBAR_FOLDER="true"`) | mittel | M | erledigt (0.4.1), Import von Sascha getestet |
 | I-033 | Weitere Formate: JSON, XLSX | niedrig | M | offen |
 | I-034 | Scan-Vergleich (was ist neu/weg seit dem letzten Scan) | niedrig | L | offen |
 
 **Hinweise zu I-030 bis I-032:**
 - CSV: Zellen, die mit `=`, `+`, `-`, `@` beginnen, entschärfen (CSV-Injection in Excel); Gerätenamen kommen aus dem Netz. Für deutsche Excel-Version Trennzeichen `;` und UTF-8 mit BOM anbieten.
-- Lesezeichen: Das Format wird von beiden Browsern importiert. **Ob** die Markierung für die Lesezeichenleiste in beiden Browsern tatsächlich greift, ist **unbestätigt** und muss mit echten Firefox- und Chrome-Importen getestet werden (Fallback: eigener Ordner „NetzScanner“).
+- Lesezeichen: Das Format wird von beiden Browsern importiert. **Ob** die Markierung für die Lesezeichenleiste greift, ist **nicht** bestätigt: Sascha meldet, dass der Import einen eigenen Ordner anlegt. Das reicht ihm; welcher Browser, ist nicht notiert.
 - Lesezeichen enthalten nur URLs ohne Zugangsdaten.
 
 ## Oberfläche / Plattform

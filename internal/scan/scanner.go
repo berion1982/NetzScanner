@@ -123,8 +123,12 @@ func scanHost(ctx context.Context, ip netip.Addr, ports []int, timeout time.Dura
 			}
 			banner := grabBanner(conn, p, 400*time.Millisecond)
 			conn.Close()
+			var cert *model.Cert
+			if httpsPorts[p] { // TLS-Port: Zertifikat lesen (I-004)
+				cert = readCert(ctx, ip.String(), p)
+			}
 			mu.Lock()
-			found = append(found, model.Port{Number: p, Service: ServiceName(p), Banner: banner})
+			found = append(found, model.Port{Number: p, Service: ServiceName(p), Banner: banner, Cert: cert})
 			mu.Unlock()
 		}(p)
 	}

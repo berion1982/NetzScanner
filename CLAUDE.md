@@ -18,6 +18,7 @@ Zuerst `HANDOVER.md` lesen – dort steht der aktuelle Stand und der nächste Sc
 
 ## Git-Workflow
 - Jede Änderung auf dem zugewiesenen Branch, dann **als Pull Request** (Sascha pullt selbst).
+- Nach dem Push **immer direkt den Pull Request erstellen** (ohne Rückfrage); Ziel `main`, Beschreibung auf Deutsch. Ist der alte PR des Branches schon gemergt: Branch auf `origin/main` neu aufsetzen (normaler Push, kein Force-Push).
 - Kleine, thematisch saubere Commits. Keine Merges/Force-Pushes ohne Auftrag.
 - **Nichts löschen ohne Rückfrage** – lieber umbenennen (z. B. `datei.alt`).
 - Jede sichtbare Änderung: `CHANGELOG.md` ergänzen, bei Release `VERSION` anheben (SemVer).
