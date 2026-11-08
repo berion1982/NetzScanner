@@ -51,12 +51,13 @@ type server struct {
 	names    map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
 	users    map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
 	locs     map[string]string // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
+	cats     map[string]string // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
 	finished time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
 func NewHandler(opt Options) http.Handler {
-	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}}
+	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}, cats: map[string]string{}}
 	if opt.Demo {
 		s.hosts = DemoHosts()
 	}
@@ -70,6 +71,7 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
 	mux.HandleFunc("POST /api/hosts/location", s.handleLocation)
+	mux.HandleFunc("POST /api/hosts/category", s.handleCategory)
 	mux.HandleFunc("POST /api/export", s.handleExport)
 	mux.HandleFunc("POST /api/export/topology-pdf", s.handleTopologyPDF)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
@@ -129,6 +131,12 @@ func (s *server) viewLocked() []model.Host {
 		}
 		hosts[i].Username = s.users[hosts[i].IP]
 		hosts[i].Location = s.locs[hosts[i].IP]
+		// Kategorie: Wahl des Nutzers hat Vorrang, sonst Vermutung aus dem Scan (I-015).
+		if c, ok := s.cats[hosts[i].IP]; ok {
+			hosts[i].Category, hosts[i].CategoryManual = c, true
+		} else {
+			hosts[i].Category = scan.Categorize(hosts[i])
+		}
 	}
 	return hosts
 }
@@ -350,6 +358,33 @@ func (s *server) handleLocation(w http.ResponseWriter, r *http.Request) {
 		delete(s.locs, req.IP)
 	} else {
 		s.locs[req.IP] = loc
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleCategory setzt die Kategorie eines Geraets (server, client, network, iot).
+// Leer oder "auto" entfernt die Wahl des Nutzers -> es gilt wieder die automatische Vermutung.
+func (s *server) handleCategory(w http.ResponseWriter, r *http.Request) {
+	var req struct{ IP, Category string }
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	auto := req.Category == "" || req.Category == "auto"
+	if !auto && !model.ValidCategory(req.Category) {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Kategorie"))
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.hasHostLocked(req.IP) {
+		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
+		return
+	}
+	if auto {
+		delete(s.cats, req.IP)
+	} else {
+		s.cats[req.IP] = req.Category
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

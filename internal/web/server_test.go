@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -225,5 +226,47 @@ func TestLocation(t *testing.T) {
 	rec = postJSON(h, "/api/export", `{"format":"csv","ips":["192.168.1.10"]}`)
 	if strings.Contains(rec.Body.String(), "Büro") {
 		t.Errorf("Standort nicht geloescht: %q", rec.Body.String())
+	}
+}
+
+// Kategorie: automatische Vermutung, Setzen durch den Nutzer, Zuruecksetzen, Fehlerfaelle.
+func TestCategory(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	cat := func(ip string) (string, bool) {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/hosts", nil))
+		var hs []model.Host
+		if err := json.Unmarshal(rec.Body.Bytes(), &hs); err != nil {
+			t.Fatal(err)
+		}
+		for _, x := range hs {
+			if x.IP == ip {
+				return x.Category, x.CategoryManual
+			}
+		}
+		t.Fatalf("Geraet %s fehlt", ip)
+		return "", false
+	}
+	if c, m := cat("192.168.1.1"); c != model.CatNetwork || m {
+		t.Errorf("Router automatisch: %q manuell=%v", c, m)
+	}
+	if c, _ := cat("192.168.1.10"); c != model.CatServer { // Synology-NAS
+		t.Errorf("NAS: %q", c)
+	}
+	if rec := postJSON(h, "/api/hosts/category", `{"ip":"192.168.1.10","category":"iot"}`); rec.Code != 200 {
+		t.Fatalf("Kategorie setzen: %d", rec.Code)
+	}
+	if c, m := cat("192.168.1.10"); c != model.CatIoT || !m {
+		t.Errorf("manuell: %q %v", c, m)
+	}
+	if rec := postJSON(h, "/api/hosts/category", `{"ip":"192.168.1.10","category":"kaffee"}`); rec.Code != 400 {
+		t.Errorf("ungueltige Kategorie: %d", rec.Code)
+	}
+	if rec := postJSON(h, "/api/hosts/category", `{"ip":"10.9.9.9","category":"iot"}`); rec.Code != 404 {
+		t.Errorf("unbekannte IP: %d", rec.Code)
+	}
+	postJSON(h, "/api/hosts/category", `{"ip":"192.168.1.10","category":"auto"}`)
+	if c, m := cat("192.168.1.10"); c != model.CatServer || m {
+		t.Errorf("zurueckgesetzt: %q %v", c, m)
 	}
 }

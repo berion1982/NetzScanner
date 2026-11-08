@@ -52,6 +52,10 @@ aside{flex:1 1 240px;padding:16px}
 aside h3{margin:0 0 8px}aside dt{color:var(--mut);margin-top:8px;font-size:12px}
 aside dd{margin:0;font-family:ui-monospace,monospace;word-break:break-all}
 svg{width:100%;height:auto;display:block}
+.node.cat-network rect{fill:#16304f;stroke:#58a6ff}.node.cat-server rect{fill:#173a22;stroke:#3fb950}.node.cat-client rect{fill:#2a2f38;stroke:#8b949e}.node.cat-iot rect{fill:#473414;stroke:#d29922}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}.legend button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:14px;color:var(--txt);font-size:12px}
+.legend button.off{opacity:.45;text-decoration:line-through}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.cat-network{--c:#58a6ff}.cat-server{--c:#3fb950}.cat-client{--c:#8b949e}.cat-iot{--c:#d29922}.legend i,.catdot{background:var(--c)}
 .node{cursor:pointer}.node rect{fill:#1b2430;stroke:var(--line);stroke-width:1.5}
 .node:hover rect,.node.sel rect{stroke:var(--cy)}
 .node text{fill:var(--txt);font-size:12px;text-anchor:middle}.node .s{fill:var(--mut);font-size:10px}
@@ -74,11 +78,12 @@ line{stroke:#3a4656;stroke-width:1.5}
  <div class="tiles" id="tiles"></div>
  <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button><span style="flex:1"></span>
   <select id="fmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="html">Lesbare Tabelle (HTML)</option><option value="md">Lesbare Tabelle (Markdown)</option><option value="bookmarks">Lesezeichen (Firefox/Chrome, Leiste)</option><option value="bookmarks-folder">Lesezeichen (Ordner „NetzScanner“)</option></select>
-  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th>Standort</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
+  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th title="Vermutung aus Hersteller, System und Ports – im Detail-Panel änderbar">Kategorie</th><th>Standort</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
  <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><span id="pdfmsg" class="msg"></span></div>
+ <div class="legend" id="legend" aria-label="Kategorien ein-/ausblenden"></div>
  <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 600 340"></svg></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Knoten anklicken.</p></aside></div>
 </section>
@@ -88,9 +93,9 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
  <h2>Live-Ergebnisse beim Scan</h2><p>Während ein Scan läuft, erscheinen gefundene Geräte sofort in der Liste und werden Stück für Stück ergänzt: zuerst IP und offene Ports, dann MAC und Hersteller, zuletzt der Name. Solange der Name gesucht wird, steht dort grau „(wird ermittelt …)“. Du kannst schon Geräte anklicken, auswählen oder umbenennen; die Details aktualisieren sich von selbst, außer du tippst gerade in ein Feld. Bei „Abbrechen“ bleibt, was bis dahin gefunden wurde.</p>
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen gelten nur, solange das Programm läuft.</p>
- <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
+ <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort, offene Ports und Kategorie – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
- <h2>Topologie</h2><p>Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
+ <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Die Wahl gilt nur, solange das Programm läuft. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
  <table class="ht"><tbody>
  <tr><td><code>192.168.1.0/24</code></td><td>ganzes Netz (254 Geräte); Netz- und Broadcast-Adresse entfallen. Kleinere Teilnetze: <code>/28</code> = 14, <code>/26</code> = 62 Geräte</td></tr>
@@ -170,6 +175,20 @@ function saveUser(ip, user, msgEl) {
     });
 }
 
+// Kategorien (Schluessel wie im Server, siehe internal/model): Reihenfolge = Anzeige.
+const CATS = ["network", "server", "client", "iot"];
+const CAT_LABEL = { network: "Netzwerkgeräte", server: "Server", client: "Clients", iot: "IoT" };
+const hiddenCats = new Set(); // in der Topologie ausgeblendete Kategorien (nur im Browser, nicht gespeichert)
+
+// Kategorie speichern ("auto" = zurueck zur automatischen Vermutung).
+function saveCategory(ip, category, msgEl) {
+  post("/api/hosts/category", { ip, category }).then(r => r.json().then(b => ({ ok: r.ok, b })))
+    .then(({ ok, b }) => {
+      if (!ok) { msgEl.className = "msg err"; msgEl.textContent = b.error; return; }
+      loadHosts().then(() => { const h = hostsCache.find(x => x.ip === ip); if (h) showDetails(h); });
+    });
+}
+
 // Standort speichern (leer = loeschen).
 function saveLocation(ip, location, msgEl) {
   post("/api/hosts/location", { ip, location }).then(r => r.json().then(b => ({ ok: r.ok, b })))
@@ -230,7 +249,14 @@ function buildDetails(h) {
   lSave.addEventListener("click", () => saveLocation(h.ip, lInput.value, lMsg));
   lInput.addEventListener("keydown", e => { if (e.key === "Enter") lSave.click(); });
   const lRow = el("div", { class: "rename" }, [lInput, lSave]);
+  // Kategorie: "Automatisch" = Vermutung des Scans; sonst feste Wahl.
+  const cSel = el("select", { "aria-label": "Kategorie" }, [el("option", { value: "auto", text: "Automatisch (" + (CAT_LABEL[h.category] || "?") + ", Vermutung)" }),
+    ...CATS.map(c => el("option", { value: c, text: CAT_LABEL[c] }))]);
+  cSel.value = h.categoryManual ? h.category : "auto";
+  const cMsg = el("div", { class: "msg" });
+  cSel.addEventListener("change", () => saveCategory(h.ip, cSel.value, cMsg));
   return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg,
+    el("small", { style: "color:var(--mut)", text: "Kategorie" }), el("div", { class: "rename" }, [cSel]), cMsg,
     el("small", { style: "color:var(--mut)", text: "Standort (optional)" }), lRow, lMsg,
     el("small", { style: "color:var(--mut)", text: "Benutzername (optional, kein Passwort)" }), uRow, uMsg, dl];
 }
@@ -286,6 +312,7 @@ function renderTable(hosts) {
       el("td", {}, [cb]),
       el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.pending ? "--mut" : h.known ? "--ok" : "--warn") + ")" })]),
       el("td", { text: h.ip }), el("td", { text: h.name, style: h.pending ? "color:var(--mut);font-style:italic" : "" }), el("td", { text: h.mac }), el("td", { text: h.vendor || "", title: "Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)" }),
+      el("td", { text: CAT_LABEL[h.category] || "", title: h.categoryManual ? "von dir gesetzt" : "Vermutung" }),
       el("td", { text: h.location || "" }),
       el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
       el("td", { class: "webcol" }, linkButtons(h)));
@@ -298,10 +325,23 @@ function renderTable(hosts) {
 }
 
 // Topologie: Ebene = Abstand zum Router (ueber "uplink"), Knoten je Ebene gleichmaessig verteilt.
-function renderMap(hosts) {
-  const byIp = Object.fromEntries(hosts.map(h => [h.ip, h]));
+function renderLegend(all) {
+  document.getElementById("legend").replaceChildren(...CATS.map(c => {
+    const b = el("button", { type: "button", class: "cat-" + c + (hiddenCats.has(c) ? " off" : ""), title: "Kategorie ein-/ausblenden" },
+      [el("i"), document.createTextNode(CAT_LABEL[c] + " (" + all.filter(h => h.category === c).length + ")")]);
+    b.addEventListener("click", () => { hiddenCats.has(c) ? hiddenCats.delete(c) : hiddenCats.add(c); renderMap(hostsCache); });
+    return b;
+  }));
+}
+
+function renderMap(allHosts) {
+  renderLegend(allHosts);
+  const byIp = Object.fromEntries(allHosts.map(h => [h.ip, h]));
+  const hosts = allHosts.filter(h => !hiddenCats.has(h.category)); // ausgeblendete Kategorien weglassen
+  if (!hosts.length) { document.getElementById("map").replaceChildren(); return; }
   const depth = h => { let d = 0, c = h; while (c.uplink && byIp[c.uplink] && d < 10) { c = byIp[c.uplink]; d++; } return d; };
   const levels = {}; hosts.forEach(h => (levels[depth(h)] ||= []).push(h));
+  Object.values(levels).forEach(l => l.sort((a, b) => CATS.indexOf(a.category) - CATS.indexOf(b.category))); // je Ebene nach Kategorie gruppiert (stabil)
   const pos = {}, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("map");
   const maxD = Math.max(...Object.keys(levels).map(Number));
   svg.setAttribute("viewBox", "0 0 600 " + (90 + maxD * 110));
@@ -310,7 +350,7 @@ function renderMap(hosts) {
   const out = [];
   hosts.forEach(h => { if (h.uplink && pos[h.uplink]) out.push(mk("line", { x1: pos[h.uplink].x, y1: pos[h.uplink].y + 44, x2: pos[h.ip].x, y2: pos[h.ip].y })); });
   hosts.forEach(h => {
-    const p = pos[h.ip], g = mk("g", { class: "node", "data-ip": h.ip });
+    const p = pos[h.ip], g = mk("g", { class: "node cat-" + h.category, "data-ip": h.ip });
     g.append(mk("rect", { x: p.x - 60, y: p.y, width: 120, height: 44, rx: 8 }));
     const t1 = mk("text", { x: p.x, y: p.y + 20 }); t1.textContent = h.name;
     const t2 = mk("text", { class: "s", x: p.x, y: p.y + 35 }); t2.textContent = h.ip;
@@ -328,7 +368,7 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
 }));
 
 // Signatur eines Geraets: aendert sie sich, muss das Detail-Panel neu aufgebaut werden.
-const sig = h => JSON.stringify([h.name, h.mac, h.vendor, h.location, h.known, h.pending, h.ports.map(p => p.number)]);
+const sig = h => JSON.stringify([h.name, h.mac, h.vendor, h.location, h.category, h.known, h.pending, h.ports.map(p => p.number)]);
 function loadHosts() {
   return fetch("/api/hosts").then(r => r.json()).then(h => {
     const old = hostsCache.find(x => x.ip === currentIp);

@@ -31,23 +31,64 @@ type WebLink struct {
 	Label string `json:"label"` // z.B. "https :443"
 }
 
+// Kategorien fuer die Topologie (I-015). Die Schluessel stehen in der API und im JSON.
+const (
+	CatNetwork = "network" // Router, Switches, Access Points ...
+	CatServer  = "server"  // Server, NAS, Dienste-Rechner
+	CatClient  = "client"  // PCs, Laptops, Smartphones, Tablets
+	CatIoT     = "iot"     // Smart-Home, Drucker, Kameras, Medienplayer ...
+)
+
+// Categories listet alle Kategorien in der Reihenfolge der Anzeige (Karte, Legende, Liste).
+var Categories = []string{CatNetwork, CatServer, CatClient, CatIoT}
+
+// CategoryLabel liefert die deutsche Bezeichnung einer Kategorie (unbekannt -> "").
+func CategoryLabel(c string) string {
+	switch c {
+	case CatNetwork:
+		return "Netzwerkgeräte"
+	case CatServer:
+		return "Server"
+	case CatClient:
+		return "Clients"
+	case CatIoT:
+		return "IoT"
+	}
+	return ""
+}
+
+// ValidCategory prueft, ob c einer der festen Kategorie-Schluessel ist.
+func ValidCategory(c string) bool { return CategoryLabel(c) != "" }
+
+// CategoryRank liefert die Sortierposition einer Kategorie (unbekannt -> hinten).
+func CategoryRank(c string) int {
+	for i, k := range Categories {
+		if k == c {
+			return i
+		}
+	}
+	return len(Categories)
+}
+
 // Host ist ein gefundenes Geraet im Netz.
 type Host struct {
-	IP          string    `json:"ip"`
-	Name        string    `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
-	NameSource  string    `json:"nameSource,omitempty"`  // Herkunft des Namens: dns, dns-geraet, zertifikat, http-titel, nutzer
-	Location    string    `json:"location,omitempty"`    // optional vom Nutzer eingetragener Standort (Freitext, z. B. "Buero, Raum 2")
-	Username    string    `json:"username,omitempty"`    // optional vom Nutzer eingetragen (KEIN Passwort!)
-	ScannedName string    `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
-	MAC         string    `json:"mac"`
-	Vendor      string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
-	OS          string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
-	Ports       []Port    `json:"ports"`
-	Uplink      string    `json:"uplink,omitempty"`  // Topologie: ID (IP) des vorgelagerten Geraets
-	Role        string    `json:"role,omitempty"`    // "router", "switch" oder leer
-	Known       bool      `json:"known"`             // false = unbekanntes Geraet
-	Pending     bool      `json:"pending,omitempty"` // true = Scan laeuft noch, Angaben (Name) unvollstaendig
-	WebLinks    []WebLink `json:"webLinks"`          // wird durch FillWebLinks berechnet
+	IP             string    `json:"ip"`
+	Name           string    `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
+	NameSource     string    `json:"nameSource,omitempty"`  // Herkunft des Namens: dns, dns-geraet, zertifikat, http-titel, nutzer
+	Location       string    `json:"location,omitempty"`    // optional vom Nutzer eingetragener Standort (Freitext, z. B. "Buero, Raum 2")
+	Username       string    `json:"username,omitempty"`    // optional vom Nutzer eingetragen (KEIN Passwort!)
+	ScannedName    string    `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
+	MAC            string    `json:"mac"`
+	Vendor         string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
+	OS             string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
+	Ports          []Port    `json:"ports"`
+	Uplink         string    `json:"uplink,omitempty"`         // Topologie: ID (IP) des vorgelagerten Geraets
+	Role           string    `json:"role,omitempty"`           // "router", "switch" oder leer
+	Category       string    `json:"category"`                 // Kategorie (CatNetwork ...): Vermutung aus dem Scan oder Wahl des Nutzers
+	CategoryManual bool      `json:"categoryManual,omitempty"` // true = Nutzer hat die Kategorie selbst gesetzt
+	Known          bool      `json:"known"`                    // false = unbekanntes Geraet
+	Pending        bool      `json:"pending,omitempty"`        // true = Scan laeuft noch, Angaben (Name) unvollstaendig
+	WebLinks       []WebLink `json:"webLinks"`                 // wird durch FillWebLinks berechnet
 }
 
 // webPorts ordnet Ports, die typischerweise eine Weboberflaeche liefern,
