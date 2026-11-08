@@ -173,3 +173,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Betriebssystem-Vermutung** (I-013): Das Feld „System (Vermutung)“ wird jetzt aus dem Scan gefüllt – aus SSH-Bannern (OpenSSH-Version + Ubuntu/Debian/Raspbian, RouterOS, Dropbear, Windows-OpenSSH), HTTP-Server-Headern (IIS-Version → Windows, Apache/nginx mit „(Ubuntu)“/„(Debian)“ …) und typischen Ports (RDP/RPC/WinRM → Windows, AFP → macOS, Port 62078 → iOS). Es wird nichts zusätzlich gesendet.
 - Anzeige im Detail-Panel und als neue Spalte „System (Vermutung)“ in der PDF-Geräteliste.
 - Grenzen: nur eine **Vermutung**; Versionszuordnung (z. B. OpenSSH 8.9 → Ubuntu 22.04) gilt nur für unveränderte Distributionspakete; ohne Banner (z. B. die meisten Windows-PCs, Handys) bleibt das Feld leer. Offen: Windows-Version per SMB, SNMP, TTL.
+
+## [0.9.0] – 2026-11-08
+### Hinzugefügt
+- **Standort pro Gerät** (I-014): Im Detail-Panel gibt es ein Freitextfeld „Standort“ (z. B. „Büro, Raum 2“, max. 64 Zeichen). Der Standort steht in der Tabelle, in der **CSV** (neue Spalte „Standort“ nach „Gerätename“), in HTML/Markdown und in der PDF-Geräteliste. Neuer Endpunkt `POST /api/hosts/location`.
+- Achtung: Die CSV hat wieder eine Spalte mehr (Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Standort, Offene Ports).
+- Wie Anzeigenamen und Benutzernamen liegt der Standort nur im Arbeitsspeicher und ist nach dem Beenden des Programms weg.

@@ -50,12 +50,13 @@ type server struct {
 	hosts    []model.Host
 	names    map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
 	users    map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
+	locs     map[string]string // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
 	finished time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
 func NewHandler(opt Options) http.Handler {
-	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}}
+	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}}
 	if opt.Demo {
 		s.hosts = DemoHosts()
 	}
@@ -68,6 +69,7 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("GET /api/hosts", s.handleHosts)
 	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
+	mux.HandleFunc("POST /api/hosts/location", s.handleLocation)
 	mux.HandleFunc("POST /api/export", s.handleExport)
 	mux.HandleFunc("POST /api/export/topology-pdf", s.handleTopologyPDF)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
@@ -126,6 +128,7 @@ func (s *server) viewLocked() []model.Host {
 			hosts[i].NameSource = "nutzer"
 		}
 		hosts[i].Username = s.users[hosts[i].IP]
+		hosts[i].Location = s.locs[hosts[i].IP]
 	}
 	return hosts
 }
@@ -321,6 +324,32 @@ func (s *server) handleUser(w http.ResponseWriter, r *http.Request) {
 		delete(s.users, req.IP)
 	} else {
 		s.users[req.IP] = user
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleLocation traegt den Standort (Freitext) fuer ein Geraet ein (leer = loeschen).
+func (s *server) handleLocation(w http.ResponseWriter, r *http.Request) {
+	var req struct{ IP, Location string }
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	loc, err := cleanName(req.Location)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody(strings.Replace(err.Error(), "Name", "Standort", 1)))
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.hasHostLocked(req.IP) {
+		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
+		return
+	}
+	if loc == "" {
+		delete(s.locs, req.IP)
+	} else {
+		s.locs[req.IP] = loc
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

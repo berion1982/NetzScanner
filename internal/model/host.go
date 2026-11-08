@@ -36,6 +36,7 @@ type Host struct {
 	IP          string    `json:"ip"`
 	Name        string    `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
 	NameSource  string    `json:"nameSource,omitempty"`  // Herkunft des Namens: dns, dns-geraet, zertifikat, http-titel, nutzer
+	Location    string    `json:"location,omitempty"`    // optional vom Nutzer eingetragener Standort (Freitext, z. B. "Buero, Raum 2")
 	Username    string    `json:"username,omitempty"`    // optional vom Nutzer eingetragen (KEIN Passwort!)
 	ScannedName string    `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
 	MAC         string    `json:"mac"`
