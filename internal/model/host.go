@@ -154,7 +154,7 @@ type Host struct {
 // dem passenden Schema zu. Nur diese Ports werden als Link angeboten.
 var webPorts = map[int]string{
 	80: "http", 443: "https", 631: "http", 5000: "http", 5001: "https",
-	8000: "http", 8080: "http", 8081: "http", 8443: "https", 8888: "http",
+	8000: "http", 8080: "http", 8081: "http", 8123: "http", 8443: "https", 8888: "http",
 }
 
 // FillWebLinks berechnet aus IP und offenen Ports die klickbaren Web-Zugaenge.

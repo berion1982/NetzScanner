@@ -7,7 +7,7 @@ import (
 )
 
 // httpPorts: hier fragen wir per HEAD den "Server"-Header ab.
-var httpPorts = map[int]bool{80: true, 631: true, 5000: true, 8000: true, 8008: true, 8080: true, 8081: true, 8888: true}
+var httpPorts = map[int]bool{80: true, 631: true, 5000: true, 8000: true, 8008: true, 8080: true, 8123: true, 8081: true, 8888: true}
 
 // grabBanner liest (kurz) einen Hinweis auf den Dienst. Banner kommen aus dem
 // Netz und sind NICHT vertrauenswuerdig: nur druckbare ASCII-Zeichen, begrenzte Laenge.

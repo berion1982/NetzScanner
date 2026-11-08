@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/berion1982/netzscanner/internal/model"
@@ -36,5 +37,17 @@ func TestCategorize(t *testing.T) {
 		if got := Categorize(tc.h); got != tc.want {
 			t.Errorf("%s: %q, erwartet %q", tc.name, got, tc.want)
 		}
+	}
+}
+
+// Home Assistant (Port 8123) wird als Linux-basiert erkannt; Windows-Banner haben Vorrang.
+func TestGuessOSHomeAssistant(t *testing.T) {
+	ha := model.Host{Ports: []model.Port{{Number: 8123}, {Number: 22222, Banner: "SSH-2.0-OpenSSH_9.6"}}}
+	if got := GuessOS(ha); !strings.Contains(got, "Home Assistant") {
+		t.Errorf("HA: %q", got)
+	}
+	win := model.Host{Ports: []model.Port{{Number: 8123}, {Number: 80, Banner: "Microsoft-IIS/10.0"}}}
+	if got := GuessOS(win); !strings.Contains(got, "Windows") {
+		t.Errorf("Windows-Vorrang: %q", got)
 	}
 }

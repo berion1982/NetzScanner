@@ -45,12 +45,26 @@ var iisWindows = map[string]string{
 // GuessOS liefert eine Betriebssystem-Vermutung fuer ein Geraet oder "" (unbekannt).
 // Reihenfolge: genaue Hinweise aus Bannern vor groben Hinweisen aus offenen Ports.
 func GuessOS(h model.Host) string {
+	// Home Assistant (Port 8123 = Standard-Weboberflaeche, Port 22222 = SSH von HA OS) liefert in
+	// Bannern keinen Betriebssystem-Hinweis. HA OS, Supervised und Container laufen auf Linux; nur
+	// Windows-Hinweise aus Bannern haben Vorrang (HA Core koennte theoretisch auch dort laufen).
+	if hasPort(&h, 8123) && !strings.Contains(strings.ToLower(osFromAnyBanner(h)), "windows") {
+		return "Home Assistant (Linux-basiert, Vermutung aus Port 8123)"
+	}
+	if os := osFromAnyBanner(h); os != "" {
+		return os
+	}
+	return osFromPorts(h.Ports)
+}
+
+// osFromAnyBanner liefert die erste Banner-Vermutung eines Geraets (leer, wenn keine).
+func osFromAnyBanner(h model.Host) string {
 	for _, p := range h.Ports {
 		if os := osFromBanner(p.Banner); os != "" {
 			return os
 		}
 	}
-	return osFromPorts(h.Ports)
+	return ""
 }
 
 // osFromBanner wertet einen einzelnen Banner aus (SSH oder HTTP-Server-Header).
