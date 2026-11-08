@@ -5,12 +5,15 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/berion1982/netzscanner/internal/model"
 	"github.com/berion1982/netzscanner/internal/scan"
@@ -41,12 +44,13 @@ type server struct {
 	total    int
 	errMsg   string
 	hosts    []model.Host
+	names    map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
 	finished time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
 func NewHandler(opt Options) http.Handler {
-	s := &server{opt: opt}
+	s := &server{opt: opt, names: map[string]string{}}
 	if opt.Demo {
 		s.hosts = DemoHosts()
 	}
@@ -57,6 +61,7 @@ func NewHandler(opt Options) http.Handler {
 	mux.Handle("/", http.FileServer(http.FS(sub)))
 
 	mux.HandleFunc("GET /api/hosts", s.handleHosts)
+	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())
 	})
@@ -96,11 +101,69 @@ func guardPost(next http.Handler) http.Handler {
 func (s *server) handleHosts(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	hosts := s.hosts
-	if hosts == nil {
-		hosts = []model.Host{} // JSON: [] statt null
+	// Kopie bauen und Anzeigenamen des Nutzers einsetzen (Scan-Ergebnis bleibt unveraendert).
+	hosts := make([]model.Host, len(s.hosts)) // JSON: [] statt null
+	copy(hosts, s.hosts)
+	for i := range hosts {
+		if n, ok := s.names[hosts[i].IP]; ok {
+			hosts[i].ScannedName = hosts[i].Name
+			hosts[i].Name = n
+			hosts[i].Known = true
+		}
 	}
 	writeJSON(w, http.StatusOK, hosts)
+}
+
+// maxNameRunes ist die maximale Laenge eines Anzeigenamens.
+const maxNameRunes = 64
+
+// cleanName prueft einen vom Nutzer eingegebenen Namen: getrimmt, hoechstens
+// 64 Zeichen, keine Steuerzeichen (z.B. Zeilenumbrueche - wichtig fuer CSV/Lesezeichen).
+func cleanName(s string) (string, error) {
+	s = strings.TrimSpace(s)
+	if utf8.RuneCountInString(s) > maxNameRunes {
+		return "", fmt.Errorf("Name zu lang (maximal %d Zeichen)", maxNameRunes)
+	}
+	for _, r := range s {
+		if unicode.IsControl(r) {
+			return "", fmt.Errorf("Name enthaelt unzulaessige Zeichen")
+		}
+	}
+	return s, nil
+}
+
+// handleRename setzt den Anzeigenamen eines gefundenen Geraets; leerer Name = zuruecksetzen.
+// Die Namen bleiben ueber neue Scans hinweg (nach IP) erhalten, aber nur bis das Programm endet.
+func (s *server) handleRename(w http.ResponseWriter, r *http.Request) {
+	var req struct{ IP, Name string }
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	name, err := cleanName(req.Name)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody(err.Error()))
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	found := false
+	for _, h := range s.hosts {
+		if h.IP == req.IP {
+			found = true
+			break
+		}
+	}
+	if !found {
+		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
+		return
+	}
+	if name == "" {
+		delete(s.names, req.IP)
+	} else {
+		s.names[req.IP] = name
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
 func (s *server) handleStatus(w http.ResponseWriter, r *http.Request) {

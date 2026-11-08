@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.3.0 (Scan-Kern, nur gegen localhost getestet) · **Datum:** 2026-11-08
+**Stand:** v0.3.1 (Scan-Kern + Auswahl + Umbenennen; nur localhost getestet) · **Datum:** 2026-11-08
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -8,6 +8,7 @@
 - Änderungen immer als PR. Keine GitHub-Actions-Tests.
 
 ## Was existiert
+- Auswahl (Client, `selected` in index.html) und Umbenennen (Server, `names` in server.go, RAM). Export soll die Auswahl als IP-Liste an den Server senden (I-030).
 - Scan: `internal/scan` (targets, ports, arp, oui, banner, scanner), API in `internal/web/server.go`. Start: `./dist/netzscanner`, dann Ziel eingeben.
 - UI: `internal/web` (Server + `static/index.html`), Modell `internal/model`, Start: `./dist/netzscanner` → http://127.0.0.1:8484
 - Grundgerüst: `cmd/netzscanner`, `internal/version`, `scripts/build.sh` (7 Plattformen, getestet).
