@@ -452,7 +452,27 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 	pdf.SetFont("Helvetica", "I", 7)
 	pdf.SetTextColor(110, 110, 110)
 	pdf.SetXY(pdfMargin, pdfPageH-14)
-	pdf.CellFormat(0, 4, t("Hinweis: Ohne SNMP/LLDP ist dies eine Sternansicht (Router oben, Geraete im selben Subnetz darunter), keine echte Verkabelung."), "", 0, "L", false, 0, "")
+	pdf.CellFormat(0, 4, t(topologyNote(hosts)), "", 0, "L", false, 0, "")
+}
+
+// topologyNote liefert den Hinweis unter der Karte passend zur Datenquelle der Verbindungen:
+// Mesh-Liste der FRITZ!Box (Host.MeshLink) und/oder SNMP (Host.UplinkPort). Ohne beides: Sternansicht.
+// Ausschliesslich ASCII, weil die PDF-Schrift nur Windows-1252 kann.
+func topologyNote(hosts []model.Host) string {
+	mesh, snmp := false, false
+	for _, h := range hosts {
+		mesh = mesh || h.MeshLink != ""
+		snmp = snmp || h.UplinkPort != ""
+	}
+	switch {
+	case mesh && snmp:
+		return "Hinweis: Verbindungen laut Mesh-Liste der FRITZ!Box und SNMP (Switch-Ports); alle uebrigen Geraete haengen vereinfacht am Router."
+	case mesh:
+		return "Hinweis: Verbindungen laut Mesh-Liste der FRITZ!Box (Box/Repeater); Geraete ohne Mesh-Eintrag haengen vereinfacht am Router (Sternansicht)."
+	case snmp:
+		return "Hinweis: Verbindungen laut SNMP (MAC-Tabellen der Switches, Vermutung); Geraete ohne Zuordnung haengen vereinfacht am Router."
+	}
+	return "Hinweis: Ohne SNMP/LLDP ist dies eine Sternansicht (Router oben, Geraete im selben Subnetz darunter), keine echte Verkabelung."
 }
 
 // categoryFill liefert die helle Kastenfarbe (RGB) einer Kategorie; druckfreundlich.
