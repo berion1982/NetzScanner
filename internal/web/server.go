@@ -297,7 +297,7 @@ func (s *server) hasHostLocked(ip string) bool {
 }
 
 // handleExport erzeugt eine Datei aus den ausgewaehlten Geraeten und liefert sie als Download.
-// format: "csv-excel" (; + BOM), "csv" (Komma), "html" oder "md".
+// format: "csv-excel" (; + BOM), "csv" (Komma), "html", "md", "bookmarks" (Lesezeichenleiste) oder "bookmarks-folder".
 func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Format string   `json:"format"`
@@ -345,6 +345,14 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 		ctype, ext, err = "text/html; charset=utf-8", "html", export.WriteHTML(&buf, chosen, meta)
 	case "md":
 		ctype, ext, err = "text/markdown; charset=utf-8", "md", export.WriteMarkdown(&buf, chosen, meta)
+	case "bookmarks", "bookmarks-folder":
+		// Lesezeichen brauchen mindestens einen Web-Link (Geraet mit offenem Web-Port).
+		if export.BookmarkCount(chosen) == 0 {
+			writeJSON(w, http.StatusBadRequest, errBody("keine Web-Links bei den ausgewaehlten Geraeten"))
+			return
+		}
+		ctype, ext = "text/html; charset=utf-8", "html"
+		err = export.WriteBookmarks(&buf, chosen, meta, req.Format == "bookmarks")
 	default:
 		writeJSON(w, http.StatusBadRequest, errBody("unbekanntes Format"))
 		return

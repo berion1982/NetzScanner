@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.4.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.4.1 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -19,7 +19,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
-- **I-032 Lesezeichen-Datei** (Netscape-Bookmark-HTML, Firefox + Chrome, Lesezeichenleiste) auf Basis der Auswahl. Ob die Markierung „Lesezeichenleiste“ in beiden Browsern greift, ist **unbestätigt** → Sascha muss den Import testen. Danach: I-003 (OUI-Liste), FTP/Telnet als Risiko, dann Topologie (I-010).
+- I-032 ist umgesetzt (0.4.1, `internal/export/bookmarks.go`). Ob die Markierung „Lesezeichenleiste“ in Firefox und Chrome greift, ist **unbestätigt** → Sascha muss den Import testen (sonst Variante „Ordner“). Nächste Idee: I-003 (OUI-Liste), FTP/Telnet als Risiko, dann Topologie (I-010).
 
 ## Offen für Sascha
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).

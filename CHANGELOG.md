@@ -2,6 +2,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/de/), Versionierung: [SemVer](https://semver.org/lang/de/).
 Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
+## [0.4.1] – 2026-11-08
+### Hinzugefügt
+- **Lesezeichen-Export** (I-032): Netscape-Bookmark-HTML für Firefox und Chrome/Edge mit den Web-Links der ausgewählten Geräte. Zwei Varianten: Ordner als Lesezeichenleiste markiert (`PERSONAL_TOOLBAR_FOLDER`) oder normaler Ordner „NetzScanner“ (Fallback). Nur URLs, keine Zugangsdaten; Namen werden maskiert. Ohne Web-Link bei der Auswahl kommt eine Fehlermeldung.
+- Hinweis: Ob die Leisten-Markierung in beiden Browsern greift, ist **unbestätigt** (Import-Test durch Sascha nötig).
+
 ## [Unreleased]
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
