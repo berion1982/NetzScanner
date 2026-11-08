@@ -34,6 +34,11 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.5.0 | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM |
 | 0.6.0 | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
 
+## Erkenntnisse aus dem echten Scan (FritzBox 192.168.178.1)
+- Auf Linux mit systemd-resolved (Stub 127.0.0.53) liefert Reverse-DNS für die Gateway-IP den Pseudonamen `_gateway`. Der richtige Name `fritz.box` kommt erst vom DNS-Server direkt auf dem Gerät (Port 53) – Quelle `dns-geraet` in `internal/scan/names.go`.
+- Fehlersuche bei Namen/Ports: `netzscanner --diagnose <IP>`.
+- Offen: Hersteller (OUI) für `0C:72:74` fehlt (I-003); FTP-Port 21 wird noch nicht als Risiko gezählt.
+
 ## Hinweise
 - Hersteller-Erkennung aus MAC (OUI-Liste) einplanen; Liste lizenzkonform einbetten.
 - ICMP/ARP-Raw braucht Admin/root; Fallback TCP-Connect ist Pflicht.
