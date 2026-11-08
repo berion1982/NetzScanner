@@ -220,3 +220,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.13.1] – 2026-11-08
 ### Hinzugefügt
 - **Betriebssystem-Spalte** (I-013, Teil): „System (Vermutung)“ jetzt auch in der Geräte-Tabelle sowie in CSV (neue letzte Spalte „Betriebssystem (Vermutung)“, bestehende Spalten unverändert), HTML und Markdown. Weiterhin nur eine Vermutung aus SSH-Banner, HTTP-Server-Header und Ports; der Wert wird in der CSV gegen Formeln abgesichert.
+
+## [0.13.2] – 2026-11-08
+### Hinzugefügt
+- **Home Assistant erkennen** (I-013): Die Standard-Portliste enthält jetzt 8123 (Weboberfläche von Home Assistant, mit Web-Link und HEAD-Abfrage) und 22222 (SSH von HA OS). Ist 8123 offen, lautet die Betriebssystem-Vermutung „Home Assistant (Linux-basiert, Vermutung aus Port 8123)“; ein Windows-Hinweis aus einem Banner hat Vorrang.
+### Hinweis
+- Das ist eine Vermutung aus dem Port. Eine genaue HA-/Linux-Version liefert der Scan ohne Login nicht. Im LAN noch nicht geprüft.
