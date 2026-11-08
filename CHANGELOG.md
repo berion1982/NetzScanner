@@ -17,6 +17,13 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.8] – 2026-11-08
+### Hinzugefügt
+- **Hersteller in Tabelle und Export** (I-007): neue Spalte „Hersteller (Chip)“ in der Geräteliste (Tooltip erklärt, dass es der Chip-Hersteller laut MAC ist, nicht zwingend der Gerätehersteller); gleiche Beschriftung im Detail-Panel und in HTML/Markdown-Export samt Fußnote. Hilfe-Seite ergänzt.
+### Hinweis
+- Die CSV bleibt unverändert bei den festen Spalten (Benutzername, IP, MAC, Gerätename, Offene Ports), damit der Import ins Zielprogramm nicht bricht. Soll der Hersteller auch in die CSV, wäre das eine Option – Entscheidung bei Sascha.
+- Solange die OUI-Liste klein ist (I-003), bleibt die Spalte bei vielen Geräten leer.
+
 ## [0.5.7] – 2026-11-08
 ### Hinzugefügt
 - **Topologie, erster Schritt** (I-010, Teil 1): Der Scan liest den Standard-Gateway des eigenen Rechners (Linux `/proc/net/route`, Windows `route print`, macOS `route -n get default`; ohne Rechte). Das Gerät mit dieser IP bekommt die Rolle „router“, alle anderen Geräte mit MAC (= selbes Subnetz) den Router als Uplink – die Topologie-Seite zeigt damit statt einer flachen Reihe einen Stern unter dem Router.

@@ -93,14 +93,18 @@ func WriteMarkdown(w io.Writer, hosts []model.Host, m Meta) error {
 	fmt.Fprintf(&b, "# NetzScanner – Geräteliste\n\n")
 	fmt.Fprintf(&b, "- Ziel: %s\n- Erstellt: %s\n- Programm: %s\n- Geräte: %d\n\n",
 		mdEscape(m.Target), m.Generated.Format("02.01.2006 15:04"), mdEscape(m.Version), len(hosts))
-	b.WriteString("| Name | IP | MAC | Hersteller | Benutzername | Offene Ports |\n|---|---|---|---|---|---|\n")
+	b.WriteString("| Name | IP | MAC | Hersteller (Chip) | Benutzername | Offene Ports |\n|---|---|---|---|---|---|\n")
 	for _, h := range hosts {
 		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s |\n", mdEscape(h.Name), mdEscape(h.IP), mdEscape(h.MAC),
 			mdEscape(h.Vendor), mdEscape(h.Username), mdEscape(portList(h)))
 	}
+	b.WriteString("\n" + vendorNote + "\n")
 	_, err := io.WriteString(w, b.String())
 	return err
 }
+
+// vendorNote erklaert die Herstellerspalte (I-007).
+const vendorNote = "Hersteller (Chip): Hersteller laut MAC-Adresse (Netzwerkchip), nicht zwingend der Gerätehersteller."
 
 // htmlPage ist die lesbare Tabelle als eigenstaendige Datei (hell zum Drucken,
 // dunkel bei dunklem Browser-Thema). html/template maskiert alle Werte automatisch.
@@ -115,9 +119,10 @@ th{background:#f6f8fa}.meta{color:#57606a;margin-bottom:16px}a{color:#0969da}
 </style></head><body>
 <h1>NetzScanner – Geräteliste</h1>
 <div class="meta">Ziel: {{.Meta.Target}} · Erstellt: {{.Generated}} · {{.Meta.Version}} · {{len .Hosts}} Geräte</div>
-<table><thead><tr><th>Name</th><th>IP</th><th>MAC</th><th>Hersteller</th><th>Benutzername</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody>
+<table><thead><tr><th>Name</th><th>IP</th><th>MAC</th><th>Hersteller (Chip)</th><th>Benutzername</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody>
 {{range .Hosts}}<tr><td>{{.Name}}</td><td>{{.IP}}</td><td>{{.MAC}}</td><td>{{.Vendor}}</td><td>{{.Username}}</td><td>{{range $i, $p := .Ports}}{{if $i}}, {{end}}{{$p.Number}}{{if $p.Service}} ({{$p.Service}}){{end}}{{end}}</td><td>{{range .WebLinks}}<a href="{{.URL}}" rel="noopener noreferrer">{{.Label}}</a> {{end}}</td></tr>
-{{end}}</tbody></table></body></html>
+{{end}}</tbody></table>
+<p class="meta">{{.Note}}</p></body></html>
 `))
 
 // WriteHTML schreibt die lesbare Tabelle als HTML-Datei.
@@ -126,5 +131,6 @@ func WriteHTML(w io.Writer, hosts []model.Host, m Meta) error {
 		Meta      Meta
 		Hosts     []model.Host
 		Generated string
-	}{m, hosts, m.Generated.Format("02.01.2006 15:04")})
+		Note      string
+	}{m, hosts, m.Generated.Format("02.01.2006 15:04"), vendorNote})
 }
