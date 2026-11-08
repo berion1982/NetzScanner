@@ -129,6 +129,24 @@ func scanHost(ctx context.Context, ip netip.Addr, ports []int, timeout time.Dura
 	return found
 }
 
+// dnsResolver erzwingt den eingebauten Go-Resolver (PreferGo). Der System-Resolver
+// (cgo/NSS) kann lokale Pseudo-Namen liefern, z.B. "_gateway" vom NSS-Modul
+// "myhostname" fuer den Standard-Gateway - das ist dann NICHT der Name des Geraets.
+// Der Go-Resolver fragt dagegen nur /etc/hosts und den konfigurierten DNS-Server.
+var dnsResolver = &net.Resolver{PreferGo: true}
+
+// cleanHostName macht aus einem DNS-Antwortnamen einen Anzeigenamen.
+// Namen mit fuehrendem "_" sind lokale/Dienst-Pseudonamen (z.B. "_gateway") und
+// werden verworfen (Rueckgabe ""), damit stattdessen "(unbekannt)" bzw. ein
+// besserer Name gezeigt wird.
+func cleanHostName(raw string) string {
+	name := sanitize(trimDot(raw))
+	if name == "" || name[0] == '_' {
+		return ""
+	}
+	return name
+}
+
 // resolveNames fragt per Reverse-DNS den Namen je Host ab (parallel, 1,5s Timeout).
 func resolveNames(ctx context.Context, hosts []model.Host) {
 	var wg sync.WaitGroup
@@ -138,9 +156,16 @@ func resolveNames(ctx context.Context, hosts []model.Host) {
 			defer wg.Done()
 			c, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
 			defer cancel()
-			names, err := net.DefaultResolver.LookupAddr(c, h.IP)
-			if err == nil && len(names) > 0 {
-				h.Name = sanitize(trimDot(names[0]))
+			names, err := dnsResolver.LookupAddr(c, h.IP)
+			if err != nil {
+				return
+			}
+			// Ersten brauchbaren Namen nehmen (Pseudonamen wie "_gateway" ueberspringen).
+			for _, n := range names {
+				if name := cleanHostName(n); name != "" {
+					h.Name = name
+					return
+				}
 			}
 		}(&hosts[i])
 	}

@@ -22,16 +22,17 @@ type WebLink struct {
 
 // Host ist ein gefundenes Geraet im Netz.
 type Host struct {
-	IP       string    `json:"ip"`
-	Name     string    `json:"name"`
-	MAC      string    `json:"mac"`
-	Vendor   string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
-	OS       string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
-	Ports    []Port    `json:"ports"`
-	Uplink   string    `json:"uplink,omitempty"` // Topologie: ID (IP) des vorgelagerten Geraets
-	Role     string    `json:"role,omitempty"`   // "router", "switch" oder leer
-	Known    bool      `json:"known"`            // false = unbekanntes Geraet
-	WebLinks []WebLink `json:"webLinks"`         // wird durch FillWebLinks berechnet
+	IP          string    `json:"ip"`
+	Name        string    `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
+	ScannedName string    `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
+	MAC         string    `json:"mac"`
+	Vendor      string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
+	OS          string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
+	Ports       []Port    `json:"ports"`
+	Uplink      string    `json:"uplink,omitempty"` // Topologie: ID (IP) des vorgelagerten Geraets
+	Role        string    `json:"role,omitempty"`   // "router", "switch" oder leer
+	Known       bool      `json:"known"`            // false = unbekanntes Geraet
+	WebLinks    []WebLink `json:"webLinks"`         // wird durch FillWebLinks berechnet
 }
 
 // webPorts ordnet Ports, die typischerweise eine Weboberflaeche liefern,

@@ -2,6 +2,7 @@ package web
 
 import (
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
@@ -102,5 +103,46 @@ func TestScanFlow(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/hosts", nil))
 	if !strings.Contains(rec.Body.String(), "127.0.0.1") || !strings.Contains(rec.Body.String(), strconv.Itoa(port)) {
 		t.Errorf("Ergebnis enthaelt Host/Port nicht: %s", rec.Body.String())
+	}
+}
+
+// postJSON ist ein kleiner Helfer fuer JSON-POSTs in Tests.
+func postJSON(h http.Handler, path, body string) *httptest.ResponseRecorder {
+	r := httptest.NewRequest("POST", path, strings.NewReader(body))
+	r.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, r)
+	return rec
+}
+
+// Umbenennen: Name wird angezeigt, Originalname bleibt als scannedName, Reset funktioniert,
+// unbekannte IPs und unzulaessige Namen werden abgelehnt.
+func TestRename(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	get := func() string {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/hosts", nil))
+		return rec.Body.String()
+	}
+	if rec := postJSON(h, "/api/hosts/name", `{"ip":"192.168.1.10","name":"  NAS Büro  "}`); rec.Code != 200 {
+		t.Fatalf("Umbenennen: Status %d %s", rec.Code, rec.Body.String())
+	}
+	if out := get(); !strings.Contains(out, `"name":"NAS Büro"`) || !strings.Contains(out, `"scannedName":"nas-01"`) {
+		t.Errorf("Name nicht uebernommen: %s", out)
+	}
+	if rec := postJSON(h, "/api/hosts/name", `{"ip":"192.168.1.10","name":""}`); rec.Code != 200 {
+		t.Fatalf("Reset: Status %d", rec.Code)
+	}
+	if out := get(); strings.Contains(out, "NAS Büro") || strings.Contains(out, "scannedName") {
+		t.Errorf("Reset hat nicht gewirkt: %s", out)
+	}
+	for body, want := range map[string]int{
+		`{"ip":"10.9.9.9","name":"x"}`:                                   404,
+		`{"ip":"192.168.1.10","name":"a\nb"}`:                            400,
+		`{"ip":"192.168.1.10","name":"` + strings.Repeat("x", 65) + `"}`: 400,
+	} {
+		if rec := postJSON(h, "/api/hosts/name", body); rec.Code != want {
+			t.Errorf("%.40s: Status %d (erwartet %d)", body, rec.Code, want)
+		}
 	}
 }

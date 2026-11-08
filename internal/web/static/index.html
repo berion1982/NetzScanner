@@ -19,6 +19,16 @@ section{display:none}section.on{display:block}
 .btn.stop{background:#8b2a2a;border-color:var(--bad)}.btn:disabled{opacity:.5;cursor:default}
 .prog{flex:1;min-width:160px;color:var(--mut)}
 .bar{height:6px;background:#21262d;border-radius:3px;margin-top:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);width:0}
+.selbar{display:flex;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);color:var(--mut)}
+.selbar button{all:unset;cursor:pointer;color:var(--acc)}.selbar button:disabled{color:var(--mut);cursor:default}
+input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px;cursor:pointer}
+tr.chk{background:#1a2638}
+.node.chk rect{stroke:var(--acc);stroke-width:2}
+.rename{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.rename input{flex:1 1 140px;min-width:0;background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 8px;font:inherit}
+.rename button{background:#21262d;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit}
+.rename button.ok{border-color:#2ea043;background:#238636}
+.msg{font-size:12px;min-height:16px}
 .err{color:var(--bad)}.empty{padding:24px;color:var(--mut)}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
 .tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
@@ -58,7 +68,7 @@ line{stroke:#3a4656;stroke-width:1.5}
   <div class="prog" id="prog">Bereit.</div>
  </div>
  <div class="tiles" id="tiles"></div>
- <div class="row"><div class="card tbl"><table><thead><tr><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
+ <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
@@ -69,6 +79,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Hilfe</h2>
  <p>Der NetzScanner zeigt alle Geräte im Netz mit IP, Name, MAC-Adresse und offenen Ports.</p>
  <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
+ <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen gelten nur, solange das Programm läuft.</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
  <h2>Topologie</h2><p>Zeigt, welches Gerät an welchem hängt (Router → Switch → Geräte). Quelle: Uplink-Angaben (später LLDP/SNMP).</p>
  <h2>Hinweis</h2><p>Ziel eingeben (z. B. <code>192.168.1.0/24</code> oder eine einzelne IP), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
@@ -90,8 +101,22 @@ function linkButtons(h) {
   return h.webLinks.map(l => el("a", { class: "web", href: l.url, target: "_blank", rel: "noopener noreferrer", text: l.label + " ↗" }));
 }
 
-// Detail-Panels (beide Reiter) befuellen.
-function showDetails(h) {
+// Zustand: Auswahl (IPs), zuletzt geladene Liste, aktuell angezeigtes Geraet.
+const selected = new Set();
+let hostsCache = [], currentIp = null;
+
+// Umbenennen: Name an den Server senden (leer = zuruecksetzen), danach neu laden.
+function saveName(ip, name, msgEl) {
+  post("/api/hosts/name", { ip, name }).then(r => r.json().then(b => ({ ok: r.ok, b })))
+    .then(({ ok, b }) => {
+      if (!ok) { msgEl.className = "msg err"; msgEl.textContent = b.error; return; }
+      loadHosts().then(() => { const h = hostsCache.find(x => x.ip === ip); if (h) showDetails(h); });
+    });
+}
+
+// Baut ein Detail-Panel (Name bearbeiten + Infos). Jedes Panel bekommt eigene Elemente,
+// damit die Eingabefelder und Knoepfe in beiden Reitern funktionieren.
+function buildDetails(h) {
   const dl = el("dl");
   const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
   add("IP", h.ip); add("MAC", h.mac); add("Hersteller", h.vendor); add("System (Vermutung)", h.os);
@@ -99,7 +124,42 @@ function showDetails(h) {
   const banners = h.ports.filter(p => p.banner).map(p => p.number + ": " + p.banner).join("\n");
   if (banners) { dl.append(el("dt", { text: "Banner (unverifiziert)" }), el("dd", { style: "white-space:pre-wrap", text: banners })); }
   dl.append(el("dt", { text: "Web-Zugänge" }), el("dd", {}, h.webLinks.length ? linkButtons(h) : ["–"]));
-  document.querySelectorAll(".detail").forEach(d => d.replaceChildren(el("h3", { text: h.name }), dl.cloneNode(true)));
+
+  // Name bearbeiten
+  const input = el("input", { maxlength: "64", "aria-label": "Gerätename" });
+  input.value = h.name === "(unbekannt)" ? "" : h.name;
+  const msg = el("div", { class: "msg" });
+  const save = el("button", { class: "ok", text: "Speichern" });
+  save.addEventListener("click", () => saveName(h.ip, input.value, msg));
+  input.addEventListener("keydown", e => { if (e.key === "Enter") save.click(); });
+  const row = el("div", { class: "rename" }, [input, save]);
+  if (h.scannedName) {
+    const reset = el("button", { text: "Zurücksetzen" });
+    reset.addEventListener("click", () => saveName(h.ip, "", msg));
+    row.append(reset);
+    msg.className = "msg"; msg.style.color = "var(--mut)"; msg.textContent = "Scan-Name: " + h.scannedName;
+  }
+  return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg, dl];
+}
+
+// Detail-Panels (beide Reiter) befuellen.
+function showDetails(h) {
+  currentIp = h.ip;
+  document.querySelectorAll(".detail").forEach(d => d.replaceChildren(...buildDetails(h)));
+}
+
+// Auswahl: Zaehler, Alle-Checkbox, Hervorhebung in Tabelle und Topologie aktualisieren.
+function updateSelection() {
+  document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
+  document.getElementById("selnone").disabled = selected.size === 0;
+  const all = document.getElementById("selall");
+  all.checked = hostsCache.length > 0 && selected.size === hostsCache.length;
+  all.indeterminate = selected.size > 0 && selected.size < hostsCache.length;
+  document.querySelectorAll("#tb tr.r").forEach(tr => {
+    const on = selected.has(tr.dataset.ip);
+    tr.classList.toggle("chk", on); tr.querySelector("input").checked = on;
+  });
+  document.querySelectorAll("#map .node").forEach(g => g.classList.toggle("chk", selected.has(g.dataset.ip)));
 }
 
 function renderTiles(hosts) {
@@ -113,14 +173,17 @@ function renderTiles(hosts) {
 function renderTable(hosts) {
   document.getElementById("empty").style.display = hosts.length ? "none" : "block";
   document.getElementById("tb").replaceChildren(...hosts.map(h => {
-    const tr = el("tr", { class: "r" });
+    const tr = el("tr", { class: "r", "data-ip": h.ip });
+    const cb = el("input", { type: "checkbox", "aria-label": "Gerät " + h.ip + " auswählen" });
+    cb.addEventListener("change", () => { cb.checked ? selected.add(h.ip) : selected.delete(h.ip); updateSelection(); });
     tr.append(
+      el("td", {}, [cb]),
       el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.known ? "--ok" : "--warn") + ")" })]),
       el("td", { text: h.ip }), el("td", { text: h.name }), el("td", { text: h.mac }),
       el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
       el("td", { class: "webcol" }, linkButtons(h)));
     tr.addEventListener("click", e => {
-      if (e.target.closest("a")) return; // Klick auf Link soll nur den Link oeffnen
+      if (e.target.closest("a") || e.target.closest("input")) return; // Link/Haekchen: eigene Aktion
       document.querySelectorAll("tr.sel").forEach(x => x.classList.remove("sel")); tr.classList.add("sel"); showDetails(h);
     });
     return tr;
@@ -140,7 +203,7 @@ function renderMap(hosts) {
   const out = [];
   hosts.forEach(h => { if (h.uplink && pos[h.uplink]) out.push(mk("line", { x1: pos[h.uplink].x, y1: pos[h.uplink].y + 44, x2: pos[h.ip].x, y2: pos[h.ip].y })); });
   hosts.forEach(h => {
-    const p = pos[h.ip], g = mk("g", { class: "node" });
+    const p = pos[h.ip], g = mk("g", { class: "node", "data-ip": h.ip });
     g.append(mk("rect", { x: p.x - 60, y: p.y, width: 120, height: 44, rx: 8 }));
     const t1 = mk("text", { x: p.x, y: p.y + 20 }); t1.textContent = h.name;
     const t2 = mk("text", { class: "s", x: p.x, y: p.y + 35 }); t2.textContent = h.ip;
@@ -157,7 +220,18 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
   b.classList.add("on"); document.getElementById(b.dataset.t).classList.add("on");
 }));
 
-function loadHosts() { return fetch("/api/hosts").then(r => r.json()).then(h => { renderTiles(h); renderTable(h); renderMap(h); }); }
+function loadHosts() {
+  return fetch("/api/hosts").then(r => r.json()).then(h => {
+    hostsCache = h;
+    // Auswahl bereinigen: nur IPs behalten, die es noch gibt.
+    const ips = new Set(h.map(x => x.ip)); [...selected].forEach(ip => { if (!ips.has(ip)) selected.delete(ip); });
+    renderTiles(h); renderTable(h); renderMap(h); updateSelection();
+  });
+}
+document.getElementById("selall").addEventListener("change", e => {
+  hostsCache.forEach(h => e.target.checked ? selected.add(h.ip) : selected.delete(h.ip)); updateSelection();
+});
+document.getElementById("selnone").addEventListener("click", () => { selected.clear(); updateSelection(); });
 
 // JSON-POST mit dem vom Server verlangten Content-Type.
 const post = (u, b) => fetch(u, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b || {}) });

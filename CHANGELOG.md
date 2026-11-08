@@ -6,6 +6,20 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
+## [0.3.2] – 2026-11-08
+### Behoben
+- Gerätename „_gateway“ (gemeldet bei der FritzBox): Der System-Resolver lieferte einen lokalen Pseudonamen (vermutlich vom NSS-Modul `myhostname`). Es wird jetzt der eingebaute Go-Resolver genutzt, und Namen mit führendem `_` werden verworfen.
+### Bekannt
+- Gerätetyp (z. B. „FritzBox“) wird noch nicht erkannt, siehe I-006 in `IDEAS.md`.
+
+## [0.3.1] – 2026-11-08
+### Hinzugefügt
+- Geräte per Häkchen auswählen (einzeln, „Alle“, „Auswahl aufheben“, Zähler); Auswahl wird auch in der Topologie markiert (I-040).
+- Gerätenamen anpassen im Detail-Panel, mit „Zurücksetzen“ und Anzeige des Scan-Namens; Namen bleiben bis zum Programmende und über neue Scans (nach IP) erhalten (I-021).
+- API `POST /api/hosts/name` (max. 64 Zeichen, keine Steuerzeichen).
+### Hinweis
+- Auswahl und Namen liegen nur im Speicher; der Export (CSV, Lesezeichen) folgt in I-030/I-032.
+
 ## [0.3.0] – 2026-11-08
 ### Hinzugefügt
 - Scan-Kern (`internal/scan`): Zielauswertung (CIDR/Einzel-IP, max. /16), TCP-Connect-Portscan ohne Admin-Rechte, Banner-Abfrage, Reverse-DNS, MAC aus der ARP-Tabelle (Linux, Windows, macOS), Hersteller (kleine Beispieltabelle).

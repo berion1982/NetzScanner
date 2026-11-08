@@ -117,3 +117,15 @@ func TestRunCancel(t *testing.T) {
 		t.Error("abgebrochener Scan muss Fehler liefern")
 	}
 }
+
+// Pseudonamen wie "_gateway" (NSS myhostname) duerfen nicht als Geraetename erscheinen;
+// normale Namen bleiben erhalten (ohne Punkt am Ende).
+func TestCleanHostName(t *testing.T) {
+	for in, want := range map[string]string{
+		"_gateway": "", "_Gateway.": "", "fritz.box.": "fritz.box", "nas-01": "nas-01", "": "", "a\x00b": "ab",
+	} {
+		if got := cleanHostName(in); got != want {
+			t.Errorf("cleanHostName(%q) = %q, erwartet %q", in, got, want)
+		}
+	}
+}
