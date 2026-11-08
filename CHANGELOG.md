@@ -316,3 +316,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Behoben
 - **Reservierungsliste zeigte nur 2 statt 11 FRITZ!Box-Einträge** (vermutete Ursache, an der Box noch nicht bestätigt): Geräte mit Adressvergabe „Static“ wurden nur übernommen, wenn sie eine IP **und** eine MAC hatten und über die MAC im Scan geführt wurden (offline Geräte haben bei der Box oft keine IP). Jetzt zählt die komplette Router-Liste; Einträge ohne IP bleiben in der Liste.
 - Router-Login meldet zusätzlich „Static ohne IP / ohne MAC“, damit man sieht, woran es liegt.
+
+## [0.22.2] – 2026-11-08
+### Entfernt
+- **FRITZ!Box-Zeilen aus dem Reiter „Reservierungen“** (aus 0.22.0/0.22.1): Der Abgleich mit der echten Box (Sascha) zeigt, dass „Static“ im Router-Login **nicht** die festen Zuweisungen sind – es sind u. a. der Router selbst, VPN-Gegenstellen und Geräte ohne IP/MAC; Saschas fest zugewiesener PC fehlte dort. Die Annahme aus 0.22.0 war falsch.
+### Hinweis
+- Die FRITZ!Box gibt feste Zuweisungen per TR-064 nicht heraus (Befund `--diagnose-router`). Der Reiter zeigt wieder nur Windows-DHCP-Reservierungen und weist darauf hin. Die Zeile „Adressvergabe laut Router“ im Router-Login bleibt als Information. Einzige Alternative wäre das undokumentierte `data.lua` der Box-Oberfläche (fragil), derzeit nicht geplant.

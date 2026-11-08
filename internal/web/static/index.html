@@ -98,7 +98,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
   <div class="msg" id="wdmsg" style="white-space:pre-wrap"></div></details>
 </section>
 <section id="resv">
- <h2>Feste DHCP-Reservierungen</h2><p style="color:var(--mut)">Liste der festen IP-Reservierungen aus dem zuletzt gelesenen Windows-DHCP-Server und – falls der Router-Login gemacht wurde – der FRITZ!Box (Geräte mit Adressvergabe „Static“; das ist eine <b>Vermutung</b>, die FRITZ!Box bietet keine eigene Reservierungsliste). Quellen im Reiter „DHCP &amp; Router“. Nur im Arbeitsspeicher. Die CSV-Datei hat die Spalten Netz, IP, MAC, Name (DHCP) und lässt sich als Sicherung oder Vorlage verwenden.</p>
+ <h2>Feste DHCP-Reservierungen</h2><p style="color:var(--mut)">Liste der festen IP-Reservierungen aus dem zuletzt gelesenen Windows-DHCP-Server. <b>Die FRITZ!Box gibt ihre festen Zuweisungen per TR-064 nicht heraus</b> (geprüft an einer echten Box: „Static“ im Router-Login sind Router, VPN-Gegenstellen u. Ä., nicht die festen Zuweisungen) – sie stehen nur in deren Oberfläche. Quelle im Reiter „DHCP &amp; Router“. Nur im Arbeitsspeicher. Die CSV-Datei hat die Spalten Netz, IP, MAC, Name (DHCP) und lässt sich als Sicherung oder Vorlage verwenden.</p>
  <div class="card tbl"><div class="selbar"><span id="rvcount">0 Reservierungen</span><span style="flex:1"></span>
   <select id="rvfmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="md">Lesbare Tabelle (Markdown)</option></select>
   <button class="btn" id="rvexp" disabled>Exportieren</button><span class="msg" id="rvmsg"></span></div>
@@ -409,7 +409,7 @@ document.getElementById("rtgo").addEventListener("click", () => {
   post("/api/router/fritzbox", body).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
     if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
     const only = (b.onlyRouter || []).map(x => "  • " + (x.name || "(ohne Name)") + (x.ip ? " – " + x.ip : "") + (x.active ? "" : " (offline)")).join("\n");
-    msg.textContent = b.entries + " Geräte beim Router, " + b.matched + " davon im Scan zugeordnet." + (b.sources && Object.keys(b.sources).length ? "\nAdressvergabe laut Router: " + Object.entries(b.sources).map(([k, v]) => k + " " + v).join(", ") + (b.staticNoIP || b.staticNoMAC ? " (Static ohne IP: " + (b.staticNoIP || 0) + ", ohne MAC: " + (b.staticNoMAC || 0) + ")" : "") : "") + (only ? "\nNur beim Router bekannt (nicht gescannt):\n" + only : "");
+    msg.textContent = b.entries + " Geräte beim Router, " + b.matched + " davon im Scan zugeordnet." + (b.sources && Object.keys(b.sources).length ? "\nAdressvergabe laut Router: " + Object.entries(b.sources).map(([k, v]) => k + " " + v).join(", ") : "") + (only ? "\nNur beim Router bekannt (nicht gescannt):\n" + only : "");
     renderRouterInfo(b.info);
     loadHosts();
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Abfrage fehlgeschlagen."; });
