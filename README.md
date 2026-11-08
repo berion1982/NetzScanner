@@ -25,6 +25,12 @@ scripts/build.sh native   # nur aktuelle Plattform
 ```
 Voraussetzung: Go ≥ 1.24.
 
+## Fehlersuche
+```bash
+./dist/netzscanner --diagnose 192.168.178.1   # prüft ein Gerät Schritt für Schritt
+```
+Die Ausgabe zeigt, welche Quellen (DNS, Zertifikat, Webseite) etwas liefern – hilfreich, wenn ein Name fehlt.
+
 ## Design-Konzepte ansehen
 `docs/design/index.html` im Browser öffnen.
 

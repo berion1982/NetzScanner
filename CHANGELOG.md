@@ -6,6 +6,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
+## [0.3.3] – 2026-11-08
+### Hinzugefügt
+- Diagnose-Kommando `netzscanner --diagnose <IP>`: prüft ein Gerät Schritt für Schritt (DNS-Konfiguration, offene Ports, ARP/MAC, Reverse-DNS über drei Wege, TLS-Zertifikat, Web-Startseite, Ergebnis der Namenssuche) und zeigt jede Fehlermeldung. Zum Kopieren für die Fehlersuche; enthält keine Zugangsdaten.
+### Hinweis
+- Die mehrstufige Namenssuche aus 0.3.2 (Zertifikat, Seitentitel) war im Merge von PR #4 noch nicht enthalten und kommt mit diesem Release.
+
 ## [0.3.2] – 2026-11-08
 ### Behoben
 - Gerätename „_gateway“ (gemeldet bei der FritzBox): Der System-Resolver lieferte einen lokalen Pseudonamen (vermutlich vom NSS-Modul `myhostname`). Es wird jetzt der eingebaute Go-Resolver genutzt, und Namen mit führendem `_` werden verworfen.
