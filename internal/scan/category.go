@@ -26,7 +26,7 @@ var networkVendors = []string{
 var iotVendors = []string{
 	"espressif", "shelly", "allterco", "tuya", "signify", "philips lighting", "sonos",
 	"amazon", "nest", "roku", "ring", "ecobee", "sonoff", "itead", "xiaomi", "ikea",
-	"lifx", "wyze", "eufy", "tado", "eq-3", "homematic", "brother", "canon", "epson",
+	"lifx", "wyze", "eufy", "fantasia trading", "tado", "eq-3", "homematic", "brother", "canon", "epson",
 	"lexmark", "kyocera", "ricoh", "hikvision", "dahua", "reolink", "axis comm", "nuki", "somfy",
 }
 

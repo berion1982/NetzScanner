@@ -279,3 +279,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Hersteller des Switches aus der `sysObjectID`** (I-052): Bei der SNMP-Abfrage wird die Enterprise-Nummer gelesen (`internal/scan/vendor.go`, u. a. LANCOM, Netgear, Cisco, HP, TP-Link, Zyxel, Ubiquiti, MikroTik). Der Hersteller erscheint hinter der Adresse im SNMP-Ergebnis und in der System-Spalte; bei Geräten ohne Tabellen gibt es einen gezielten Hinweis („Bridge-MIB bzw. LLDP am Gerät einschalten“).
 ### Hinweis
 - Die Nummern-Tabelle ist aus dem Gedächtnis erstellt und **nicht gegen die IANA-Liste geprüft**; unbekannte Nummern bleiben ohne Herstellernamen.
+
+## [0.18.1] – 2026-11-08
+### Geändert
+- **Marke statt Firmenname beim Namensvorschlag** (`internal/scan/brand.go`): Der Block F4:9D:8A gehört laut IEEE „Fantasia Trading LLC“, das Gerät ist ein Anker-/eufy-Produkt (von Sascha bestätigt). Vorschlag jetzt „Anker (eufy) – Fantasia Trading LLC (Vorschlag)“, Kategorie IoT statt Client. Die Tabelle ist klein und wird nur um bestätigte Fälle erweitert.
+### Hinweis
+- Ein Router-Login (FRITZ!Box) liefert den Gerätenamen aus der Box und ersetzt den Vorschlag automatisch.
