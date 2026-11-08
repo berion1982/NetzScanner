@@ -84,7 +84,7 @@ line{stroke:#3a4656;stroke-width:1.5}
 <section id="topo">
  <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><span id="pdfmsg" class="msg"></span></div>
  <div class="legend" id="legend" aria-label="Kategorien ein-/ausblenden"></div>
- <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 600 340"></svg></div>
+ <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 780 340"></svg></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Knoten anklicken.</p></aside></div>
 </section>
 <section id="help" class="help">
@@ -356,18 +356,32 @@ function renderMap(allHosts) {
   const levels = {}; hosts.forEach(h => (levels[depth(h)] ||= []).push(h));
   Object.values(levels).forEach(l => l.sort((a, b) => CATS.indexOf(a.category) - CATS.indexOf(b.category))); // je Ebene nach Kategorie gruppiert (stabil)
   const pos = {}, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("map");
-  const maxD = Math.max(...Object.keys(levels).map(Number));
-  svg.setAttribute("viewBox", "0 0 600 " + (90 + maxD * 110));
-  Object.entries(levels).forEach(([d, list]) => list.forEach((h, i) => { pos[h.ip] = { x: 600 * (i + 1) / (list.length + 1), y: 20 + d * 110 }; }));
+  // Layout: Passen mehr Knoten in eine Ebene als eine Zeile fasst, wird auf weitere Zeilen umgebrochen
+  // (sonst ueberlappen sich die Kaesten bei vielen Geraeten). Breite/Hoehe des Bildes ergeben sich daraus.
+  const W = 780, BW = 120, BH = 44, GAP = 10, ROWSTEP = 56, LEVELGAP = 40;
+  const cols = Math.max(1, Math.floor((W + GAP) / (BW + GAP)));
+  let y = 20;
+  Object.keys(levels).map(Number).sort((a, b) => a - b).forEach(d => {
+    const list = levels[d];
+    for (let start = 0; start < list.length; start += cols) {
+      const row = list.slice(start, start + cols);
+      row.forEach((h, i) => { pos[h.ip] = { x: W / 2 + (i - (row.length - 1) / 2) * (BW + GAP), y }; }); // feste Schrittweite, Zeile mittig
+      y += ROWSTEP;
+    }
+    y += LEVELGAP;
+  });
+  svg.setAttribute("viewBox", "0 0 " + W + " " + (y - LEVELGAP + 20));
+  const cut = (t, n) => t.length > n ? t.slice(0, n - 1) + "…" : t; // lange Namen kuerzen, voller Name steht im Tooltip
   const mk = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
   const out = [];
   hosts.forEach(h => { if (h.uplink && pos[h.uplink]) out.push(mk("line", { x1: pos[h.uplink].x, y1: pos[h.uplink].y + 44, x2: pos[h.ip].x, y2: pos[h.ip].y })); });
   hosts.forEach(h => {
     const p = pos[h.ip], g = mk("g", { class: "node cat-" + h.category, "data-ip": h.ip });
     g.append(mk("rect", { x: p.x - 60, y: p.y, width: 120, height: 44, rx: 8 }));
-    const t1 = mk("text", { x: p.x, y: p.y + 20 }); t1.textContent = h.name;
+    const t1 = mk("text", { x: p.x, y: p.y + 20 }); t1.textContent = cut(h.name, 15);
     const t2 = mk("text", { class: "s", x: p.x, y: p.y + 35 }); t2.textContent = h.ip;
-    g.append(t1, t2);
+    const tip = mk("title", {}); tip.textContent = h.name + " (" + h.ip + ")";
+    g.append(t1, t2, tip);
     g.addEventListener("click", () => { svg.querySelectorAll(".sel").forEach(x => x.classList.remove("sel")); g.classList.add("sel"); showDetails(h); });
     out.push(g);
   });

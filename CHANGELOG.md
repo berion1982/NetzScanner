@@ -199,3 +199,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Kaputte oder zu große Datei: wird zu `.defekt` umbenannt (nicht gelöscht), das Programm startet normal. Knopf „Gespeicherte Eingaben löschen“ in der Hilfe (mit Rückfrage).
 ### Geändert
 - Hilfe: Datenschutz-Abschnitt beschreibt jetzt den Zwischenspeicher.
+
+## [0.11.1] – 2026-11-08
+### Behoben
+- **Topologie-Karte bei vielen Geräten:** Die Kästen einer Ebene überlappten sich und lange Namen liefen heraus. Jetzt wird auf mehrere Zeilen umgebrochen (6 pro Zeile, feste Abstände), Namen werden gekürzt (voller Name als Tooltip) und die Bildhöhe passt sich an.
