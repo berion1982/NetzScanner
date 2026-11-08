@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.21.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.22.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - **Leitlinie:** Der NetzScanner **sammelt und exportiert** Daten (lesend). Kein Zurückschreiben/Importieren in Router oder Server (z. B. DHCP-Reservierungen) – das übernehmen deren eigene Werkzeuge.
@@ -24,6 +24,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
+- **0.22.0 (I-055 d):** Router-Geräte mit `AddressSource`=Static (bei Sascha 11 von 49) landen in „Reservierungen“. **Sascha: mit der FRITZ!Box-Oberfläche abgleichen**, ob das genau die festen Zuweisungen sind. Danach: Mesh (I-055 c) über `X_AVM-DE_GetMeshListPath`.
 - **Befund `--diagnose-router` (Sascha, FRITZ!Box 192.168.178.1):** Hosts:1 hat `GetHostNumberOfEntries/GetSpecificHostEntry/GetGenericHostEntry`, `X_AVM-DE_GetHostListPath`, **`X_AVM-DE_GetMeshListPath`**, `X_AVM-DE_GetSpecificHostEntryByIP`, Friendly-Name-/Geräteklasse-Setter – **keine Aktion für feste IP-Reservierungen**. LANHostConfigManagement: `GetAddressRange`, `SetDHCPServerEnable` usw., ebenfalls keine Reservierungsliste. Folgerungen: (d) per TR-064 vermutlich nicht möglich (Rest: `AddressSource`=Static prüfen oder undokumentiertes `data.lua`, fragil); (c) Mesh ist machbar über `GetMeshListPath` (Datei/JSON, Aufbau erst an der Box ansehen). Der Reiter „Reservierungen“ kennt vorerst nur Windows-DHCP.
 - **0.21.0 (I-055 d, Teil 1):** `./dist/netzscanner --diagnose-router <FritzBox-IP>` (`internal/router/describe.go`) listet Dienste/Aktionen der echten Box; Router-Login zeigt „Adressvergabe laut Router“. **Sascha: Ausgabe beider Dinge schicken** (v. a. Zeilen mit `<<` und die Summe DHCP/Static). Danach Teil 2: Reservierungen der Box in den Reiter „Reservierungen“ übernehmen (Quelle dort nur Windows-DHCP).
 - **0.20.0 (I-057):** Reiter „Reservierungen“ (`internal/web/reservations.go`, `internal/export/reservations.go`), Export CSV/Markdown. **I-058 (Import/Zurückschreiben) verworfen:** Der Scanner ist nur zum **Sammeln und Exportieren** da, Import macht der Windows Server selbst. Offen: FRITZ!Box-Reservierungen (I-055 d).

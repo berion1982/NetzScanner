@@ -30,6 +30,8 @@ import (
 // routerEntry sind die gemerkten Angaben zu einem Geraet laut Router (ohne Zugangsdaten).
 type routerEntry struct {
 	Name          string
+	IP            string // IP laut Router (fuer die Reservierungsliste)
+	Source        string // Adressvergabe laut Router: "DHCP" oder "Static" (Static = vermutlich feste Zuweisung)
 	Iface         string
 	Active        bool
 	SSID          string // WLAN, an dem das Geraet haengt (leer = kein WLAN-Client)
@@ -140,7 +142,7 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 		if m == "" {
 			continue
 		}
-		info[m] = routerEntry{Name: e.Name, Iface: e.Iface, Active: e.Active}
+		info[m] = routerEntry{Name: e.Name, IP: e.IP, Source: e.Source, Iface: e.Iface, Active: e.Active}
 		if inScan[m] {
 			matched++
 		} else if len(only) < maxOnlyRouter {
