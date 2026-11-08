@@ -407,7 +407,7 @@ document.getElementById("snmpbtn").addEventListener("click", () => {
   post("/api/topology/snmp", { community: comm.value, targets }).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
     comm.value = "";
     if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
-    msg.textContent = b.switches.map(x => x.ip + (x.name ? " (" + x.name + ")" : "") + ": " + (x.error ? "Fehler – " + x.error : x.entries + " MAC-Einträge, " + (x.lldp || 0) + " LLDP-Nachbarn")).join("\n") +
+    msg.textContent = b.switches.map(x => x.ip + (x.name ? " (" + x.name + ")" : "") + (x.vendor ? " [" + x.vendor + "]" : "") + ": " + (x.error ? "Fehler – " + x.error : x.entries + " MAC-Einträge, " + (x.lldp || 0) + " LLDP-Nachbarn")).join("\n") +
       "\n" + b.linked + " Gerät(e) einem Switch-Port zugeordnet.";
     loadHosts();
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Abfrage fehlgeschlagen."; });
