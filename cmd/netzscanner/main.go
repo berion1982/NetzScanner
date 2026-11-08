@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/berion1982/netzscanner/internal/router"
 	"github.com/berion1982/netzscanner/internal/scan"
 	"github.com/berion1982/netzscanner/internal/version"
 	"github.com/berion1982/netzscanner/internal/web"
@@ -21,6 +22,7 @@ func main() {
 	listen := flag.String("listen", "127.0.0.1:8484", "Adresse:Port des Webservers")
 	demo := flag.Bool("demo", false, "Demo-Daten anzeigen (zum Ansehen der Oberflaeche)")
 	allowPublic := flag.Bool("allow-public", false, "Scans oeffentlicher IP-Adressen erlauben (nur mit Erlaubnis!)")
+	diagnoseRouter := flag.String("diagnose-router", "", "FRITZ!Box (IP): zeigt, welche TR-064-Dienste/Aktionen sie anbietet (ohne Zugangsdaten, nur lesend)")
 	diagnose := flag.String("diagnose", "", "ein Geraet (IP) Schritt fuer Schritt pruefen und Ergebnis ausgeben (Fehlersuche)")
 	dataFile := flag.String("data", web.DefaultStorePath(), "Datei fuer zwischengespeicherte Eingaben (Namen, Benutzernamen, Standorte, Kategorien)")
 	noSave := flag.Bool("no-save", false, "Eingaben nicht auf die Platte speichern (nur im Arbeitsspeicher)")
@@ -35,6 +37,10 @@ func main() {
 		return
 	}
 
+	if *diagnoseRouter != "" {
+		router.Describe(context.Background(), *diagnoseRouter, os.Stdout)
+		return
+	}
 	if *diagnose != "" {
 		scan.Diagnose(context.Background(), *diagnose, os.Stdout)
 		return
