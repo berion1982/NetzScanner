@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/berion1982/netzscanner/internal/model"
 )
 
 // Startseite und API muessen antworten; die Demo-Daten enthalten Web-Links.
@@ -182,5 +184,22 @@ func TestExportFlow(t *testing.T) {
 	}
 	if rec := postJSON(h, "/api/hosts/user", `{"ip":"10.9.9.9","user":"x"}`); rec.Code != 404 {
 		t.Errorf("unbekannte IP: %d", rec.Code)
+	}
+}
+
+// I-044: Teilergebnisse werden einsortiert (nach IP, numerisch), bei gleicher IP
+// ersetzt und nach Scan-Ende ignoriert.
+func TestUpsertHost(t *testing.T) {
+	s := &server{names: map[string]string{}, users: map[string]string{}, running: true}
+	s.upsertHost(model.Host{IP: "192.168.1.100", Name: "b", Pending: true})
+	s.upsertHost(model.Host{IP: "192.168.1.9", Name: "a"})
+	s.upsertHost(model.Host{IP: "192.168.1.100", Name: "b-fertig"}) // ersetzt, kein Duplikat
+	if len(s.hosts) != 2 || s.hosts[0].IP != "192.168.1.9" || s.hosts[1].Name != "b-fertig" || s.hosts[1].Pending {
+		t.Fatalf("falsche Liste: %+v", s.hosts)
+	}
+	s.running = false
+	s.upsertHost(model.Host{IP: "192.168.1.5"}) // Scan vorbei: ignoriert
+	if len(s.hosts) != 2 {
+		t.Errorf("Teilergebnis nach Scan-Ende darf nicht aufgenommen werden: %+v", s.hosts)
 	}
 }

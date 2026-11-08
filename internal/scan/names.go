@@ -69,14 +69,18 @@ func cleanHostName(raw string) string {
 	return name
 }
 
-// resolveNames ermittelt fuer alle Hosts einen Namen (parallel).
-func resolveNames(ctx context.Context, hosts []model.Host) {
+// resolveNames ermittelt fuer alle Hosts einen Namen (parallel). done (optional)
+// wird je Geraet aufgerufen, sobald dessen Name feststeht (Teilergebnisse, I-044).
+func resolveNames(ctx context.Context, hosts []model.Host, done func(model.Host)) {
 	var wg sync.WaitGroup
 	for i := range hosts {
 		wg.Add(1)
 		go func(h *model.Host) {
 			defer wg.Done()
 			h.Name, h.NameSource = findName(ctx, h)
+			if done != nil {
+				done(*h) // Teilergebnis: dieses Geraet hat jetzt seinen Namen
+			}
 		}(&hosts[i])
 	}
 	wg.Wait()

@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"net/netip"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -222,7 +224,8 @@ func (s *server) handleStart(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 
 	go func() {
-		hosts, err := scan.Run(ctx, scan.Options{Target: req.Target, Ports: ports, AllowPublic: s.opt.AllowPublic},
+		hosts, err := scan.Run(ctx, scan.Options{Target: req.Target, Ports: ports, AllowPublic: s.opt.AllowPublic,
+			OnHost: s.upsertHost}, // Teilergebnisse sofort in die Liste (I-044)
 			func(done, total int) {
 				s.mu.Lock()
 				s.done, s.total = done, total
@@ -233,11 +236,46 @@ func (s *server) handleStart(w http.ResponseWriter, r *http.Request) {
 		s.running, s.finished = false, time.Now()
 		if err != nil {
 			s.errMsg = "Scan abgebrochen: " + err.Error()
+			// Bisher gefundene Teilergebnisse bleiben sichtbar, werden aber abgeschlossen
+			// (kein "wird ermittelt" mehr, Name ggf. "(unbekannt)").
+			for i := range s.hosts {
+				s.hosts[i] = scan.FinishHost(s.hosts[i])
+			}
 			return
 		}
 		s.hosts = hosts
 	}()
 	writeJSON(w, http.StatusAccepted, map[string]int{"total": len(ips)})
+}
+
+// upsertHost nimmt ein Teilergebnis des laufenden Scans auf (I-044): Ist die IP schon
+// in der Liste, werden die Angaben ersetzt, sonst wird das Geraet einsortiert. Die
+// Liste bleibt nach IP sortiert. Nach Scan-Ende oder Abbruch wird sie ignoriert,
+// damit ein spaet eintreffendes Teilergebnis das Endergebnis nicht ueberschreibt.
+func (s *server) upsertHost(h model.Host) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.running {
+		return
+	}
+	for i := range s.hosts {
+		if s.hosts[i].IP == h.IP {
+			s.hosts[i] = h
+			return
+		}
+	}
+	s.hosts = append(s.hosts, h)
+	sort.Slice(s.hosts, func(i, j int) bool { return ipLess(s.hosts[i].IP, s.hosts[j].IP) })
+}
+
+// ipLess sortiert IPv4-Adressen numerisch (Fallback: Text).
+func ipLess(a, b string) bool {
+	x, errX := netip.ParseAddr(a)
+	y, errY := netip.ParseAddr(b)
+	if errX != nil || errY != nil {
+		return a < b
+	}
+	return x.Less(y)
 }
 
 func (s *server) handleCancel(w http.ResponseWriter, r *http.Request) {
