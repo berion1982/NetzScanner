@@ -60,7 +60,7 @@ type server struct {
 	dhcpRows   []dhcp.Entry               // alle Zeilen der letzten DHCP-Abfrage (Reiter "Reservierungen", nur im RAM, I-057)
 	dhcpInfo   map[string]dhcpEntry       // Windows-DHCP-Server: normalisierte MAC -> Eintrag (nur im RAM, I-056)
 	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
-	meshLinks  map[string]meshLink        // Mesh der FRITZ!Box: Geraete-IP -> Vorgaenger (nur im RAM, I-055 c)
+	meshData   *router.Mesh               // Mesh-Liste der FRITZ!Box (nur im RAM, I-055 c); Zuordnung wird bei jeder Ansicht frisch berechnet
 	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
 	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
 	macs       map[string]string          // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
@@ -152,6 +152,11 @@ func (s *server) handleHosts(w http.ResponseWriter, r *http.Request) {
 func (s *server) viewLocked() []model.Host {
 	hosts := make([]model.Host, len(s.hosts)) // JSON: [] statt null
 	copy(hosts, s.hosts)
+	// Mesh (I-055 c): Zuordnung zu den aktuellen Geraeten, so passt sie auch zu spaeter gefundenen Geraeten.
+	var meshLinks map[string]meshLink
+	if s.meshData != nil {
+		meshLinks = buildMeshLinks(*s.meshData, hosts)
+	}
 	for i := range hosts {
 		match := s.inputsMatch(hosts[i].IP, hosts[i].MAC) // Eingaben nur, wenn hinter der IP noch dasselbe Geraet steckt
 		if n, ok := s.names[hosts[i].IP]; ok && match {
@@ -180,7 +185,7 @@ func (s *server) viewLocked() []model.Host {
 			}
 		}
 		// Mesh der FRITZ!Box (I-055 c): ersetzt die Sternansicht; SNMP darunter hat weiter Vorrang.
-		if l, ok := s.meshLinks[hosts[i].IP]; ok && l.mac != "" && l.mac == scan.NormMAC(hosts[i].MAC) {
+		if l, ok := meshLinks[hosts[i].IP]; ok {
 			hosts[i].Uplink, hosts[i].MeshLink = l.Uplink, l.Label
 		}
 		// Topologie per SNMP (I-010 Teil 2): gilt nur, solange hinter der IP dieselbe MAC steckt.
