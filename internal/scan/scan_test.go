@@ -95,7 +95,8 @@ func TestARPParsing(t *testing.T) {
 }
 
 func TestVendor(t *testing.T) {
-	if Vendor("B8:27:EB:01:02:03") != "Raspberry Pi" {
+	// Die volle IEEE-Liste nennt den Namen "Raspberry Pi Trading Ltd" -> Teilstring pruefen.
+	if !strings.Contains(Vendor("B8:27:EB:01:02:03"), "Raspberry Pi") {
 		t.Error("Raspberry nicht erkannt")
 	}
 	if Vendor("DA:11:22:33:44:55") == "" {

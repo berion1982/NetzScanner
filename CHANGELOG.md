@@ -151,3 +151,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Go-Grundgerüst mit `--version` (Versionsnummer, Builddatum, Commit).
 - Build-Skript für Linux/Windows/macOS inkl. ARM (`scripts/build.sh`).
 - Drei dunkle Design-Konzepte als klickbare Entwürfe (`docs/design/`).
+
+## [0.5.9] – 2026-11-08
+### Geändert
+- **Volle IEEE-OUI-Liste eingebettet** (I-003): `internal/scan/data/oui.txt` enthält jetzt ~40.000 Herstellerpräfixe (erzeugt von Sascha mit `scripts/update-oui.sh`). Damit klappt die Chip-Erkennung aus der MAC (z. B. `0C:72:74` = AVM).
+- Test `TestVendor` prüft den Namen als Teilstring („Raspberry Pi“), da die IEEE-Liste „Raspberry Pi Foundation/Trading Ltd“ liefert.
+- Grenze bleibt: Zufällige (lokal administrierte) MAC-Adressen haben keinen Hersteller.

@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.5.8 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.5.9 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -19,7 +19,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
-- **I-003 halb fertig (0.4.3):** Mechanismus (`internal/scan/oui.go`, `data/oui.txt`) und `scripts/update-oui.sh` stehen; die **volle IEEE-Liste fehlt**, weil `standards-oui.ieee.org` in der Cloud-Umgebung gesperrt ist. Auf Saschas PC: `scripts/update-oui.sh`, Ergebnis prüfen (IEEE-Nutzungsbedingungen!), committen. Alternative: Host in der Umgebung freigeben. Die nmap-Liste (`nmap-mac-prefixes`) wäre erreichbar, ihre Lizenz (NPSL) ist aber unklar → nicht eingebettet.
+- **I-003 erledigt (0.5.9):** volle IEEE-Liste (~40.000 Einträge) ist eingebettet. Im LAN prüfen: erscheinen Hersteller bei den Geräten (z. B. AVM bei `0C:72:74`)? Zufällige MACs bleiben ohne Hersteller.
 - **I-002 umgesetzt (0.5.0):** mDNS + NetBIOS in `internal/scan/udpnames.go`; nur mit lokalen Test-Servern geprüft → Sascha bitte im LAN testen: weniger „(unbekannt)“? Folgeidee I-008 (SSDP/LLMNR/SNMP) ist teilweise umgesetzt.
 - **I-008 teilweise (0.5.3):** LLMNR + SSDP/UPnP in `internal/scan/ssdp.go` (nur lokal getestet) → Sascha bitte im LAN testen (TV, Router, Mediaserver). Offen: SNMP sysName (braucht Community, später mit Logins), HTTP-Server-Header.
 - **I-044 umgesetzt (0.5.4):** Live-Ergebnisse (`Options.OnHost`, `upsertHost` im Server, Feld `pending`, Polling lädt die Liste jede Sekunde). Im LAN prüfen, ob es flüssig wirkt (Tabelle wird je Sekunde neu gezeichnet).
@@ -33,7 +33,6 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 ## Offen für Sascha
 - **Topologie (I-010 Teil 1) im LAN prüfen:** Steht die FritzBox oben, hängen die Geräte darunter? Für Teil 2 entscheiden: SNMP (Community des Switches nötig) oder LLDP/CDP (braucht Rechte)?
 - **Hersteller auch in die CSV?** (I-007: bisher bewusst nur in HTML/Markdown, damit der CSV-Import nicht bricht.)
-- **Entscheidung I-003:** volle OUI-Liste per `scripts/update-oui.sh` selbst erzeugen, Host `standards-oui.ieee.org` freigeben, oder nmap-Liste trotz Lizenzfrage?
 - Scan im LAN wiederholen: Wie viele Geräte bleiben nach I-002/I-008 (mDNS, NetBIOS, LLMNR, SSDP) noch „(unbekannt)“? Bekommt die Hue Bridge einen sinnvollen Namen (I-009)?
 - Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).
