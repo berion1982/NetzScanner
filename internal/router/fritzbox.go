@@ -33,6 +33,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -59,6 +60,25 @@ var svcHosts = service{"/upnp/control/hosts", "urn:dslforum-org:service:Hosts:1"
 
 // errUnavailable: Dienst/Aktion gibt es an dieser Box nicht (404/500). Kein Anmeldefehler.
 var errUnavailable = errors.New("nicht verfügbar")
+
+// unavailableError ist errUnavailable mit Zusatzangabe (HTTP-Status, UPnP-Fehlercode/-text der Box),
+// damit die Oberflaeche den echten Grund zeigen kann statt nur "nicht verfuegbar". Kein Geheimnis.
+type unavailableError struct{ detail string }
+
+func (e *unavailableError) Error() string { return errUnavailable.Error() + " (" + e.detail + ")" }
+func (e *unavailableError) Unwrap() error { return errUnavailable }
+
+// reUPnP liest errorCode/errorDescription aus der SOAP-Fehlerantwort (UPnP-Fehler).
+var reUPnP = regexp.MustCompile(`(?s)<errorCode>\s*(\d{1,5})\s*</errorCode>.*?<errorDescription>\s*([^<]{0,60})`)
+
+// faultDetail macht aus Status und Antwortkoerper eine kurze Beschreibung, z. B. "HTTP 500, UPnP 606 Action not authorized".
+func faultDetail(status int, body []byte) string {
+	d := "HTTP " + strconv.Itoa(status)
+	if m := reUPnP.FindSubmatch(body); m != nil {
+		d += ", UPnP " + string(m[1]) + " " + clean(string(m[2]), 60)
+	}
+	return d
+}
 
 // ErrAuth bedeutet: Benutzer/Passwort wurden abgelehnt (kein weiterer Versuch).
 var ErrAuth = errors.New("Anmeldung abgelehnt (Benutzer/Passwort oder Recht „FRITZ!Box Einstellungen“ prüfen)")
@@ -122,8 +142,8 @@ func ReadFritzbox(ctx context.Context, host, user, pass string) (Result, error) 
 	res := Result{Hosts: hosts, Info: info}
 	if mesh, err := c.readMesh(ctx); err == nil {
 		res.Mesh = mesh
-	} else if !errors.Is(err, ErrAuth) { // Mesh ist optional: Grund als Hinweis, kein Abbruch
-		res.Info.Notes = append(res.Info.Notes, "Mesh: "+err.Error())
+	} else { // Mesh ist optional: Grund als Hinweis, kein Abbruch
+		res.Info.Notes = append(res.Info.Notes, "Mesh: "+clean(err.Error(), 160))
 	}
 	return res, nil
 }
@@ -246,7 +266,7 @@ func (c *client) call(ctx context.Context, svc service, action, args string) (ma
 		case http.StatusOK:
 			return parseResponse(data)
 		case http.StatusNotFound, http.StatusInternalServerError:
-			return nil, errUnavailable // Dienst/Aktion fehlt oder UPnP-Fehler (z. B. nicht unterstuetzt)
+			return nil, &unavailableError{faultDetail(resp.StatusCode, data)} // Dienst/Aktion fehlt oder UPnP-Fehler (z. B. nicht unterstuetzt)
 		case http.StatusUnauthorized:
 			ch := parseChallenge(resp.Header.Get("WWW-Authenticate"))
 			if ch == nil {

@@ -173,3 +173,14 @@ func TestReadFritzboxBadHost(t *testing.T) {
 		t.Error("Hostname statt IP muss abgelehnt werden")
 	}
 }
+
+// TestFaultDetail: UPnP-Fehlercode und -text werden aus der SOAP-Fehlerantwort gelesen.
+func TestFaultDetail(t *testing.T) {
+	body := []byte(`<s:Fault><detail><UPnPError><errorCode>606</errorCode><errorDescription>Action not authorized</errorDescription></UPnPError></detail></s:Fault>`)
+	if got := faultDetail(500, body); got != "HTTP 500, UPnP 606 Action not authorized" {
+		t.Errorf("faultDetail = %q", got)
+	}
+	if got := faultDetail(404, nil); got != "HTTP 404" {
+		t.Errorf("faultDetail ohne Körper = %q", got)
+	}
+}
