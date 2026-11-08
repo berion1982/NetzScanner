@@ -22,6 +22,8 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
+- **Empfehlung: I-051 (LLDP-MIB per SNMP)** – herstellerneutral, nennt die echte Verkabelung inkl. Access Points; danach I-052 (Hersteller/Modell aus `sysObjectID`), I-053 (SNMP v3), I-054 (VLAN-Communities). Saschas Geräte: **LANCOM und Netgear** (Annahme: Standard-BRIDGE-MIB reicht, ungeprüft; unverwaltete Netgear-Switches haben kein SNMP). Danach Logins (I-020/I-022) → I-024.
+- **Zuletzt erledigt (0.13.0–0.14.2):** eigene Kategorien (I-017), OS-Spalte in CSV/HTML/Markdown, Home Assistant (Port 8123/22222 → „Home Assistant (Linux-basiert)“, Kategorie Server), SNMP-Topologie (I-010 Teil 2), Tabelle kompakter (Web-Knöpfe „🌐 Port“ hinter dem Namen, Hersteller gekürzt, **System-Spalte aus der Tabelle entfernt** – bleibt in Details, PDF und Exporten).
 - **Neu in 0.6.0–0.14.2 (alles nur lokal/mit Tests geprüft, im LAN noch nicht):** CSV mit Hersteller (0.6.0, I-007), **Topologie-PDF** (0.7.0, I-012), **Betriebssystem-Vermutung** (0.8.0, I-013, teilweise: Banner/Ports), **Standort** (0.9.0, I-014), **Kategorien** (0.10.0, I-015: Vermutung in `internal/scan/category.go`, im LAN prüfen, ob sie bei deinen Geräten stimmt). Sascha bitte im LAN testen: PDF-Button, OS-Vermutung bei Linux-Servern/Windows-Servern, Standort eintragen und in CSV prüfen, Karte mit vielen Geräten (Sammelgruppen) in Web und PDF, Neustart behält Eingaben.
 - **I-013 Rest (offen):** Windows-Version per SMB/NTLM, SNMP sysDescr (Community nötig), TTL-Fingerprint (ICMP-Rechte), SSDP-SERVER-Header. (OS-Spalte in Tabelle/CSV/HTML/Markdown seit 0.13.1 erledigt.)
 - **I-014 Folgeidee erledigt (0.11.0, I-016):** Eingaben liegen in `eingaben.json` (`internal/web/store.go`); im LAN prüfen: Neustart behält Namen/Standorte? Offen: Verschlüsselung der Datei, Export/Import.
@@ -34,16 +36,16 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - **I-010 Teil 1 umgesetzt (0.5.7):** `internal/scan/gateway.go` – Standard-Gateway → Rolle „router“ + Uplink für alle Geräte mit MAC (Sternansicht, keine echte Verkabelung). **Teil 2 offen:** LLDP/CDP (Rechte nötig) und SNMP (Community nötig, ARP-/MAC-/Interface-Tabellen) für echte Switch-Uplinks. Im LAN prüfen: steht die FritzBox oben?
 - **I-009 umgesetzt (0.5.1):** MAC-/EUI-64-artige Namen (`looksLikeIdentifier` in `names.go`) werden verworfen; letzter Ausweg „<Hersteller> (Vorschlag)“ (Quelle `hersteller`). Im LAN prüfen (Hue Bridge).
 - **Neue Idee (nur in `IDEAS.md`, nicht umgesetzt):** I-024 (Router-/Windows-DHCP-Geräteliste nach Login abfragen, baut auf I-020/I-022 auf; Machbarkeit je Router offen).
-- Empfohlene Reihenfolge: I-010 Teil 2 → Logins (I-020/I-022) → I-024.
+- Empfohlene Reihenfolge: I-051 → I-052 → Logins (I-020/I-022) → I-024 (I-010 Teil 2 per SNMP v2c ist seit 0.14.0 umgesetzt).
 
 ## Offen für Sascha
-- **Topologie (I-010 Teil 1) im LAN prüfen:** Steht die FritzBox oben, hängen die Geräte darunter? Für Teil 2 entscheiden: SNMP (Community des Switches nötig) oder LLDP/CDP (braucht Rechte)?
+- **Topologie im LAN prüfen:** Steht die FritzBox oben, hängen die Geräte darunter? **SNMP (0.14.0) an LANCOM/Netgear testen:** SNMP v2c am Switch einschalten, Switch-IPs + Community im Topologie-Tab eingeben; stimmen die Ports? Bei Fehlern Modell und Meldung zurückmelden. Entschieden: SNMP (nicht LLDP zuerst); LLDP-MIB per SNMP folgt als I-051.
 - Scan im LAN wiederholen: Wie viele Geräte bleiben nach I-002/I-008 (mDNS, NetBIOS, LLMNR, SSDP) noch „(unbekannt)“? Bekommt die Hue Bridge einen sinnvollen Namen (I-009)?
 - Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).
 - Weitere Geräte im LAN prüfen: fehlen welche, sind MACs/Namen falsch? (I-005)
 - **Neue Funktionen im LAN prüfen (0.6.0–0.14.2):** Funktioniert „Topologie als PDF“ (Karte lesbar, Liste vollständig)? Stimmt die OS-Vermutung bei deinen Servern? Passt die neue CSV-Spaltenreihenfolge (Hersteller nach MAC, Standort nach Gerätename) zum Zielprogramm?
-- Wünschst du die OS-Spalte auch in Tabelle/CSV/HTML? Soll die Eingaben-Datei verschlüsselt werden oder ein Export/Import der Eingaben kommen?
+- Mag das Zielprogramm die zusätzliche letzte CSV-Spalte „Betriebssystem (Vermutung)“? Passt die Home-Assistant-Erkennung (läuft er auf Port 8123)? Soll die Eingaben-Datei verschlüsselt werden oder ein Export/Import der Eingaben kommen?
 - WLAN-Idee I-050: nur eigene Umgebung oder alle sichtbaren WLANs?
 
 ## Roadmap
@@ -71,8 +73,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.14.0 ✅ | Topologie per SNMP (I-010 Teil 2) |
 | 0.14.1 ✅ | Tabelle kompakter, Web-Spalte vorn |
 | 0.14.2 ✅ | System-Spalte aus der Tabelle (bleibt in Details/Exporten) |
-| 0.13.0 (Plan) | Rest von I-008 (SNMP sysName), ICMP mit Rechten, Rest von I-013 (SMB/SNMP/TTL) |
-| 0.14.0 (Plan) | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute (I-010) |
+| nächste (Plan) | I-051 LLDP-MIB per SNMP, I-052 `sysObjectID`-Erkennung, I-053 SNMP v3, I-054 VLAN-Communities |
+| später (Plan) | Rest von I-008 (SNMP sysName), ICMP mit Rechten, Rest von I-013 (SMB/TTL), Traceroute |
 | 0.15.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |
 | später (Plan) | Weitere Exporte (JSON, XLSX), Scan-Vergleich, Eingaben-Datei verschlüsseln / Export-Import |
 
