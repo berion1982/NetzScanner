@@ -11,7 +11,7 @@ import (
 )
 
 func sample() []model.Host {
-	h := model.Host{IP: "192.168.1.10", Name: "nas-01", MAC: "00:11:32:AA:BB:CC", Vendor: "Synology", Username: "admin", Location: "Büro, Raum 2", Category: model.CatServer,
+	h := model.Host{IP: "192.168.1.10", Name: "nas-01", MAC: "00:11:32:AA:BB:CC", Vendor: "Synology", Username: "admin", Location: "Büro, Raum 2", Category: model.CatServer, OS: "Linux (Synology DSM)",
 		Ports: []model.Port{{Number: 22, Service: "ssh"}, {Number: 5000, Service: "http"}}}
 	h.FillWebLinks()
 	return []model.Host{h}
@@ -23,7 +23,7 @@ func TestCSVStandard(t *testing.T) {
 	if err := WriteCSV(&b, sample(), false); err != nil {
 		t.Fatal(err)
 	}
-	want := "Benutzername,IP,MAC,Hersteller (Chip),Gerätename,Standort,Offene Ports,Kategorie\r\nadmin,192.168.1.10,00:11:32:AA:BB:CC,Synology,nas-01,\"Büro, Raum 2\",\"22, 5000\",Server\r\n"
+	want := "Benutzername,IP,MAC,Hersteller (Chip),Gerätename,Standort,Offene Ports,Kategorie,Betriebssystem (Vermutung)\r\nadmin,192.168.1.10,00:11:32:AA:BB:CC,Synology,nas-01,\"Büro, Raum 2\",\"22, 5000\",Server,Linux (Synology DSM)\r\n"
 	if b.String() != want {
 		t.Errorf("CSV:\n%q\nerwartet:\n%q", b.String(), want)
 	}
@@ -33,7 +33,7 @@ func TestCSVStandard(t *testing.T) {
 func TestCSVExcel(t *testing.T) {
 	var b bytes.Buffer
 	WriteCSV(&b, sample(), true)
-	if !bytes.HasPrefix(b.Bytes(), []byte{0xEF, 0xBB, 0xBF}) || !strings.Contains(b.String(), "Benutzername;IP;MAC;Hersteller (Chip);Gerätename;Standort;Offene Ports;Kategorie") {
+	if !bytes.HasPrefix(b.Bytes(), []byte{0xEF, 0xBB, 0xBF}) || !strings.Contains(b.String(), "Benutzername;IP;MAC;Hersteller (Chip);Gerätename;Standort;Offene Ports;Kategorie;Betriebssystem (Vermutung)") {
 		t.Errorf("Excel-CSV falsch: %q", b.String())
 	}
 }
