@@ -1,7 +1,7 @@
 # NetzScanner
 
 Netzwerk-Scanner für das **Onboarding neuer Netze**: liefert maximale Informationen über alle Geräte.
-Status: **v0.1.0 – Grundlagen und Design-Konzepte** (Scanner noch nicht implementiert).
+Status: **v0.2.0 – Oberfläche mit Demo-Daten** (Scan-Kern folgt in 0.3.0).
 
 ## Ziele
 - Pro Gerät: **IP, Name, MAC (+Hersteller), offene Ports**
@@ -19,6 +19,8 @@ Go, eine statische Binary, Web-UI eingebettet. Begründung: [docs/ADR-0001-sprac
 scripts/build.sh          # alle Plattformen -> dist/
 scripts/build.sh native   # nur aktuelle Plattform
 ./dist/netzscanner --version
+./dist/netzscanner            # startet die Oberfläche auf http://127.0.0.1:8484
+./dist/netzscanner --listen 0.0.0.0:8484   # von anderen Rechnern erreichbar (z. B. Raspberry)
 ```
 Voraussetzung: Go ≥ 1.24.
 

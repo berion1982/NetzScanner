@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetzScanner</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--txt:#e6edf3;--mut:#9da7b3;--acc:#58a6ff;--cy:#39d0d8;--ok:#3fb950;--warn:#d29922;--bad:#f85149}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,sans-serif;display:flex;min-height:100vh}
+nav{width:200px;flex:none;background:var(--panel);border-right:1px solid var(--line);padding:16px;display:flex;flex-direction:column}
+nav b{font-size:16px;margin-bottom:16px}
+nav button{all:unset;cursor:pointer;display:block;padding:8px 10px;border-radius:6px;color:var(--mut)}
+nav button:hover,nav button.on{background:#21262d;color:var(--txt)}
+nav small{margin-top:auto;color:var(--mut);font-size:11px}
+main{flex:1;min-width:0;padding:20px}
+section{display:none}section.on{display:block}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.tile small{color:var(--mut)}.tile div{font-size:28px;font-weight:600}
+.row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.tbl{flex:3 1 520px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.webcol{white-space:normal;min-width:200px}
+th{color:var(--mut);font-weight:500}tr.r{cursor:pointer}tr.r:hover,tr.sel{background:#1c2330}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%}
+.tag{background:#21262d;border-radius:5px;padding:1px 6px;margin-right:4px;font-size:12px}
+.risk{color:var(--bad)}
+a.web{display:inline-block;background:#1f6feb22;border:1px solid var(--acc);color:var(--acc);border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;text-decoration:none;font-size:12px}
+a.web:hover{background:#1f6feb55}
+aside{flex:1 1 240px;padding:16px}
+aside h3{margin:0 0 8px}aside dt{color:var(--mut);margin-top:8px;font-size:12px}
+aside dd{margin:0;font-family:ui-monospace,monospace;word-break:break-all}
+svg{width:100%;height:auto;display:block}
+.node{cursor:pointer}.node rect{fill:#1b2430;stroke:var(--line);stroke-width:1.5}
+.node:hover rect,.node.sel rect{stroke:var(--cy)}
+.node text{fill:var(--txt);font-size:12px;text-anchor:middle}.node .s{fill:var(--mut);font-size:10px}
+line{stroke:#3a4656;stroke-width:1.5}
+.help h2{margin-top:24px}.help{max-width:760px}code{background:#21262d;padding:1px 5px;border-radius:4px}
+@media(max-width:800px){nav{display:none}}
+</style></head><body>
+<nav><b>▣ NetzScanner</b>
+<button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="help">Hilfe</button>
+<small id="ver">…</small></nav>
+<main>
+<section id="ov" class="on">
+ <div class="tiles" id="tiles"></div>
+ <div class="row"><div class="card tbl"><table><thead><tr><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
+</section>
+<section id="topo">
+ <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 600 340"></svg></div>
+ <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Knoten anklicken.</p></aside></div>
+</section>
+<section id="help" class="help">
+ <h2>Hilfe</h2>
+ <p>Der NetzScanner zeigt alle Geräte im Netz mit IP, Name, MAC-Adresse und offenen Ports.</p>
+ <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
+ <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
+ <h2>Topologie</h2><p>Zeigt, welches Gerät an welchem hängt (Router → Switch → Geräte). Quelle: Uplink-Angaben (später LLDP/SNMP).</p>
+ <h2>Hinweis</h2><p>Aktuell werden <b>Demo-Daten</b> angezeigt, der Scan-Kern folgt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
+</section>
+</main>
+<script>
+// Alle Texte aus dem Netz (Namen, Banner) werden NUR per textContent eingesetzt,
+// nie als HTML - sonst koennte ein manipuliertes Geraet Code in die Seite schleusen.
+function el(tag, props = {}, kids = []) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) { if (k === "text") e.textContent = v; else e.setAttribute(k, v); }
+  kids.forEach(c => e.append(c));
+  return e;
+}
+const RISKY = [23, 21, 445, 3389]; // Ports, die im Onboarding genauer angesehen werden sollten
+
+// Web-Links als Buttons; target=_blank + noopener: neuer Tab ohne Zugriff auf diese Seite.
+function linkButtons(h) {
+  return h.webLinks.map(l => el("a", { class: "web", href: l.url, target: "_blank", rel: "noopener noreferrer", text: l.label + " ↗" }));
+}
+
+// Detail-Panels (beide Reiter) befuellen.
+function showDetails(h) {
+  const dl = el("dl");
+  const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
+  add("IP", h.ip); add("MAC", h.mac); add("Hersteller", h.vendor); add("System (Vermutung)", h.os);
+  add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
+  dl.append(el("dt", { text: "Web-Zugänge" }), el("dd", {}, h.webLinks.length ? linkButtons(h) : ["–"]));
+  document.querySelectorAll(".detail").forEach(d => d.replaceChildren(el("h3", { text: h.name }), dl.cloneNode(true)));
+}
+
+function renderTiles(hosts) {
+  const ports = hosts.reduce((n, h) => n + h.ports.length, 0);
+  const unknown = hosts.filter(h => !h.known).length;
+  const risk = hosts.reduce((n, h) => n + h.ports.filter(p => RISKY.includes(p.number)).length, 0);
+  const t = [["Geräte online", hosts.length, ""], ["Offene Ports", ports, ""], ["Unbekannte Geräte", unknown, "color:var(--warn)"], ["Risiko-Ports", risk, "color:var(--bad)"]];
+  document.getElementById("tiles").replaceChildren(...t.map(([l, v, s]) => el("div", { class: "tile" }, [el("small", { text: l }), el("div", { style: s, text: String(v) })])));
+}
+
+function renderTable(hosts) {
+  document.getElementById("tb").replaceChildren(...hosts.map(h => {
+    const tr = el("tr", { class: "r" });
+    tr.append(
+      el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.known ? "--ok" : "--warn") + ")" })]),
+      el("td", { text: h.ip }), el("td", { text: h.name }), el("td", { text: h.mac }),
+      el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
+      el("td", { class: "webcol" }, linkButtons(h)));
+    tr.addEventListener("click", e => {
+      if (e.target.closest("a")) return; // Klick auf Link soll nur den Link oeffnen
+      document.querySelectorAll("tr.sel").forEach(x => x.classList.remove("sel")); tr.classList.add("sel"); showDetails(h);
+    });
+    return tr;
+  }));
+}
+
+// Topologie: Ebene = Abstand zum Router (ueber "uplink"), Knoten je Ebene gleichmaessig verteilt.
+function renderMap(hosts) {
+  const byIp = Object.fromEntries(hosts.map(h => [h.ip, h]));
+  const depth = h => { let d = 0, c = h; while (c.uplink && byIp[c.uplink] && d < 10) { c = byIp[c.uplink]; d++; } return d; };
+  const levels = {}; hosts.forEach(h => (levels[depth(h)] ||= []).push(h));
+  const pos = {}, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("map");
+  const maxD = Math.max(...Object.keys(levels).map(Number));
+  svg.setAttribute("viewBox", "0 0 600 " + (90 + maxD * 110));
+  Object.entries(levels).forEach(([d, list]) => list.forEach((h, i) => { pos[h.ip] = { x: 600 * (i + 1) / (list.length + 1), y: 20 + d * 110 }; }));
+  const mk = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const out = [];
+  hosts.forEach(h => { if (h.uplink && pos[h.uplink]) out.push(mk("line", { x1: pos[h.uplink].x, y1: pos[h.uplink].y + 44, x2: pos[h.ip].x, y2: pos[h.ip].y })); });
+  hosts.forEach(h => {
+    const p = pos[h.ip], g = mk("g", { class: "node" });
+    g.append(mk("rect", { x: p.x - 60, y: p.y, width: 120, height: 44, rx: 8 }));
+    const t1 = mk("text", { x: p.x, y: p.y + 20 }); t1.textContent = h.name;
+    const t2 = mk("text", { class: "s", x: p.x, y: p.y + 35 }); t2.textContent = h.ip;
+    g.append(t1, t2);
+    g.addEventListener("click", () => { svg.querySelectorAll(".sel").forEach(x => x.classList.remove("sel")); g.classList.add("sel"); showDetails(h); });
+    out.push(g);
+  });
+  svg.replaceChildren(...out);
+}
+
+// Reiter-Umschaltung
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("nav button,section").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); document.getElementById(b.dataset.t).classList.add("on");
+}));
+
+fetch("/api/hosts").then(r => r.json()).then(h => { renderTiles(h); renderTable(h); renderMap(h); });
+fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });
+</script></body></html>
