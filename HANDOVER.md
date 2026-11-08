@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.3.1 (Scan-Kern + Auswahl + Umbenennen; nur localhost getestet) · **Datum:** 2026-11-08
+**Stand:** v0.3.2 (Scan-Kern + Auswahl + Umbenennen; nur localhost getestet) · **Datum:** 2026-11-08
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.

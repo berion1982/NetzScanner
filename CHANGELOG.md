@@ -6,6 +6,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
+## [0.3.2] – 2026-11-08
+### Behoben
+- Gerätename „_gateway“ (gemeldet bei der FritzBox): Der System-Resolver lieferte einen lokalen Pseudonamen (vermutlich vom NSS-Modul `myhostname`). Es wird jetzt der eingebaute Go-Resolver genutzt, und Namen mit führendem `_` werden verworfen.
+### Bekannt
+- Gerätetyp (z. B. „FritzBox“) wird noch nicht erkannt, siehe I-006 in `IDEAS.md`.
+
 ## [0.3.1] – 2026-11-08
 ### Hinzugefügt
 - Geräte per Häkchen auswählen (einzeln, „Alle“, „Auswahl aufheben“, Zähler); Auswahl wird auch in der Topologie markiert (I-040).
