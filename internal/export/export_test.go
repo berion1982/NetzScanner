@@ -70,3 +70,28 @@ func TestTablesEscape(t *testing.T) {
 		t.Errorf("HTML ohne Links/Ports: %s", ht.String())
 	}
 }
+
+// Lesezeichen: Netscape-Format, Leisten-Markierung nur auf Wunsch, Namen maskiert, keine Zugangsdaten.
+func TestBookmarks(t *testing.T) {
+	hs := sample()
+	hs[0].Name = `<b>x</b>`
+	m := Meta{Generated: time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC), Version: "test"}
+	var bar, folder bytes.Buffer
+	if err := WriteBookmarks(&bar, hs, m, true); err != nil {
+		t.Fatal(err)
+	}
+	WriteBookmarks(&folder, hs, m, false)
+	o := bar.String()
+	if !strings.HasPrefix(o, "<!DOCTYPE NETSCAPE-Bookmark-file-1>") || !strings.Contains(o, `PERSONAL_TOOLBAR_FOLDER="true"`) {
+		t.Errorf("Kopf/Leiste fehlt: %s", o)
+	}
+	if strings.Contains(folder.String(), "PERSONAL_TOOLBAR_FOLDER") {
+		t.Error("Ordner-Variante darf nicht als Leiste markiert sein")
+	}
+	if !strings.Contains(o, `HREF="http://192.168.1.10:5000/"`) || strings.Contains(o, "<b>x") || !strings.Contains(o, "&lt;b&gt;x") {
+		t.Errorf("Link/Maskierung falsch: %s", o)
+	}
+	if BookmarkCount(hs) != 1 {
+		t.Error("BookmarkCount falsch")
+	}
+}
