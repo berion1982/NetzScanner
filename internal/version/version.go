@@ -4,7 +4,28 @@
 // Ohne ldflags (z.B. "go run") gelten die Standardwerte "dev" / "unbekannt".
 package version
 
-import "fmt"
+import (
+	_ "embed" // fuer //go:embed
+	"fmt"
+	"strings"
+)
+
+// embeddedVersion ist die eingebettete Kopie der Versionsnummer. Sie sorgt dafuer,
+// dass auch "go run" / "go build" ohne ldflags die richtige Nummer zeigen.
+// Sie MUSS immer identisch mit der Datei VERSION im Repo-Wurzelverzeichnis sein
+// (prueft TestEmbeddedMatchesRootFile); beide gemeinsam anheben.
+//
+//go:embed VERSION
+var embeddedVersion string
+
+func init() {
+	// Nur wenn der Linker nichts gesetzt hat, gilt die eingebettete Nummer.
+	if Version == "dev" {
+		if v := strings.TrimSpace(embeddedVersion); v != "" {
+			Version = v
+		}
+	}
+}
 
 // Diese Variablen werden vom Linker ueberschrieben. Sie muessen deshalb
 // "var" (nicht "const") und vom Typ string sein.

@@ -17,6 +17,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.2] – 2026-11-08
+### Geändert
+- **Versionsführung:** Die Versionsnummer ist jetzt zusätzlich im Programm eingebettet (`internal/version/VERSION`). Auch bei `go run`/`go build` ohne Build-Skript zeigt das Programm die richtige Nummer statt „dev“. Ein Test stellt sicher, dass sie mit `VERSION` im Root übereinstimmt. Regeln dazu stehen in `CLAUDE.md` und `HANDOVER.md`.
+
 ## [0.5.1] – 2026-11-08
 ### Geändert
 - **Kennung-Namen abgewertet** (I-009): Namen, die nur eine MAC-/EUI-64-Kennung sind (z. B. `001788FFFE476CE2` einer Hue Bridge), gelten nicht mehr als Gerätename; die Namenssuche probiert dann weitere Quellen (mDNS, NetBIOS, Zertifikat, Seitentitel).
