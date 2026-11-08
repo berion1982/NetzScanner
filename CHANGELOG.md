@@ -207,3 +207,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.12.0] – 2026-11-08
 ### Geändert
 - **Topologie-Karte mit Sammelgruppen:** Geräte mit gleichem Uplink und gleicher Kategorie werden in einem gestrichelten Rahmen („IoT (19)“) zusammengefasst, statt eine Linie je Gerät zu zeichnen. Die Linien laufen über eine Sammelschiene links neben den Gruppen. Einzelne Geräte stehen ohne Rahmen. Nur die Weboberfläche; die PDF-Karte ist noch unverändert (Linie je Gerät).
+
+## [0.12.1] – 2026-11-08
+### Geändert
+- **PDF-Karte mit Sammelgruppen** (wie die Weboberfläche seit 0.12.0): gestrichelter Rahmen je Gruppe in Kategoriefarbe mit Titel und Anzahl, eine Linie pro Gruppe über eine Sammelschiene, Einzelgeräte ohne Rahmen. Bis zu 6 Kästen pro Zeile in einer Gruppe; bei vielen Geräten wird die Karte wie bisher verkleinert.

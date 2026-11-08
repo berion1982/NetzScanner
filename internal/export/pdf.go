@@ -11,6 +11,7 @@ package export
 
 import (
 	"io"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -53,14 +54,54 @@ func pdfDepth(h model.Host, byIP map[string]model.Host) int {
 	return d
 }
 
-// layoutTopology ordnet die Geraete in Ebenen an und liefert Knoten (nach IP) sowie die Gesamthoehe.
-// Passen mehr Kaesten in eine Ebene, als eine Zeile fasst, wird auf mehrere Zeilen umgebrochen.
-func layoutTopology(hosts []model.Host) (map[string]*pdfNode, float64) {
+// Sammelgruppen (wie in der Weboberflaeche, I-015): Geraete mit gleichem Uplink UND gleicher
+// Kategorie stehen in einem gestrichelten Rahmen; vom Uplink fuehrt nur eine Linie zur Gruppe.
+const (
+	pdfGroupPad   = 4.0 // Innenabstand im Rahmen
+	pdfGroupTitle = 6.0 // Hoehe der Titelzeile ("IoT (19)")
+	pdfUnitGap    = 8.0 // Abstand zwischen Gruppen/Einzelgeraeten einer Zeile
+	pdfGroupCols  = 6   // Kaesten pro Zeile innerhalb einer Gruppe
+)
+
+// pdfFrame ist ein Gruppenrahmen (Position/Groesse in mm vor der Skalierung).
+type pdfFrame struct {
+	x, y, w, h float64
+	cat, label string
+}
+
+// pdfLink ist eine Linie vom Uplink zu einer Gruppe/einem Einzelgeraet. Der Weg laeuft ueber eine
+// "Sammelschiene" links neben den Gruppen der Ebene, damit keine Linie eine andere Gruppe kreuzt.
+type pdfLink struct {
+	from         string  // IP des Uplinks
+	trunkX, busY float64 // senkrechte Schiene / waagerechte Hoehe unter dem Uplink
+	toX, toY     float64 // Ziel: linke Kante der Einheit
+}
+
+// pdfLayout ist das Ergebnis von layoutTopology.
+type pdfLayout struct {
+	nodes  map[string]*pdfNode
+	frames []pdfFrame
+	links  []pdfLink
+	height float64
+}
+
+// pdfUnit ist eine Gruppe (>= 2 Geraete) oder ein Einzelgeraet beim Layouten.
+type pdfUnit struct {
+	list  []model.Host
+	group bool
+	cols  int
+	w, h  float64
+}
+
+// layoutTopology ordnet die Geraete in Ebenen an (Abstand zum Router) und bildet je Ebene
+// Sammelgruppen nach (Uplink, Kategorie). Die Einheiten fliessen zeilenweise und brechen um,
+// wenn die Seitenbreite nicht reicht.
+func layoutTopology(hosts []model.Host) pdfLayout {
 	byIP := make(map[string]model.Host, len(hosts))
 	for _, h := range hosts {
 		byIP[h.IP] = h
 	}
-	// Geraete nach Ebene gruppieren (Reihenfolge der Liste bleibt erhalten).
+	// Geraete nach Ebene gruppieren, je Ebene stabil nach Kategorie sortiert.
 	levels := map[int][]model.Host{}
 	maxD := 0
 	for _, h := range hosts {
@@ -70,36 +111,119 @@ func layoutTopology(hosts []model.Host) (map[string]*pdfNode, float64) {
 			maxD = d
 		}
 	}
-	// Innerhalb einer Ebene nach Kategorie sortieren (stabil: Reihenfolge der Liste bleibt je Kategorie).
-	for _, l := range levels {
-		sort.SliceStable(l, func(i, j int) bool {
-			return model.CategoryRank(l[i].Category) < model.CategoryRank(l[j].Category)
-		})
-	}
 	usableW := pdfPageW - 2*pdfMargin
-	cols := int((usableW + pdfGapX) / (pdfBoxW + pdfGapX)) // Kaesten pro Zeile
-	nodes := make(map[string]*pdfNode, len(hosts))
+	lay := pdfLayout{nodes: make(map[string]*pdfNode, len(hosts))}
 	y := 0.0
 	for d := 0; d <= maxD; d++ {
 		list := levels[d]
-		for start := 0; start < len(list); start += cols {
-			end := start + cols
-			if end > len(list) {
-				end = len(list)
-			}
-			row := list[start:end]
-			for i, h := range row {
-				// gleichmaessig ueber die Breite verteilen (wie die SVG-Ansicht)
-				cx := usableW * float64(i+1) / float64(len(row)+1)
-				nodes[h.IP] = &pdfNode{host: h, x: cx - pdfBoxW/2, y: y}
-			}
-			y += pdfBoxH + pdfRowGap
+		if len(list) == 0 {
+			continue
 		}
-		if len(list) > 0 {
-			y += pdfLevelGp
+		sort.SliceStable(list, func(i, j int) bool {
+			return model.CategoryRank(list[i].Category) < model.CategoryRank(list[j].Category)
+		})
+		// 1) Einheiten bilden: Schluessel = Uplink + Kategorie (Reihenfolge des ersten Auftretens).
+		var order []string
+		buckets := map[string][]model.Host{}
+		for _, h := range list {
+			k := h.Uplink + "|" + h.Category
+			if _, ok := buckets[k]; !ok {
+				order = append(order, k)
+			}
+			buckets[k] = append(buckets[k], h)
 		}
+		var units []pdfUnit
+		for _, k := range order {
+			l := buckets[k]
+			if len(l) < 2 { // Einzelgeraet: kein Rahmen
+				units = append(units, pdfUnit{list: l, cols: 1, w: pdfBoxW, h: pdfBoxH})
+				continue
+			}
+			cols := len(l)
+			if cols > pdfGroupCols {
+				cols = pdfGroupCols
+			}
+			rows := (len(l) + cols - 1) / cols
+			units = append(units, pdfUnit{list: l, group: true, cols: cols,
+				w: float64(cols)*pdfBoxW + float64(cols-1)*pdfGapX + 2*pdfGroupPad,
+				h: pdfGroupTitle + float64(rows)*pdfBoxH + float64(rows-1)*pdfGapX + pdfGroupPad})
+		}
+		// 2) Einheiten in Zeilen verteilen (Umbruch bei Platzmangel).
+		var lines [][]pdfUnit
+		var cur []pdfUnit
+		cw := 0.0
+		for _, u := range units {
+			if len(cur) > 0 && cw+pdfUnitGap+u.w > usableW {
+				lines, cur, cw = append(lines, cur), nil, 0
+			}
+			if len(cur) > 0 {
+				cw += pdfUnitGap
+			}
+			cw += u.w
+			cur = append(cur, u)
+		}
+		if len(cur) > 0 {
+			lines = append(lines, cur)
+		}
+		// 3) Positionen vergeben; jede Zeile mittig.
+		levelTop, firstLink, minX := y, len(lay.links), usableW
+		for _, line := range lines {
+			total := pdfUnitGap * float64(len(line)-1)
+			rowH := 0.0
+			for _, u := range line {
+				total += u.w
+				if u.h > rowH {
+					rowH = u.h
+				}
+			}
+			x := (usableW - total) / 2
+			for _, u := range line {
+				first := u.list[0]
+				toY := y + pdfBoxH/2
+				if u.group {
+					toY = y + pdfGroupTitle/2
+					lay.frames = append(lay.frames, pdfFrame{x: x, y: y, w: u.w, h: u.h, cat: first.Category,
+						label: model.CategoryLabel(first.Category) + " (" + strconv.Itoa(len(u.list)) + ")"})
+					for i, h := range u.list {
+						bx := x + pdfGroupPad + float64(i%u.cols)*(pdfBoxW+pdfGapX)
+						by := y + pdfGroupTitle + float64(i/u.cols)*(pdfBoxH+pdfGapX)
+						lay.nodes[h.IP] = &pdfNode{host: h, x: bx, y: by}
+					}
+				} else {
+					lay.nodes[first.IP] = &pdfNode{host: first, x: x, y: y}
+				}
+				if x < minX {
+					minX = x
+				}
+				if _, ok := byIP[first.Uplink]; ok && first.Uplink != "" && first.Uplink != first.IP {
+					lay.links = append(lay.links, pdfLink{from: first.Uplink, toX: x, toY: toY})
+				}
+				x += u.w + pdfUnitGap
+			}
+			y += rowH + pdfRowGap
+		}
+		// Sammelschiene dieser Ebene: links neben den Einheiten, waagerechter Abschnitt knapp ueber der Ebene.
+		for i := firstLink; i < len(lay.links); i++ {
+			lay.links[i].trunkX = minX - pdfGapX
+			lay.links[i].busY = levelTop - pdfLevelGp/2
+		}
+		y += pdfLevelGp
 	}
-	return nodes, y
+	lay.height = y
+	return lay
+}
+
+// categoryStroke liefert die kraeftigere Linienfarbe (RGB) einer Kategorie fuer Gruppenrahmen.
+func categoryStroke(c string) [3]int {
+	switch c {
+	case model.CatNetwork:
+		return [3]int{70, 130, 210}
+	case model.CatServer:
+		return [3]int{50, 140, 70}
+	case model.CatIoT:
+		return [3]int{200, 130, 20}
+	}
+	return [3]int{120, 120, 120}
 }
 
 // pdfText macht aus einem UTF-8-Text einen Text fuer die Standardschrift (Windows-1252).
@@ -203,7 +327,8 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 		return
 	}
 
-	nodes, height := layoutTopology(hosts)
+	lay := layoutTopology(hosts)
+	nodes, height := lay.nodes, lay.height
 	top := pdf.GetY() + 4
 	availH := pdfPageH - top - 20 // Platz fuer Legende, Hinweis und Fusszeile abziehen
 	scale := 1.0
@@ -218,14 +343,36 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 	py := func(n *pdfNode) float64 { return top + n.y*scale }
 	bw, bh := pdfBoxW*scale, pdfBoxH*scale
 
-	// 1) Verbindungslinien zuerst zeichnen, damit die Kaesten sie ueberdecken.
+	// 1) Linien zuerst (Kaesten und Rahmen ueberdecken sie): Uplink -> Sammelschiene -> Gruppe.
+	sx := func(x float64) float64 { return offX + x*scale }
+	sy := func(y float64) float64 { return top + y*scale }
 	pdf.SetDrawColor(150, 150, 150)
 	pdf.SetLineWidth(0.25)
-	for _, n := range nodes {
-		if up, ok := nodes[n.host.Uplink]; ok && n.host.Uplink != n.host.IP {
-			pdf.Line(px(up)+bw/2, py(up)+bh, px(n)+bw/2, py(n))
+	for _, l := range lay.links {
+		up, ok := nodes[l.from]
+		if !ok {
+			continue
 		}
+		ux, uy := px(up)+bw/2, py(up)+bh
+		pdf.Line(ux, uy, ux, sy(l.busY))                            // vom Uplink nach unten
+		pdf.Line(ux, sy(l.busY), sx(l.trunkX), sy(l.busY))          // waagerecht zur Sammelschiene
+		pdf.Line(sx(l.trunkX), sy(l.busY), sx(l.trunkX), sy(l.toY)) // senkrecht zur Einheit
+		pdf.Line(sx(l.trunkX), sy(l.toY), sx(l.toX), sy(l.toY))     // kurz hinein
 	}
+	// Gruppenrahmen: gestrichelt in Kategoriefarbe, Titel oben links.
+	for _, f := range lay.frames {
+		c := categoryStroke(f.cat)
+		pdf.SetDrawColor(c[0], c[1], c[2])
+		pdf.SetLineWidth(0.3)
+		pdf.SetDashPattern([]float64{1.5, 1}, 0)
+		pdf.RoundedRect(sx(f.x), sy(f.y), f.w*scale, f.h*scale, 2*scale, "1234", "D")
+		pdf.SetDashPattern([]float64{}, 0)
+		pdf.SetTextColor(c[0], c[1], c[2])
+		pdf.SetFont("Helvetica", "B", math.Max(3, 7*scale))
+		pdf.SetXY(sx(f.x)+2*scale, sy(f.y)+0.8*scale)
+		pdf.CellFormat(f.w*scale-4*scale, 4*scale, t(f.label), "", 0, "L", false, 0, "")
+	}
+	pdf.SetLineWidth(0.2)
 	// 2) Kaesten mit Name (fett), IP und ggf. Standort. Router/Switch farbig hervorheben.
 	nameFont, ipFont := 8*scale, 7*scale
 	if nameFont < 3 {
