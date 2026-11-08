@@ -94,7 +94,7 @@ func (s *server) handleWindowsDHCP(w http.ResponseWriter, r *http.Request) {
 
 	info, res := matchDHCP(rows, hosts)
 	s.mu.Lock()
-	s.dhcpInfo = info
+	s.dhcpInfo, s.dhcpRows = info, rows
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, res)
 }
@@ -138,7 +138,7 @@ func matchDHCP(rows []dhcp.Entry, hosts []model.Host) (map[string]dhcpEntry, dhc
 // handleDHCPClear verwirft die DHCP-Angaben.
 func (s *server) handleDHCPClear(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
-	s.dhcpInfo = nil
+	s.dhcpInfo, s.dhcpRows = nil, nil
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

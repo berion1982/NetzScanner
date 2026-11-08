@@ -68,7 +68,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
 <nav><b>▣ NetzScanner</b>
-<button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="help">Hilfe</button>
+<button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
 <small id="ver">…</small></nav>
 <main>
 <section id="ov" class="on">
@@ -96,6 +96,14 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
   <p style="color:var(--mut);margin:6px 0">Liest per WinRM (Port 5985, NTLM, verschlüsselt) mit PowerShell <b>nur lesend</b> alle Leases und festen Reservierungen des Windows-DHCP-Servers und ordnet sie über die MAC den Geräten zu (Name, „feste Reservierung“ bzw. Lease-Ablauf). Voraussetzung: DHCP-Rolle auf dem Server, WinRM aktiv (<code>Test-WSMan localhost</code>), Server wurde mitgescannt. Empfohlen: eigener Benutzer in den Gruppen „DHCP-Benutzer“ und „Remoteverwaltungsbenutzer“ statt Domain-Admin; Schreibweise <code>DOMÄNE\benutzer</code>. <b>Zugangsdaten bleiben nur im Arbeitsspeicher</b>, werden nie gespeichert oder exportiert. Nur von diesem Rechner aus möglich. <i>Noch nicht an einem echten Windows Server geprüft.</i></p>
   <div class="rename"><input id="wdhost" placeholder="Server-IP" aria-label="DHCP-Server-Adresse" autocomplete="off"><input id="wduser" placeholder="DOMÄNE\Benutzer" aria-label="DHCP-Benutzer" autocomplete="off"><input id="wdpass" type="password" placeholder="Passwort" aria-label="DHCP-Passwort" autocomplete="off"><button id="wdgo" class="ok" type="button">Lesen</button><button id="wdclr" type="button">Zurücksetzen</button></div>
   <div class="msg" id="wdmsg" style="white-space:pre-wrap"></div></details>
+</section>
+<section id="resv">
+ <h2>Feste DHCP-Reservierungen</h2><p style="color:var(--mut)">Liste der festen IP-Reservierungen aus dem zuletzt gelesenen Windows-DHCP-Server (Reiter „DHCP &amp; Router“). Nur im Arbeitsspeicher. Die CSV-Datei hat die Spalten Netz, IP, MAC, Name (DHCP) und lässt sich als Sicherung oder Vorlage verwenden.</p>
+ <div class="card tbl"><div class="selbar"><span id="rvcount">0 Reservierungen</span><span style="flex:1"></span>
+  <select id="rvfmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="md">Lesbare Tabelle (Markdown)</option></select>
+  <button class="btn" id="rvexp" disabled>Exportieren</button><span class="msg" id="rvmsg"></span></div>
+  <table><thead><tr><th>Netz</th><th>IP</th><th>MAC</th><th>Name (DHCP)</th><th>Gerät im Scan</th></tr></thead><tbody id="rvtb"></tbody></table>
+  <div class="empty" id="rvempty">Noch keine Reservierungen – zuerst im Reiter „DHCP &amp; Router“ den Windows-DHCP-Server lesen.</div></div>
 </section>
 <section id="topo">
  <details class="row" style="margin-bottom:8px;display:block"><summary style="cursor:pointer">Echte Verbindungen per SNMP lesen (optional)</summary>
@@ -409,6 +417,25 @@ document.getElementById("rtgo").addEventListener("click", () => {
 document.getElementById("rtclr").addEventListener("click", () => {
   post("/api/router/clear", {}).then(() => { document.getElementById("rtmsg").textContent = "Router-Angaben entfernt."; renderRouterInfo(null); loadHosts(); });
 });
+// Reiter "Reservierungen" (I-057): Texte kommen vom DHCP-Server -> nur per textContent.
+function loadReservations() {
+  fetch("/api/reservations").then(r => r.json()).then(list => {
+    document.getElementById("rvtb").replaceChildren(...list.map(x => el("tr", {}, [x.Scope, x.IP, x.MAC, x.Name, x.ScanName].map(t => el("td", { text: t || "" })))));
+    document.getElementById("rvcount").textContent = list.length + (list.length === 1 ? " Reservierung" : " Reservierungen");
+    document.getElementById("rvempty").style.display = list.length ? "none" : "";
+    document.getElementById("rvexp").disabled = !list.length;
+  }).catch(() => {});
+}
+document.getElementById("rvexp").addEventListener("click", () => {
+  const msg = document.getElementById("rvmsg");
+  post("/api/reservations/export", { format: document.getElementById("rvfmt").value }).then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-reservierungen" });
+    document.body.appendChild(a); a.click(); a.remove(); msg.className = "msg"; msg.textContent = "Gespeichert.";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "Export fehlgeschlagen."; });
+});
+document.querySelector('nav button[data-t="resv"]').addEventListener("click", loadReservations);
 // Windows-DHCP (I-056): Passwort nur im Anfragekoerper; Feld wird sofort geleert.
 document.getElementById("wdgo").addEventListener("click", () => {
   const msg = document.getElementById("wdmsg"), pw = document.getElementById("wdpass");
@@ -423,7 +450,7 @@ document.getElementById("wdgo").addEventListener("click", () => {
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Abfrage fehlgeschlagen."; });
 });
 document.getElementById("wdclr").addEventListener("click", () => {
-  post("/api/dhcp/clear", {}).then(() => { document.getElementById("wdmsg").textContent = "DHCP-Angaben entfernt."; loadHosts(); });
+  post("/api/dhcp/clear", {}).then(() => { document.getElementById("wdmsg").textContent = "DHCP-Angaben entfernt."; loadReservations(); loadHosts(); });
 });
 document.getElementById("snmpbtn").addEventListener("click", () => {
   const msg = document.getElementById("snmpmsg"), comm = document.getElementById("snmpcomm");
