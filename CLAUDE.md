@@ -21,7 +21,8 @@ Zuerst `HANDOVER.md` lesen – dort steht der aktuelle Stand und der nächste Sc
 - Nach dem Push **immer direkt den Pull Request erstellen** (ohne Rückfrage); Ziel `main`, Beschreibung auf Deutsch. Ist der alte PR des Branches schon gemergt: Branch auf `origin/main` neu aufsetzen (normaler Push, kein Force-Push).
 - Kleine, thematisch saubere Commits. Keine Merges/Force-Pushes ohne Auftrag.
 - **Nichts löschen ohne Rückfrage** – lieber umbenennen (z. B. `datei.alt`).
-- Jede sichtbare Änderung: `CHANGELOG.md` ergänzen, bei Release `VERSION` anheben (SemVer).
+- Jede sichtbare Änderung: `CHANGELOG.md` ergänzen und Version anheben (SemVer).
+- **Version immer an allen Stellen gleich halten:** `VERSION` (Root, für `scripts/build.sh`) **und** `internal/version/VERSION` (eingebettet, damit auch `go run` die Nummer zeigt) · Kopf von `CHANGELOG.md` · „Stand“ in `HANDOVER.md` · Status in `IDEAS.md`. `go test ./...` prüft, dass beide VERSION-Dateien übereinstimmen. Anzeige im Programm: `--version`, `/api/version`, Hilfe-Seite, Exporte.
 - GitHub-Actions-Tests werden **nicht** genutzt. Lokal prüfen: `go vet ./... && go test ./...`.
 
 ## Code-Regeln

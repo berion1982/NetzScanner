@@ -1,6 +1,7 @@
 package version
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -15,5 +16,18 @@ func TestString(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("String() = %q, enthaelt %q nicht", got, want)
 		}
+	}
+}
+
+// TestEmbeddedMatchesRootFile stellt sicher, dass die eingebettete Kopie
+// (internal/version/VERSION) und die Datei VERSION im Repo-Root gleich sind.
+// Schlaegt der Test fehl, wurde nur eine der beiden Dateien angehoben.
+func TestEmbeddedMatchesRootFile(t *testing.T) {
+	root, err := os.ReadFile("../../VERSION")
+	if err != nil {
+		t.Fatalf("VERSION im Repo-Root nicht lesbar: %v", err)
+	}
+	if strings.TrimSpace(string(root)) != strings.TrimSpace(embeddedVersion) {
+		t.Errorf("VERSION (%q) und internal/version/VERSION (%q) weichen ab", root, embeddedVersion)
 	}
 }

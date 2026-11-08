@@ -142,6 +142,12 @@ func udpExchange(ctx context.Context, ip string, port int, req []byte) ([]byte, 
 // mdnsName fragt das Geraet per mDNS nach dem Namen seiner IP (Reverse-PTR).
 // Kommt als Antwort z.B. "iphone-von-anna.local", wird ".local" entfernt.
 func mdnsName(ctx context.Context, ip string, port int) string {
+	return ptrName(ctx, ip, port)
+}
+
+// ptrName schickt eine Reverse-PTR-Anfrage im DNS-Format per UDP an ip:port.
+// Gemeinsam fuer mDNS (5353) und LLMNR (5355), die dasselbe Format nutzen.
+func ptrName(ctx context.Context, ip string, port int) string {
 	a := net.ParseIP(ip).To4()
 	if a == nil {
 		return "" // nur IPv4
