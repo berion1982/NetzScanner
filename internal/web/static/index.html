@@ -56,10 +56,11 @@ svg{width:100%;height:auto;display:block}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}.legend button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--line);border-radius:14px;color:var(--txt);font-size:12px}
 .legend button.off{opacity:.45;text-decoration:line-through}.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .cat-network{--c:#58a6ff}.cat-server{--c:#3fb950}.cat-client{--c:#8b949e}.cat-iot{--c:#d29922}.legend i,.catdot{background:var(--c)}
+.grp rect{fill:var(--c);fill-opacity:.07;stroke:var(--c);stroke-opacity:.6;stroke-dasharray:5 4}.grp text{fill:var(--c);font-size:11px;font-weight:600}
 .node{cursor:pointer}.node rect{fill:#1b2430;stroke:var(--line);stroke-width:1.5}
 .node:hover rect,.node.sel rect{stroke:var(--cy)}
 .node text{fill:var(--txt);font-size:12px;text-anchor:middle}.node .s{fill:var(--mut);font-size:10px}
-line{stroke:#3a4656;stroke-width:1.5}
+line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 .ht td{padding:6px 12px 6px 0;vertical-align:top;border-bottom:1px solid var(--line)}.help h2{margin-top:24px}.help{max-width:760px}code{background:#21262d;padding:1px 5px;border-radius:4px}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
@@ -95,7 +96,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen werden zwischengespeichert (siehe „Datenschutz und Zwischenspeicher“).</p>
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort, offene Ports und Kategorie – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
- <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
+ <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Geräte mit gleichem Uplink und gleicher Kategorie sind in einer <b>Sammelgruppe</b> (gestrichelter Rahmen mit Anzahl) zusammengefasst; eine Linie führt vom Router zur Gruppe. Einzelne Geräte stehen ohne Rahmen. Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
  <table class="ht"><tbody>
  <tr><td><code>192.168.1.0/24</code></td><td>ganzes Netz (254 Geräte); Netz- und Broadcast-Adresse entfallen. Kleinere Teilnetze: <code>/28</code> = 14, <code>/26</code> = 62 Geräte</td></tr>
@@ -356,25 +357,65 @@ function renderMap(allHosts) {
   const levels = {}; hosts.forEach(h => (levels[depth(h)] ||= []).push(h));
   Object.values(levels).forEach(l => l.sort((a, b) => CATS.indexOf(a.category) - CATS.indexOf(b.category))); // je Ebene nach Kategorie gruppiert (stabil)
   const pos = {}, NS = "http://www.w3.org/2000/svg", svg = document.getElementById("map");
-  // Layout: Passen mehr Knoten in eine Ebene als eine Zeile fasst, wird auf weitere Zeilen umgebrochen
-  // (sonst ueberlappen sich die Kaesten bei vielen Geraeten). Breite/Hoehe des Bildes ergeben sich daraus.
-  const W = 780, BW = 120, BH = 44, GAP = 10, ROWSTEP = 56, LEVELGAP = 40;
-  const cols = Math.max(1, Math.floor((W + GAP) / (BW + GAP)));
-  let y = 20;
-  Object.keys(levels).map(Number).sort((a, b) => a - b).forEach(d => {
-    const list = levels[d];
-    for (let start = 0; start < list.length; start += cols) {
-      const row = list.slice(start, start + cols);
-      row.forEach((h, i) => { pos[h.ip] = { x: W / 2 + (i - (row.length - 1) / 2) * (BW + GAP), y }; }); // feste Schrittweite, Zeile mittig
-      y += ROWSTEP;
-    }
-    y += LEVELGAP;
-  });
-  svg.setAttribute("viewBox", "0 0 " + W + " " + (y - LEVELGAP + 20));
   const cut = (t, n) => t.length > n ? t.slice(0, n - 1) + "…" : t; // lange Namen kuerzen, voller Name steht im Tooltip
   const mk = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  // Layout (I-015): Geraete mit gleichem Uplink UND gleicher Kategorie bilden eine Sammelgruppe
+  // (gestrichelter Rahmen mit Titel, ein Kabel statt vieler Linien). Einzelne Geraete stehen ohne Rahmen.
+  // Gruppen einer Ebene fliessen nebeneinander und brechen bei Platzmangel in die naechste Zeile um.
+  const W = 780, BW = 120, BH = 44, GAP = 10, TITLE = 22, UGAP = 20, LEVELGAP = 40, MAXCOLS = 5;
+  const frames = [], links = []; // Rahmen zum Zeichnen; Linien (Uplink -> Oberkante der Einheit)
+  let y = 20;
+  Object.keys(levels).map(Number).sort((a, b) => a - b).forEach(d => {
+    // 1) Einheiten bilden (Reihenfolge: nach Kategorie sortiert, siehe oben)
+    const buckets = new Map();
+    levels[d].forEach(h => { const k = (h.uplink || "") + "|" + h.category; if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(h); });
+    const units = [...buckets.values()].map(list => {
+      const group = list.length >= 2, cols = Math.min(list.length, MAXCOLS), rows = Math.ceil(list.length / cols);
+      return group ? { list, group, cols, w: cols * BW + (cols - 1) * GAP + 2 * GAP, h: TITLE + rows * BH + (rows - 1) * GAP + GAP }
+                   : { list, group, cols: 1, w: BW, h: BH };
+    });
+    // 2) Einheiten in Zeilen verteilen (Umbruch, wenn die Breite W ueberschritten wuerde)
+    const lines = []; let cur = [], cw = 0;
+    units.forEach(u => {
+      if (cur.length && cw + UGAP + u.w > W) { lines.push(cur); cur = []; cw = 0; }
+      cw += (cur.length ? UGAP : 0) + u.w; cur.push(u);
+    });
+    if (cur.length) lines.push(cur);
+    // 3) Positionen vergeben; jede Zeile mittig
+    const levelTop = y, firstLink = links.length; let minX = W;
+    lines.forEach(line => {
+      let x = (W - (line.reduce((n, u) => n + u.w, 0) + UGAP * (line.length - 1))) / 2;
+      line.forEach(u => {
+        const first = u.list[0];
+        if (u.group) {
+          frames.push({ x, y, w: u.w, h: u.h, cat: first.category, label: CAT_LABEL[first.category] + " (" + u.list.length + ")" });
+          u.list.forEach((h, i) => { pos[h.ip] = { x: x + GAP + BW / 2 + (i % u.cols) * (BW + GAP), y: y + TITLE + Math.floor(i / u.cols) * (BH + GAP) }; });
+        } else {
+          pos[first.ip] = { x: x + BW / 2, y };
+        }
+        minX = Math.min(minX, x);
+        if (first.uplink && !u.list.some(h => h.ip === first.uplink)) links.push({ from: first.uplink, x, y: y + (u.group ? 14 : BH / 2) });
+        x += u.w + UGAP;
+      });
+      y += Math.max(...line.map(u => u.h)) + GAP * 2;
+    });
+    // Sammelschiene: alle Linien dieser Ebene laufen links neben den Einheiten senkrecht (keine Linie quert eine Gruppe)
+    links.slice(firstLink).forEach(l => { l.trunk = minX - 14; l.busY = levelTop - 18; });
+    y += LEVELGAP - GAP * 2;
+  });
+  svg.setAttribute("viewBox", "0 0 " + W + " " + (y - LEVELGAP + 20));
   const out = [];
-  hosts.forEach(h => { if (h.uplink && pos[h.uplink]) out.push(mk("line", { x1: pos[h.uplink].x, y1: pos[h.uplink].y + 44, x2: pos[h.ip].x, y2: pos[h.ip].y })); });
+  links.forEach(l => {
+    const f = pos[l.from]; if (!f) return;
+    // Weg: vom Uplink nach unten, waagerecht zur Sammelschiene, senkrecht zur Einheit, kurz nach rechts hinein.
+    out.push(mk("path", { class: "lnk", d: "M" + f.x + " " + (f.y + BH) + " V" + l.busY + " H" + l.trunk + " V" + l.y + " H" + l.x }));
+  });
+  frames.forEach(f => {
+    const g = mk("g", { class: "grp cat-" + f.cat });
+    g.append(mk("rect", { x: f.x, y: f.y, width: f.w, height: f.h, rx: 10 }));
+    const t = mk("text", { x: f.x + 10, y: f.y + 15 }); t.textContent = f.label;
+    g.append(t); out.push(g);
+  });
   hosts.forEach(h => {
     const p = pos[h.ip], g = mk("g", { class: "node cat-" + h.category, "data-ip": h.ip });
     g.append(mk("rect", { x: p.x - 60, y: p.y, width: 120, height: 44, rx: 8 }));

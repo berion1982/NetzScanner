@@ -203,3 +203,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.11.1] – 2026-11-08
 ### Behoben
 - **Topologie-Karte bei vielen Geräten:** Die Kästen einer Ebene überlappten sich und lange Namen liefen heraus. Jetzt wird auf mehrere Zeilen umgebrochen (6 pro Zeile, feste Abstände), Namen werden gekürzt (voller Name als Tooltip) und die Bildhöhe passt sich an.
+
+## [0.12.0] – 2026-11-08
+### Geändert
+- **Topologie-Karte mit Sammelgruppen:** Geräte mit gleichem Uplink und gleicher Kategorie werden in einem gestrichelten Rahmen („IoT (19)“) zusammengefasst, statt eine Linie je Gerät zu zeichnen. Die Linien laufen über eine Sammelschiene links neben den Gruppen. Einzelne Geräte stehen ohne Rahmen. Nur die Weboberfläche; die PDF-Karte ist noch unverändert (Linie je Gerät).
