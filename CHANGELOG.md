@@ -157,3 +157,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Volle IEEE-OUI-Liste eingebettet** (I-003): `internal/scan/data/oui.txt` enthält jetzt ~40.000 Herstellerpräfixe (erzeugt von Sascha mit `scripts/update-oui.sh`). Damit klappt die Chip-Erkennung aus der MAC (z. B. `0C:72:74` = AVM).
 - Test `TestVendor` prüft den Namen als Teilstring („Raspberry Pi“), da die IEEE-Liste „Raspberry Pi Foundation/Trading Ltd“ liefert.
 - Grenze bleibt: Zufällige (lokal administrierte) MAC-Adressen haben keinen Hersteller.
+
+## [0.6.0] – 2026-11-08
+### Geändert
+- **CSV enthält jetzt den Chip-Hersteller** (I-007): neue Spalte „Hersteller (Chip)“ direkt nach „MAC“ (Reihenfolge: Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Offene Ports). Achtung: Die Spaltenanzahl ändert sich – ein Import mit fester Spaltenzuordnung muss ggf. angepasst werden. Der Hersteller ist der Chip-Hersteller, nicht zwingend der Gerätehersteller; Zellen werden wie alle anderen gegen CSV-Injection entschärft.

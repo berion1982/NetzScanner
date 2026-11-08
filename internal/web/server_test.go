@@ -164,8 +164,8 @@ func TestExportFlow(t *testing.T) {
 	}
 	out := rec.Body.String()
 	// Reihenfolge der Liste (fritz.box zuerst), nur die zwei ausgewaehlten Geraete.
-	if !strings.Contains(out, ",192.168.1.1,3C:A6:2F:11:22:33,fritz.box,") ||
-		!strings.Contains(out, "admin,192.168.1.10,00:11:32:AA:BB:CC,NAS Büro,") || strings.Contains(out, "192.168.1.23") {
+	if !strings.Contains(out, ",192.168.1.1,3C:A6:2F:11:22:33,AVM,fritz.box,") ||
+		!strings.Contains(out, "admin,192.168.1.10,00:11:32:AA:BB:CC,Synology,NAS Büro,") || strings.Contains(out, "192.168.1.23") {
 		t.Errorf("CSV-Inhalt falsch: %q", out)
 	}
 	for _, f := range []string{"csv-excel", "html", "md"} {

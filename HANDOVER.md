@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.5.9 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.6.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -32,7 +32,6 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Offen für Sascha
 - **Topologie (I-010 Teil 1) im LAN prüfen:** Steht die FritzBox oben, hängen die Geräte darunter? Für Teil 2 entscheiden: SNMP (Community des Switches nötig) oder LLDP/CDP (braucht Rechte)?
-- **Hersteller auch in die CSV?** (I-007: bisher bewusst nur in HTML/Markdown, damit der CSV-Import nicht bricht.)
 - Scan im LAN wiederholen: Wie viele Geräte bleiben nach I-002/I-008 (mDNS, NetBIOS, LLMNR, SSDP) noch „(unbekannt)“? Bekommt die Hue Bridge einen sinnvollen Namen (I-009)?
 - Live-Anzeige (I-044) im LAN: flüssig oder flackert die Tabelle? Funktionieren Bereiche/Listen im Ziel-Feld (I-046) wie erwartet?
 - Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).

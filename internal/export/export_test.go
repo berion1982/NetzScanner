@@ -22,7 +22,7 @@ func TestCSVStandard(t *testing.T) {
 	if err := WriteCSV(&b, sample(), false); err != nil {
 		t.Fatal(err)
 	}
-	want := "Benutzername,IP,MAC,Gerätename,Offene Ports\r\nadmin,192.168.1.10,00:11:32:AA:BB:CC,nas-01,\"22, 5000\"\r\n"
+	want := "Benutzername,IP,MAC,Hersteller (Chip),Gerätename,Offene Ports\r\nadmin,192.168.1.10,00:11:32:AA:BB:CC,Synology,nas-01,\"22, 5000\"\r\n"
 	if b.String() != want {
 		t.Errorf("CSV:\n%q\nerwartet:\n%q", b.String(), want)
 	}
@@ -32,7 +32,7 @@ func TestCSVStandard(t *testing.T) {
 func TestCSVExcel(t *testing.T) {
 	var b bytes.Buffer
 	WriteCSV(&b, sample(), true)
-	if !bytes.HasPrefix(b.Bytes(), []byte{0xEF, 0xBB, 0xBF}) || !strings.Contains(b.String(), "Benutzername;IP;MAC;Gerätename;Offene Ports") {
+	if !bytes.HasPrefix(b.Bytes(), []byte{0xEF, 0xBB, 0xBF}) || !strings.Contains(b.String(), "Benutzername;IP;MAC;Hersteller (Chip);Gerätename;Offene Ports") {
 		t.Errorf("Excel-CSV falsch: %q", b.String())
 	}
 }
@@ -44,7 +44,7 @@ func TestCSVInjectionAndQuoting(t *testing.T) {
 	var b bytes.Buffer
 	WriteCSV(&b, []model.Host{h, h2}, true)
 	out := b.String()
-	if !strings.Contains(out, `'+cmd;10.0.0.1;'-1;"'=HYPERLINK(""http://evil"")"`) {
+	if !strings.Contains(out, `'+cmd;10.0.0.1;'-1;;"'=HYPERLINK(""http://evil"")"`) {
 		t.Errorf("Formel nicht entschaerft: %q", out)
 	}
 	if !strings.Contains(out, `"a;b,""c"""`) {

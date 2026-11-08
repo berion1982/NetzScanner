@@ -15,7 +15,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-003 | Vollständige IEEE-OUI-Herstellerliste einbetten (Lizenz/Quelle prüfen) | mittel | S | erledigt (0.5.9): volle IEEE-Liste eingebettet |
 | I-004 | TLS-Zertifikatsinfos (CN, Ablauf) bei HTTPS-Ports | niedrig | S | erledigt (0.4.2) |
 | I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
-| I-007 | Hersteller aus der MAC (Netzwerkchip) auch in Tabelle und Export anzeigen, mit Hinweis „Chip-Hersteller, nicht zwingend Gerätehersteller“ (Vorschlag Sascha; Basis ist I-003, im Detail-Panel schon vorhanden) | mittel | S | erledigt (0.5.8; CSV bewusst unverändert) |
+| I-007 | Hersteller aus der MAC (Netzwerkchip) auch in Tabelle und Export anzeigen, mit Hinweis „Chip-Hersteller, nicht zwingend Gerätehersteller“ (Vorschlag Sascha; Basis ist I-003, im Detail-Panel schon vorhanden) | mittel | S | erledigt (0.5.8; CSV ab 0.6.0) |
 | I-008 | Weitere Namensquellen: SSDP/UPnP (TV, Router, Mediaserver), LLMNR, HTTP-Server-Header, SNMP sysName | mittel | M | teilweise erledigt (0.5.3: LLMNR, SSDP; offen: SNMP sysName, HTTP-Server-Header) |
 | I-009 | Namen, die nur wie eine Kennung aussehen (z. B. `001788FFFE476CE2` = MAC/EUI-64 einer Hue Bridge), nicht als „bekannt“ werten, sondern als Platzhalter behandeln und besser aus Hersteller (OUI `00:17:88`), mDNS/SSDP oder HTTP-Titel ableiten, z. B. „Philips Hue Bridge (Vorschlag)“ | mittel | S | erledigt (0.5.1) |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
@@ -56,7 +56,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 ## Export
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
-| I-030 | CSV der **vom Nutzer ausgewählten** Geräte: Benutzername, IP, MAC, Gerätename, offene Ports – **ohne Passwörter** (Passwörter werden separat beim Import eingegeben, außerhalb dieses Programms) | hoch | M | erledigt (0.4.0) |
+| I-030 | CSV der **vom Nutzer ausgewählten** Geräte: Benutzername, IP, MAC, Hersteller (ab 0.6.0), Gerätename, offene Ports – **ohne Passwörter** (Passwörter werden separat beim Import eingegeben, außerhalb dieses Programms) | hoch | M | erledigt (0.4.0) |
 | I-031 | Lesbare Tabelle (HTML/Markdown) zusätzlich zur CSV | hoch | S | erledigt (0.4.0) |
 | I-032 | Lesezeichen-Datei (Netscape-Bookmark-HTML) für Firefox und Chrome mit den ausgewählten Geräten (Web-Links); Ordner als Lesezeichenleiste markiert (`PERSONAL_TOOLBAR_FOLDER="true"`) | mittel | M | erledigt (0.4.1), Import von Sascha getestet |
 | I-033 | Weitere Formate: JSON, XLSX | niedrig | M | offen |
