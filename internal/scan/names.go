@@ -19,6 +19,7 @@ import (
 //  1. "dns"        Reverse-DNS ueber den konfigurierten DNS-Server
 //  2. "dns-geraet" Reverse-DNS direkt beim Geraet (hat es Port 53 offen, z.B. Router)
 //     "mdns" / "netbios" Name per mDNS (UDP 5353) bzw. NetBIOS (UDP 137), siehe udpnames.go
+//     "llmnr" (UDP 5355) und "ssdp" (UPnP, UDP 1900), siehe ssdp.go
 //  3. "zertifikat" Name im TLS-Zertifikat (Port 443 u.a.)
 //  4. "http-titel" Titel der Weboberflaeche (nur Vorschlag, unsicher)
 //  5. "hersteller" letzter Ausweg (I-009): Herstellername aus der MAC als Vorschlag
@@ -101,6 +102,13 @@ func findName(ctx context.Context, h *model.Host) (name, source string) {
 	}
 	if n := netbiosName(ctx, h.IP, netbiosPort); n != "" {
 		return n, "netbios"
+	}
+	// Weitere Quellen (I-008): LLMNR (Windows) und SSDP/UPnP (TV, Router, Mediaserver).
+	if n := llmnrName(ctx, h.IP, llmnrPort); n != "" {
+		return n, "llmnr"
+	}
+	if n := ssdpName(ctx, h.IP, ssdpPort); n != "" {
+		return n, "ssdp"
 	}
 	for _, p := range h.Ports {
 		if httpsPorts[p.Number] {

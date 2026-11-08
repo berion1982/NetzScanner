@@ -134,7 +134,7 @@ function saveUser(ip, user, msgEl) {
 function buildDetails(h) {
   const dl = el("dl");
   const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
-  const SRC = { dns: "DNS", "dns-geraet": "DNS des Geräts", mdns: "mDNS (Bonjour)", netbios: "NetBIOS", zertifikat: "TLS-Zertifikat", "http-titel": "Titel der Webseite (Vermutung)", hersteller: "Hersteller aus der MAC (Vorschlag)", nutzer: "manuell" };
+  const SRC = { dns: "DNS", "dns-geraet": "DNS des Geräts", mdns: "mDNS (Bonjour)", netbios: "NetBIOS", llmnr: "LLMNR", ssdp: "UPnP/SSDP (Gerätename)", zertifikat: "TLS-Zertifikat", "http-titel": "Titel der Webseite (Vermutung)", hersteller: "Hersteller aus der MAC (Vorschlag)", nutzer: "manuell" };
   if (h.nameSource) add("Namensquelle", SRC[h.nameSource] || h.nameSource);
   add("IP", h.ip); add("MAC", h.mac); add("Hersteller", h.vendor); add("System (Vermutung)", h.os);
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));

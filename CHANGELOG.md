@@ -17,6 +17,14 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.3] – 2026-11-08
+### Hinzugefügt
+- **Weitere Namensquellen** (I-008): **LLMNR** (UDP 5355, v. a. Windows) und **SSDP/UPnP** (UDP 1900: Fernseher, Router, Mediaserver) – das Gerät wird direkt gefragt; bei SSDP wird der „friendlyName“ aus der UPnP-Beschreibung gelesen. Reihenfolge: DNS → DNS des Geräts → mDNS → NetBIOS → LLMNR → SSDP → Zertifikat → Seitentitel. Quelle steht im Detail-Panel.
+### Sicherheit
+- SSDP folgt nur einer `http://`-LOCATION, deren Rechner exakt die abgefragte IP ist (kein Abfragen fremder Rechner), ohne Weiterleitungen, max. 64 KB, Ergebnis bereinigt.
+### Hinweis
+- Nur mit lokalen Test-Servern geprüft, **nicht im echten LAN**. SNMP-sysName und HTTP-Server-Header aus I-008 sind noch offen.
+
 ## [0.5.2] – 2026-11-08
 ### Geändert
 - **Versionsführung:** Die Versionsnummer ist jetzt zusätzlich im Programm eingebettet (`internal/version/VERSION`). Auch bei `go run`/`go build` ohne Build-Skript zeigt das Programm die richtige Nummer statt „dev“. Ein Test stellt sicher, dass sie mit `VERSION` im Root übereinstimmt. Regeln dazu stehen in `CLAUDE.md` und `HANDOVER.md`.

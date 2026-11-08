@@ -21,9 +21,10 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 ## Nächster Schritt (Vorschlag)
 - **I-003 halb fertig (0.4.3):** Mechanismus (`internal/scan/oui.go`, `data/oui.txt`) und `scripts/update-oui.sh` stehen; die **volle IEEE-Liste fehlt**, weil `standards-oui.ieee.org` in der Cloud-Umgebung gesperrt ist. Auf Saschas PC: `scripts/update-oui.sh`, Ergebnis prüfen (IEEE-Nutzungsbedingungen!), committen. Alternative: Host in der Umgebung freigeben. Die nmap-Liste (`nmap-mac-prefixes`) wäre erreichbar, ihre Lizenz (NPSL) ist aber unklar → nicht eingebettet.
 - **I-002 umgesetzt (0.5.0):** mDNS + NetBIOS in `internal/scan/udpnames.go`; nur mit lokalen Test-Servern geprüft → Sascha bitte im LAN testen: weniger „(unbekannt)“? Neue Ideen: I-007 (Hersteller in Tabelle/Export), I-008 (SSDP/LLMNR/SNMP).
+- **I-008 teilweise (0.5.3):** LLMNR + SSDP/UPnP in `internal/scan/ssdp.go` (nur lokal getestet) → Sascha bitte im LAN testen (TV, Router, Mediaserver). Offen: SNMP sysName (braucht Community, später mit Logins), HTTP-Server-Header.
 - **I-009 umgesetzt (0.5.1):** MAC-/EUI-64-artige Namen (`looksLikeIdentifier` in `names.go`) werden verworfen; letzter Ausweg „<Hersteller> (Vorschlag)“ (Quelle `hersteller`). Im LAN prüfen (Hue Bridge); wirkt voll erst mit großer OUI-Liste (I-003).
 - **Neue Idee (nur in `IDEAS.md`, nicht umgesetzt):** I-024 (Router-/Windows-DHCP-Geräteliste nach Login abfragen, baut auf I-020/I-022 auf; Machbarkeit je Router offen).
-- Empfohlene Reihenfolge: I-008 (SSDP/UPnP) → FTP/Telnet als Risiko → Topologie (I-010) → Logins (I-020/I-022) → I-024.
+- Empfohlene Reihenfolge: FTP/Telnet als Risiko → Topologie (I-010) → Logins (I-020/I-022) → I-024.
 
 ## Offen für Sascha
 - **Entscheidung I-003:** volle OUI-Liste per `scripts/update-oui.sh` selbst erzeugen, Host `standards-oui.ieee.org` freigeben, oder nmap-Liste trotz Lizenzfrage?
