@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.16.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.17.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -23,6 +23,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
+- **0.17.0 (I-051 LLDP):** `internal/scan/lldp.go`, Nachbarn aus `lldpRemTable` haben in `BuildLinks` Vorrang vor der MAC-Tabelle. **Sascha: an LANCOM/Netgear prüfen** (LLDP am Gerät an? stimmen Ports/Uplinks?). Als Nächstes: I-055 (c) Mesh oder I-052 (sysObjectID).
 - **Empfehlung (Reihenfolge):** (1) **I-055 (c) Mesh-Topologie** aus der FritzBox – Nutzen für Saschas Heimnetz sofort sichtbar, aber Dienste/Felder unsicher („Ich weiß es nicht“), erst an der echten Box probieren; (2) **I-051 (LLDP-MIB per SNMP)** – herstellerneutral, nennt die echte Verkabelung inkl. Access Points; danach I-052 (Hersteller/Modell aus `sysObjectID`), I-053 (SNMP v3), I-054 (VLAN-Communities). Saschas Geräte: **LANCOM und Netgear** (Annahme: Standard-BRIDGE-MIB reicht, ungeprüft; unverwaltete Netgear-Switches haben kein SNMP). Danach Logins (I-020/I-022) → I-024.
 - **Von Sascha bestätigt (v0.16.0):** Router-Login an der FritzBox mit Router-Info und WLAN **funktioniert** (Rückmeldung „Funktioniert“); damit sind die Feldnamen in `internal/router/info.go` zumindest für seine Box brauchbar. Offen aus I-055: **(c) Mesh-Topologie** (echte Uplinks aus der Box, evtl. ohne SNMP) und **(d) feste IP-Reservierungen**.
 - **Zuletzt erledigt (0.15.0–0.16.0):** Router-Login FRITZ!Box per TR-064 (I-024 teilweise: Namen, Verbindungsart, nur Loopback, ein Versuch pro Klick), Router-Info + WLAN-Netze + WLAN-Clients mit Signal (I-055 a+b, Export Markdown/CSV ohne externe IP), Fix: Klick-Handler wurden mehrfach registriert (in `updateSelection` verschachtelt).

@@ -40,6 +40,8 @@ const (
 	oidBasePortIf   = "1.3.6.1.2.1.17.1.4.1.2"     // dot1dBasePortIfIndex.<Bridge-Port>
 	oidIfName       = "1.3.6.1.2.1.31.1.1.1.1"     // ifName.<ifIndex> (z. B. "Gi1/0/5")
 	oidIfDescr      = "1.3.6.1.2.1.2.2.1.2"        // ifDescr.<ifIndex> (Ersatz, wenn ifName fehlt)
+	oidLldpRemBase  = "1.0.8802.1.1.2.1.4.1.1"     // LLDP-MIB: lldpRemEntry.<Spalte>.<timeMark>.<lokalerPort>.<remIndex>
+	oidLldpLocDesc  = "1.0.8802.1.1.2.1.3.7.1.4"   // LLDP-MIB: lldpLocPortDesc.<lokalerPort>
 	snmpTimeout     = 2 * time.Second              // pro Anfrage
 	snmpRetries     = 1                            // eine Wiederholung
 	snmpRepetitions = 20                           // Zeilen je Bulk-Anfrage
@@ -59,6 +61,7 @@ type SwitchData struct {
 	SysName  string
 	SysDescr string
 	FDB      []FDBEntry
+	LLDP     []LLDPNeighbor // direkte Nachbarn laut LLDP-MIB (I-051)
 }
 
 // Link beschreibt, wo ein Geraet angeschlossen ist.
@@ -151,8 +154,12 @@ func QuerySwitch(ctx context.Context, ip, community string) (SwitchData, error) 
 	if pdus, err := g.BulkWalkAll(oidDot1dFdbPort); err == nil {
 		add(pdus, oidDot1dFdbPort)
 	}
-	if len(data.FDB) == 0 {
-		return data, fmt.Errorf("Gerät antwortet, hat aber keine MAC-Adresstabelle (kein Switch?)")
+
+	// 4) LLDP-Nachbarn (I-051): optional - viele Geraete haben LLDP aus oder gar nicht.
+	data.LLDP = queryLLDP(g, names)
+
+	if len(data.FDB) == 0 && len(data.LLDP) == 0 {
+		return data, fmt.Errorf("Gerät antwortet, hat aber weder MAC-Adresstabelle noch LLDP-Nachbarn (kein Switch?)")
 	}
 	return data, nil
 }
@@ -265,7 +272,16 @@ func BuildLinks(hosts []model.Host, switches []SwitchData, routerMAC string) map
 	uplink := map[string]string{}
 	for _, sw := range switches {
 		best, bestN := "", 0
+		for _, n := range sw.LLDP { // LLDP nennt den Router direkt -> sicherster Hinweis
+			if routerMAC != "" && n.MAC == routerMAC {
+				best, bestN = n.LocalPort, -1
+				break
+			}
+		}
 		for _, e := range sw.FDB {
+			if bestN == -1 {
+				break
+			}
 			if routerMAC != "" && e.MAC == routerMAC {
 				best = e.Port
 				bestN = -1 // Router-MAC gefunden: endgueltig
@@ -293,10 +309,14 @@ func BuildLinks(hosts []model.Host, switches []SwitchData, routerMAC string) map
 
 	// Regel 3: bester Port je Geraet.
 	links := map[string]Link{}
+	lldpLinks(hosts, switches, uplink, routerMAC, links)
 	for _, h := range hosts {
 		mac := NormMAC(h.MAC)
 		if mac == "" || mac == routerMAC {
 			continue
+		}
+		if _, done := links[h.IP]; done {
+			continue // LLDP ist genauer als die MAC-Tabelle
 		}
 		var best *Link
 		for _, sw := range switches {
