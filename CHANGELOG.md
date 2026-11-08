@@ -322,3 +322,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **FRITZ!Box-Zeilen aus dem Reiter „Reservierungen“** (aus 0.22.0/0.22.1): Der Abgleich mit der echten Box (Sascha) zeigt, dass „Static“ im Router-Login **nicht** die festen Zuweisungen sind – es sind u. a. der Router selbst, VPN-Gegenstellen und Geräte ohne IP/MAC; Saschas fest zugewiesener PC fehlte dort. Die Annahme aus 0.22.0 war falsch.
 ### Hinweis
 - Die FRITZ!Box gibt feste Zuweisungen per TR-064 nicht heraus (Befund `--diagnose-router`). Der Reiter zeigt wieder nur Windows-DHCP-Reservierungen und weist darauf hin. Die Zeile „Adressvergabe laut Router“ im Router-Login bleibt als Information. Einzige Alternative wäre das undokumentierte `data.lua` der Box-Oberfläche (fragil), derzeit nicht geplant.
+
+## [0.22.3] – 2026-11-08
+### Hinzugefügt
+- **Diagnose der FRITZ!Box-Mesh-Liste** (I-055 c, Teil 1): `./dist/netzscanner --diagnose-mesh <FritzBox-IP>` ruft `X_AVM-DE_GetMeshListPath` ab und gibt das Mesh-Dokument **roh** aus (`internal/router/meshdump.go`). Zugangsdaten über `NETZSCANNER_ROUTER_USER`/`NETZSCANNER_ROUTER_PASS` oder Abfrage am Terminal (Passwort-Eingabe sichtbar); nichts wird gespeichert oder geloggt, die Session-ID im Pfad wird nicht ausgegeben. Nur lesend.
+### Hinweis
+- Das Dokumentformat der Box ist **unbekannt** („Ich weiß es nicht“). Der eigentliche Mesh-Parser (Teil 2) folgt, sobald die echte Ausgabe vorliegt.
