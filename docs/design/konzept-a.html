@@ -1,0 +1,48 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Konzept A – Command Center</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--txt:#e6edf3;--mut:#9da7b3;--acc:#58a6ff;--ok:#3fb950;--warn:#d29922;--bad:#f85149}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,sans-serif;display:flex;min-height:100vh}
+nav{width:200px;background:var(--panel);border-right:1px solid var(--line);padding:16px;flex:none}
+nav b{display:block;font-size:16px;margin-bottom:16px}nav a{display:block;padding:8px 10px;border-radius:6px;color:var(--mut);text-decoration:none}
+nav a.on,nav a:hover{background:#21262d;color:var(--txt)}
+main{flex:1;padding:20px;min-width:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.tile small{color:var(--mut)}.tile div{font-size:28px;font-weight:600}
+.row{display:flex;gap:16px;align-items:flex-start}
+.tbl{flex:1;overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:500}tr.r{cursor:pointer}tr.r:hover,tr.sel{background:#1c2330}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.tag{background:#21262d;border-radius:5px;padding:1px 6px;margin-right:4px;font-size:12px}
+aside{width:280px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+aside h3{margin:0 0 8px}aside dt{color:var(--mut);margin-top:8px;font-size:12px}aside dd{margin:0;font-family:ui-monospace,monospace}
+@media(max-width:800px){nav{display:none}.row{flex-direction:column}aside{width:100%}}
+</style></head><body>
+<nav><b>▣ NetzScanner</b><a class="on" href="#">Übersicht</a><a href="#">Geräte</a><a href="#">Topologie</a><a href="#">Logins</a><a href="#">Export</a><a href="#">Hilfe</a></nav>
+<main>
+<div class="tiles">
+<div class="tile"><small>Geräte online</small><div>42</div></div>
+<div class="tile"><small>Offene Ports</small><div>187</div></div>
+<div class="tile"><small>Unbekannte Geräte</small><div style="color:var(--warn)">5</div></div>
+<div class="tile"><small>Risiko-Ports (Telnet/SMB…)</small><div style="color:var(--bad)">3</div></div>
+</div>
+<div class="row">
+<div class="tbl"><table id="t"><thead><tr><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th></tr></thead><tbody></tbody></table></div>
+<aside id="d"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside>
+</div></main>
+<script>
+// Beispieldaten (erfunden)
+const hosts=[
+{ip:"192.168.1.1",n:"fritz.box",mac:"3C:A6:2F:11:22:33",v:"AVM",p:[53,80,443],os:"FRITZ!OS",ok:1},
+{ip:"192.168.1.10",n:"nas-01",mac:"00:11:32:AA:BB:CC",v:"Synology",p:[22,445,5000,5001],os:"DSM 7",ok:1},
+{ip:"192.168.1.23",n:"drucker-eg",mac:"00:1B:A9:44:55:66",v:"Brother",p:[80,631,9100],os:"?",ok:1},
+{ip:"192.168.1.77",n:"(unbekannt)",mac:"B8:27:EB:99:88:77",v:"Raspberry Pi",p:[22,23],os:"Linux?",ok:0}];
+const tb=document.querySelector("#t tbody");
+hosts.forEach((h,i)=>{const tr=document.createElement("tr");tr.className="r";
+tr.innerHTML=`<td><span class="dot" style="background:var(${h.ok?'--ok':'--warn'})"></span></td><td>${h.ip}</td><td>${h.n}</td><td>${h.mac}</td><td>${h.p.map(x=>`<span class="tag">${x}</span>`).join("")}</td>`;
+tr.onclick=()=>{document.querySelectorAll("tr.sel").forEach(e=>e.classList.remove("sel"));tr.classList.add("sel");
+document.getElementById("d").innerHTML=`<h3>${h.n}</h3><dl><dt>IP</dt><dd>${h.ip}</dd><dt>MAC</dt><dd>${h.mac}</dd><dt>Hersteller</dt><dd>${h.v}</dd><dt>System (Vermutung)</dt><dd>${h.os}</dd><dt>Ports</dt><dd>${h.p.join(", ")}</dd></dl>`};
+tb.appendChild(tr)});
+</script></body></html>

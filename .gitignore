@@ -1,0 +1,9 @@
+# Build-Ausgaben
+/dist/
+/bin/
+# Scan-Ergebnisse und Exporte (koennen sensible Netzdaten enthalten!)
+/exports/
+*.csv
+# Zugangsdaten niemals einchecken
+*.secret
+.env

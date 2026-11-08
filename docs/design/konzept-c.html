@@ -1,0 +1,24 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Konzept C – Terminal</title>
+<style>
+:root{--bg:#000;--txt:#c9d1d9;--g:#3fb950;--mut:#6e7681;--line:#21262d}
+body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;padding:14px}
+.bar{color:var(--g);margin-bottom:8px}input{background:#0d1117;border:1px solid var(--line);color:var(--txt);padding:4px 8px;font:inherit;width:240px}
+.w{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:3px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{color:var(--mut)}tr.h{cursor:pointer}tr.h:hover{background:#0d1117}tr.x td{color:var(--mut);padding-left:28px;white-space:normal}
+.g{color:var(--g)}.y{color:#d29922}
+</style></head><body>
+<div class="bar">netzscanner v0.1.0 &gt; scan 192.168.1.0/24 &nbsp;[fertig · 42 Hosts]</div>
+<p><input id="f" placeholder="Filter (IP, Name, Port…)"></p>
+<div class="w"><table id="t"><thead><tr><th>▸</th><th>IP</th><th>NAME</th><th>MAC</th><th>PORTS</th></tr></thead><tbody></tbody></table></div>
+<script>
+// Beispieldaten (erfunden)
+const H=[["192.168.1.1","fritz.box","3C:A6:2F:11:22:33","53,80,443","AVM · FRITZ!OS · Router"],
+["192.168.1.10","nas-01","00:11:32:AA:BB:CC","22,445,5000","Synology · DSM 7 · SSH-Banner: OpenSSH 9.x"],
+["192.168.1.77","?","B8:27:EB:99:88:77","22,23","Raspberry Pi · Telnet offen!"]];
+const tb=document.querySelector("tbody");
+function draw(q=""){tb.innerHTML="";H.filter(h=>h.join(" ").toLowerCase().includes(q.toLowerCase())).forEach(h=>{
+const r=tb.insertRow();r.className="h";r.innerHTML=`<td class="g">+</td><td>${h[0]}</td><td>${h[1]}</td><td>${h[2]}</td><td class="${h[3].includes("23")?"y":""}">${h[3]}</td>`;
+let x=null;r.onclick=()=>{if(x){x.remove();x=null;r.cells[0].textContent="+"}else{x=tb.insertRow(r.rowIndex);x.className="x";x.innerHTML=`<td></td><td colspan=4>${h[4]}</td>`;r.cells[0].textContent="−"}}})}
+document.getElementById("f").oninput=e=>draw(e.target.value);draw();
+</script></body></html>

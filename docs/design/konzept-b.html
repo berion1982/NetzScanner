@@ -1,0 +1,33 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Konzept B – Topologie zuerst</title>
+<style>
+:root{--bg:#0b0f14;--panel:#141a22;--line:#2a3340;--txt:#e6edf3;--mut:#8b97a6;--acc:#39d0d8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,sans-serif}
+header{padding:12px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.wrap{display:flex;flex-wrap:wrap;gap:16px;padding:16px}
+.map{flex:2 1 460px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+svg{width:100%;height:auto;display:block}
+.node{cursor:pointer}.node rect{fill:#1b2430;stroke:var(--line);stroke-width:1.5}.node:hover rect,.node.sel rect{stroke:var(--acc)}
+.node text{fill:var(--txt);font-size:12px;text-anchor:middle}.node .s{fill:var(--mut);font-size:10px}
+line{stroke:#3a4656;stroke-width:1.5}
+#d{flex:1 1 260px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+code{color:var(--acc)}
+</style></head><body>
+<header><b>◈ NetzScanner · Topologie</b><span style="color:var(--mut)">42 Geräte · 3 Segmente</span></header>
+<div class="wrap">
+<div class="map"><svg viewBox="0 0 600 340">
+<line x1="300" y1="50" x2="300" y2="130"/><line x1="300" y1="170" x2="120" y2="250"/><line x1="300" y1="170" x2="300" y2="250"/><line x1="300" y1="170" x2="480" y2="250"/>
+<g class="node" data-i="0"><rect x="240" y="20" width="120" height="44" rx="8"/><text x="300" y="40">Router</text><text class="s" x="300" y="55">192.168.1.1</text></g>
+<g class="node" data-i="1"><rect x="240" y="126" width="120" height="44" rx="8"/><text x="300" y="146">Switch</text><text class="s" x="300" y="161">192.168.1.2 · LLDP</text></g>
+<g class="node" data-i="2"><rect x="60" y="250" width="120" height="44" rx="8"/><text x="120" y="270">nas-01</text><text class="s" x="120" y="285">192.168.1.10</text></g>
+<g class="node" data-i="3"><rect x="240" y="250" width="120" height="44" rx="8"/><text x="300" y="270">drucker-eg</text><text class="s" x="300" y="285">192.168.1.23</text></g>
+<g class="node" data-i="4"><rect x="420" y="250" width="120" height="44" rx="8"/><text x="480" y="270">(unbekannt)</text><text class="s" x="480" y="285">192.168.1.77</text></g>
+</svg></div>
+<div id="d"><h3>Details</h3><p style="color:var(--mut)">Knoten anklicken.</p></div></div>
+<script>
+// Beispieldaten (erfunden): Name, IP, MAC, Ports, Uplink-Port aus LLDP
+const n=[["Router","192.168.1.1","3C:A6:2F:11:22:33","53, 80, 443","—"],["Switch","192.168.1.2","10:7B:44:00:01:02","22, 80","Port 1 (Uplink)"],
+["nas-01","192.168.1.10","00:11:32:AA:BB:CC","22, 445, 5000","Switch Port 4"],["drucker-eg","192.168.1.23","00:1B:A9:44:55:66","80, 631, 9100","Switch Port 7"],["(unbekannt)","192.168.1.77","B8:27:EB:99:88:77","22, 23","Switch Port 9"]];
+document.querySelectorAll(".node").forEach(g=>g.onclick=()=>{document.querySelectorAll(".node.sel").forEach(e=>e.classList.remove("sel"));g.classList.add("sel");
+const x=n[g.dataset.i];document.getElementById("d").innerHTML=`<h3>${x[0]}</h3><p>IP <code>${x[1]}</code><br>MAC <code>${x[2]}</code><br>Ports <code>${x[3]}</code><br>Anschluss <code>${x[4]}</code></p>`});
+</script></body></html>
