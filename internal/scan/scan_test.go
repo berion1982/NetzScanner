@@ -173,3 +173,22 @@ func TestSummarizeCert(t *testing.T) {
 		t.Errorf("abgelaufen falsch: %+v", got)
 	}
 }
+
+// parseOUI/macPrefix: Kommentare, defekte Zeilen und verschiedene MAC-Schreibweisen.
+func TestParseOUIAndPrefix(t *testing.T) {
+	m := parseOUI("# Kommentar\naabbcc;Test GmbH\nkaputt\nAABB;zu kurz\n")
+	if len(m) != 1 || m["AABBCC"] != "Test GmbH" {
+		t.Errorf("parseOUI falsch: %v", m)
+	}
+	for _, mac := range []string{"b8:27:eb:01:02:03", "B8-27-EB-01-02-03", "b827.eb01.0203", "B827EB010203"} {
+		if got := macPrefix(mac); got != "B827EB" {
+			t.Errorf("macPrefix(%q) = %q", mac, got)
+		}
+	}
+	if macPrefix("zz:11") != "" || macPrefix("B8:27") != "" {
+		t.Error("ungueltige MAC muss leer ergeben")
+	}
+	if Vendor("") != "" {
+		t.Error("leere MAC darf keinen Hersteller liefern")
+	}
+}

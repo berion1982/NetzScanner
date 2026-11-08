@@ -1,0 +1,9 @@
+# Herstellerpraefixe (OUI) im Format: 6 Hex-Zeichen;Herstellername
+# Diese Datei ist NUR eine kleine Startliste. Die vollstaendige Liste erzeugt
+# scripts/update-oui.sh aus der IEEE-Registry (siehe dort).
+B827EB;Raspberry Pi
+DCA632;Raspberry Pi
+E45F01;Raspberry Pi
+001132;Synology
+001BA9;Brother
+3CA62F;AVM (FRITZ!)
