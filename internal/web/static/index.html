@@ -547,6 +547,7 @@ function renderMap(allHosts) {
   // (gestrichelter Rahmen mit Titel, ein Kabel statt vieler Linien). Einzelne Geraete stehen ohne Rahmen.
   // Gruppen einer Ebene fliessen nebeneinander und brechen bei Platzmangel in die naechste Zeile um.
   const W = 780, BW = 120, BH = 44, GAP = 10, TITLE = 22, UGAP = 20, LEVELGAP = 40, MAXCOLS = 5;
+  const levelMinX = {}; // linker Rand je Ebene (fuer die Fuehrung der Linien ausserhalb der Gruppen)
   const frames = [], links = []; // Rahmen zum Zeichnen; Linien (Uplink -> Oberkante der Einheit)
   let y = 20;
   Object.keys(levels).map(Number).sort((a, b) => a - b).forEach(d => {
@@ -578,21 +579,26 @@ function renderMap(allHosts) {
           pos[first.ip] = { x: x + BW / 2, y };
         }
         minX = Math.min(minX, x);
-        if (first.uplink && !u.list.some(h => h.ip === first.uplink)) links.push({ from: first.uplink, x, y: y + (u.group ? 14 : BH / 2) });
+        if (first.uplink && !u.list.some(h => h.ip === first.uplink)) links.push({ from: first.uplink, srcLvl: depth(byIp[first.uplink]), x, y: y + (u.group ? 14 : BH / 2) });
         x += u.w + UGAP;
       });
       y += Math.max(...line.map(u => u.h)) + GAP * 2;
     });
+    levelMinX[d] = minX;
     // Sammelschiene: alle Linien dieser Ebene laufen links neben den Einheiten senkrecht (keine Linie quert eine Gruppe)
     links.slice(firstLink).forEach(l => { l.trunk = minX - 14; l.busY = levelTop - 18; });
     y += LEVELGAP - GAP * 2;
   });
-  svg.setAttribute("viewBox", "0 0 " + W + " " + (y - LEVELGAP + 20));
+  svg.setAttribute("viewBox", "-30 0 " + (W + 30) + " " + (y - LEVELGAP + 20));
   const out = [];
   links.forEach(l => {
     const f = pos[l.from]; if (!f) return;
     // Weg: vom Uplink nach unten, waagerecht zur Sammelschiene, senkrecht zur Einheit, kurz nach rechts hinein.
-    out.push(mk("path", { class: "lnk", d: "M" + f.x + " " + (f.y + BH) + " V" + l.busY + " H" + l.trunk + " V" + l.y + " H" + l.x }));
+    // Der Uplink steht oft INNERHALB einer Gruppe (z. B. Repeater unter Clients): Die Linie geht erst kurz nach unten
+    // in die Luecke unter dem Geraet, dann waagerecht nach links aus der Gruppe heraus (Rand dieser Ebene), dort senkrecht
+    // nach unten - so quert sie keine fremde Gruppe.
+    const gx = (levelMinX[l.srcLvl] ?? l.trunk + 14) - 24, gy = f.y + BH + GAP / 2;
+    out.push(mk("path", { class: "lnk", d: "M" + f.x + " " + (f.y + BH) + " V" + gy + " H" + gx + " V" + l.busY + " H" + l.trunk + " V" + l.y + " H" + l.x }));
   });
   frames.forEach(f => {
     const g = catStyle(mk("g", { class: "grp " + catClass(f.cat) }), f.cat);

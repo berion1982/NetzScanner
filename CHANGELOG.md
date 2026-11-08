@@ -347,3 +347,8 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.23.3] – 2026-11-08
 ### Geändert
 - **Router-Login nennt den echten Grund:** Statt „nicht lesbar“/„nicht verfügbar“ zeigen die Hinweise jetzt HTTP-Status und UPnP-Fehlercode/-text der Box (z. B. „HTTP 500, UPnP 606 Action not authorized“) bzw. „Anmeldung abgelehnt“. Auch ein abgelehnter Mesh-Abruf wird gemeldet. Anlass: Bei Sascha wurden nach der Zuordnung (32/49 ok) Geräteinfo, WAN, WLAN und Mesh nicht gelesen; Ursache unbekannt (Vermutung, ungeprüft: Benutzer ohne Recht „FRITZ!Box Einstellungen“ oder Anmeldesperre nach mehreren Logins).
+
+## [0.23.4] – 2026-11-08
+### Behoben
+- **Mesh-Zuordnung:** Ein Gerät mit alter/fremder IP im Mesh-Dokument (Nachbareintrag) konnte einem Repeater den Knoten wegnehmen – bei Sascha hingen dadurch drei Shelly-Stecker unter einem iPhone. Zuordnung jetzt in Stufen: MAC, dann eigene IP des Knotens (Merkmal `MANAGEMENT`), dann beliebige IP; jeder Knoten wird nur einmal vergeben. (Ursache aus den Screenshots abgeleitet, am echten Mesh-Dokument ungeprüft.)
+- **Karte:** Linien von einem Uplink, der innerhalb einer Gruppe steht (Repeater unter „Clients“), laufen nicht mehr senkrecht durch andere Geräte/Gruppen, sondern gehen zuerst nach links aus der Gruppe heraus. Der Rand der Zeichnung wurde dafür um 30 Pixel erweitert. Das PDF nutzt noch die alte Führung.
