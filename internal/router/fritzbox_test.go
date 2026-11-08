@@ -17,6 +17,7 @@ import (
 type fakeBox struct {
 	user, pass string
 	failures   int
+	forbidden  bool     // true, sobald eine verbotene Aktion (Schluessel lesen / Setzen) aufgerufen wurde
 	entries    []string // Rohwerte: ip|mac|name|iface|active
 }
 
@@ -46,6 +47,53 @@ func (f *fakeBox) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	act := r.Header.Get("SoapAction")
+	if strings.Contains(act, "SecurityKeys") || strings.Contains(act, "#Set") || strings.Contains(act, "#Add") || strings.Contains(act, "#Delete") {
+		f.forbidden = true
+	}
+	// Weitere Dienste (I-055): Router-Info und WLAN. wlanconfig3 und PPP fehlen -> 404.
+	resp := func(action string, fields map[string]string) {
+		var b strings.Builder
+		for k, v := range fields {
+			fmt.Fprintf(&b, "<%s>%s</%s>", k, v, k)
+		}
+		fmt.Fprintf(w, `<s:Envelope xmlns:s="x"><s:Body><u:%sResponse xmlns:u="y">%s</u:%sResponse></s:Body></s:Envelope>`, action, b.String(), action)
+	}
+	switch {
+	case r.URL.Path == "/upnp/control/deviceinfo":
+		resp("GetInfo", map[string]string{"NewModelName": "FRITZ!Box 7590", "NewSoftwareVersion": "7.57", "NewUpTime": "90061"})
+		return
+	case r.URL.Path == "/upnp/control/wanipconnection1":
+		resp("GetInfo", map[string]string{"NewConnectionStatus": "Connected", "NewUptime": "3600", "NewExternalIPAddress": "203.0.113.5"})
+		return
+	case r.URL.Path == "/upnp/control/wancommonifconfig1":
+		resp("GetCommonLinkProperties", map[string]string{"NewWANAccessType": "DSL", "NewLayer1DownstreamMaxBitRate": "100000000", "NewLayer1UpstreamMaxBitRate": "40000000"})
+		return
+	case r.URL.Path == "/upnp/control/lanhostconfigmgm":
+		resp("GetInfo", map[string]string{"NewDHCPServerEnable": "1", "NewMinAddress": "192.168.178.20", "NewMaxAddress": "192.168.178.200", "NewIPRouters": "192.168.178.1", "NewDNSServers": "192.168.178.1"})
+		return
+	case r.URL.Path == "/upnp/control/wlanconfig1" || r.URL.Path == "/upnp/control/wlanconfig2":
+		n := strings.TrimPrefix(r.URL.Path, "/upnp/control/wlanconfig")
+		switch {
+		case strings.HasSuffix(act, "#GetInfo"):
+			ch, ssid, beacon := "6", "Heimnetz", "11i"
+			if n == "2" {
+				ch, ssid, beacon = "36", "Gast", "None"
+			}
+			resp("GetInfo", map[string]string{"NewEnable": "1", "NewSSID": ssid, "NewChannel": ch, "NewStandard": "ax", "NewBeaconType": beacon})
+		case strings.HasSuffix(act, "#GetTotalAssociations"):
+			c := "0"
+			if n == "1" {
+				c = "1"
+			}
+			resp("GetTotalAssociations", map[string]string{"NewTotalAssociations": c})
+		case strings.HasSuffix(act, "#GetGenericAssociatedDeviceInfo"):
+			resp("GetGenericAssociatedDeviceInfo", map[string]string{"NewAssociatedDeviceMACAddress": "AA:BB:CC:00:11:33", "NewAssociatedDeviceIPAddress": "192.168.178.20", "NewX_AVM-DE_SignalStrength": "80", "NewX_AVM-DE_Speed": "866"})
+		}
+		return
+	case strings.HasPrefix(r.URL.Path, "/upnp/control/wlanconfig") || r.URL.Path == "/upnp/control/wanpppconn1":
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	switch {
 	case strings.HasSuffix(act, "#GetHostNumberOfEntries"):
 		fmt.Fprintf(w, `<s:Envelope xmlns:s="x"><s:Body><u:GetHostNumberOfEntriesResponse xmlns:u="y"><NewHostNumberOfEntries>%d</NewHostNumberOfEntries></u:GetHostNumberOfEntriesResponse></s:Body></s:Envelope>`, len(f.entries))
@@ -79,9 +127,23 @@ func TestReadFritzbox(t *testing.T) {
 	}}
 	host, done := withFake(t, f)
 	defer done()
-	hosts, err := ReadFritzbox(context.Background(), host, "u-4711", "pw-geheim")
+	res, err := ReadFritzbox(context.Background(), host, "u-4711", "pw-geheim")
 	if err != nil {
 		t.Fatal(err)
+	}
+	hosts, info := res.Hosts, res.Info
+	if f.forbidden {
+		t.Error("verbotene Aktion aufgerufen (WLAN-Schluessel lesen oder Einstellung aendern)")
+	}
+	if info.Model != "FRITZ!Box 7590" || info.Firmware != "7.57" || info.WANStatus != "Connected" || info.DownKbps != 100000 ||
+		!info.DHCPEnabled || info.DHCPFrom != "192.168.178.20" || len(info.WLANs) != 2 {
+		t.Errorf("Info: %+v", info)
+	}
+	if w := info.WLANs[0]; w.SSID != "Heimnetz" || w.Band != "2,4 GHz" || w.Encryption != "WPA2" || w.Open || len(w.Clients) != 1 || w.Clients[0].Signal != 80 || w.Clients[0].Speed != 866 {
+		t.Errorf("WLAN 1: %+v", w)
+	}
+	if w := info.WLANs[1]; w.Band != "5 GHz" || !w.Open {
+		t.Errorf("Gast-WLAN (offen, 5 GHz): %+v", w)
 	}
 	if len(hosts) != 2 || hosts[0].Name != "homeassistant" || hosts[0].Iface != "LAN (Kabel)" || !hosts[0].Active ||
 		hosts[1].Iface != "WLAN" || hosts[1].Active {

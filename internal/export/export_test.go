@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/berion1982/netzscanner/internal/model"
+	"github.com/berion1982/netzscanner/internal/router"
 )
 
 func sample() []model.Host {
@@ -118,5 +119,31 @@ func TestWritePDF(t *testing.T) {
 		if !bytes.HasPrefix(b.Bytes(), []byte("%PDF-")) || !bytes.Contains(b.Bytes()[b.Len()-32:], []byte("%%EOF")) {
 			t.Errorf("kein gueltiges PDF (%d Hosts, %d Byte)", len(hs), b.Len())
 		}
+	}
+}
+
+// Router-Export (I-055): lesbare Angaben, keine externe IP, Formel-Schutz, Fremdtext maskiert.
+func TestRouterExport(t *testing.T) {
+	info := router.Info{Model: "FRITZ!Box 7590", Firmware: "7.57", UptimeSec: 90061, ExternalIP: "203.0.113.5", DHCPEnabled: true,
+		DHCPFrom: "192.168.178.20", DHCPTo: "192.168.178.200",
+		WLANs: []router.WLAN{{Index: 1, SSID: "=EVIL|<b>", Enabled: true, Channel: 6, Band: "2,4 GHz", Standard: "ax", Encryption: "WPA2",
+			Clients: []router.WLANClient{{MAC: "AA:BB:CC:00:11:33", IP: "192.168.178.20", Signal: 80, Speed: 866}}}}}
+	var md, cs bytes.Buffer
+	if err := WriteRouterMarkdown(&md, info, Meta{Version: "t"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteRouterCSV(&cs, info); err != nil {
+		t.Fatal(err)
+	}
+	for _, out := range []string{md.String(), cs.String()} {
+		if strings.Contains(out, "203.0.113.5") {
+			t.Error("externe IP darf nicht in der Datei stehen")
+		}
+	}
+	if !strings.Contains(md.String(), "FRITZ!Box 7590") || !strings.Contains(md.String(), "1 Tage 1 Std 1 Min") || !strings.Contains(md.String(), "80 %") {
+		t.Errorf("Markdown unvollstaendig:\n%s", md.String())
+	}
+	if strings.Contains(md.String(), "<b>") || !strings.Contains(cs.String(), "'=EVIL|<b>") {
+		t.Errorf("Maskierung/Formelschutz fehlt:\nMD: %s\nCSV: %s", md.String(), cs.String())
 	}
 }

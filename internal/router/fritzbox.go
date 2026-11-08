@@ -42,17 +42,23 @@ import (
 
 // Grenzen und Konstanten.
 const (
-	tr064Port      = "49000"                            // unverschluesselter TR-064-Port der FRITZ!Box
-	hostsControl   = "/upnp/control/hosts"              // Steuer-URL des Dienstes Hosts:1
-	hostsService   = "urn:dslforum-org:service:Hosts:1" // Dienst-Kennung
-	maxEntries     = 1000                               // hoechstens so viele Geraete lesen
-	maxResponse    = 64 << 10                           // Antworten auf 64 KiB begrenzen
-	requestTimeout = 6 * time.Second                    // je Anfrage
+	tr064Port      = "49000"         // unverschluesselter TR-064-Port der FRITZ!Box
+	maxEntries     = 1000            // hoechstens so viele Geraete lesen
+	maxResponse    = 64 << 10        // Antworten auf 64 KiB begrenzen
+	requestTimeout = 6 * time.Second // je Anfrage
 	maxNameRunes   = 64
 )
 
 // tr064PortOverride ersetzt den Port nur in Tests (leer = tr064Port).
 var tr064PortOverride string
+
+// service beschreibt einen TR-064-Dienst: Steuer-URL und Dienst-Kennung.
+type service struct{ control, urn string }
+
+var svcHosts = service{"/upnp/control/hosts", "urn:dslforum-org:service:Hosts:1"}
+
+// errUnavailable: Dienst/Aktion gibt es an dieser Box nicht (404/500). Kein Anmeldefehler.
+var errUnavailable = errors.New("nicht verfügbar")
 
 // ErrAuth bedeutet: Benutzer/Passwort wurden abgelehnt (kein weiterer Versuch).
 var ErrAuth = errors.New("Anmeldung abgelehnt (Benutzer/Passwort oder Recht „FRITZ!Box Einstellungen“ prüfen)")
@@ -83,10 +89,17 @@ type challenge struct {
 	realm, nonce, opaque, qop, algo string
 }
 
-// ReadFritzbox liest die Geraeteliste der FRITZ!Box unter host (IP-Adresse). Kontext zum Abbrechen.
-func ReadFritzbox(ctx context.Context, host, user, pass string) ([]Host, error) {
+// Result ist alles, was ein Router-Login liefert.
+type Result struct {
+	Hosts []Host
+	Info  Info
+}
+
+// ReadFritzbox liest Geraeteliste und Netzwerkdaten der FRITZ!Box unter host (IP-Adresse).
+// Kontext zum Abbrechen. Fehlende Teil-Dienste (z. B. kein drittes WLAN) sind kein Fehler.
+func ReadFritzbox(ctx context.Context, host, user, pass string) (Result, error) {
 	if net.ParseIP(host) == nil {
-		return nil, errors.New("Router-Adresse ist keine gültige IP")
+		return Result{}, errors.New("Router-Adresse ist keine gültige IP")
 	}
 	port := tr064Port
 	if tr064PortOverride != "" {
@@ -100,38 +113,76 @@ func ReadFritzbox(ctx context.Context, host, user, pass string) ([]Host, error) 
 			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 		},
 	}
-	body, err := c.soap(ctx, "GetHostNumberOfEntries", "")
+	hosts, err := c.readHosts(ctx)
 	if err != nil {
+		return Result{Hosts: hosts}, err
+	}
+	info := c.readInfo(ctx) // Fehler einzelner Dienste landen in info.Notes
+	return Result{Hosts: hosts, Info: info}, nil
+}
+
+// readHosts liest die Geraeteliste (Dienst Hosts:1). Hier faellt auch eine falsche Anmeldung auf.
+func (c *client) readHosts(ctx context.Context) ([]Host, error) {
+	r, err := c.call(ctx, svcHosts, "GetHostNumberOfEntries", "")
+	if err != nil {
+		if errors.Is(err, errUnavailable) {
+			return nil, errors.New("Router antwortet nicht wie eine FRITZ!Box (TR-064 aktiv? Dienst Hosts fehlt)")
+		}
 		return nil, err
 	}
-	var cnt struct {
-		N int `xml:"Body>GetHostNumberOfEntriesResponse>NewHostNumberOfEntries"`
-	}
-	if err := xml.Unmarshal(body, &cnt); err != nil || cnt.N < 0 {
+	n, convErr := strconv.Atoi(r["NewHostNumberOfEntries"])
+	if convErr != nil || n < 0 {
 		return nil, errors.New("unerwartete Antwort des Routers (TR-064 aktiv?)")
 	}
-	if cnt.N > maxEntries {
-		cnt.N = maxEntries
+	if n > maxEntries {
+		n = maxEntries
 	}
 	var out []Host
-	for i := 0; i < cnt.N; i++ {
-		b, err := c.soap(ctx, "GetGenericHostEntry", "<NewIndex>"+strconv.Itoa(i)+"</NewIndex>")
-		if err != nil {
+	for i := 0; i < n; i++ {
+		e, err := c.call(ctx, svcHosts, "GetGenericHostEntry", "<NewIndex>"+strconv.Itoa(i)+"</NewIndex>")
+		if errors.Is(err, ErrAuth) {
 			return out, err
 		}
-		var e struct {
-			IP    string `xml:"Body>GetGenericHostEntryResponse>NewIPAddress"`
-			MAC   string `xml:"Body>GetGenericHostEntryResponse>NewMACAddress"`
-			Src   string `xml:"Body>GetGenericHostEntryResponse>NewAddressSource"`
-			Iface string `xml:"Body>GetGenericHostEntryResponse>NewInterfaceType"`
-			Act   string `xml:"Body>GetGenericHostEntryResponse>NewActive"`
-			Name  string `xml:"Body>GetGenericHostEntryResponse>NewHostName"`
+		if err != nil {
+			continue // einzelner Eintrag nicht lesbar: ueberspringen
 		}
-		if xml.Unmarshal(b, &e) != nil {
-			continue // kaputter Eintrag: ueberspringen
+		out = append(out, Host{IP: clean(e["NewIPAddress"], 45), MAC: clean(e["NewMACAddress"], 17), Name: clean(e["NewHostName"], maxNameRunes),
+			Iface: ifaceLabel(e["NewInterfaceType"]), Active: e["NewActive"] == "1" || strings.EqualFold(e["NewActive"], "true"),
+			Source: clean(e["NewAddressSource"], 16)})
+	}
+	return out, nil
+}
+
+// parseResponse liest die Kind-Elemente der SOAP-Antwort (Body > <Aktion>Response > Felder) als Name -> Text.
+func parseResponse(body []byte) (map[string]string, error) {
+	dec := xml.NewDecoder(bytes.NewReader(body))
+	out := map[string]string{}
+	depth := 0
+	var name string
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			break
 		}
-		out = append(out, Host{IP: clean(e.IP, 45), MAC: clean(e.MAC, 17), Name: clean(e.Name, maxNameRunes),
-			Iface: ifaceLabel(e.Iface), Active: e.Act == "1" || strings.EqualFold(e.Act, "true"), Source: clean(e.Src, 16)})
+		switch t := tok.(type) {
+		case xml.StartElement:
+			depth++
+			if depth == 4 { // Envelope(1) > Body(2) > <Aktion>Response(3) > Feld(4)
+				name = t.Name.Local
+			}
+		case xml.EndElement:
+			if depth == 4 {
+				name = ""
+			}
+			depth--
+		case xml.CharData:
+			if depth == 4 && name != "" {
+				out[name] += string(t)
+			}
+		}
+	}
+	if len(out) == 0 {
+		return nil, errors.New("leere oder unerwartete Antwort")
 	}
 	return out, nil
 }
@@ -161,21 +212,21 @@ func clean(s string, max int) string {
 	return s
 }
 
-// soap ruft eine Aktion des Hosts-Dienstes auf und liefert den Antwort-Koerper.
+// call ruft eine TR-064-Aktion auf und liefert die Antwortfelder (Name -> Text).
 // Ablauf: erst ohne Anmeldung (liefert 401 + Herausforderung), dann genau einmal mit Digest.
-func (c *client) soap(ctx context.Context, action, args string) ([]byte, error) {
+func (c *client) call(ctx context.Context, svc service, action, args string) (map[string]string, error) {
 	envelope := `<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" ` +
-		`s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body><u:` + action + ` xmlns:u="` + hostsService + `">` +
+		`s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body><u:` + action + ` xmlns:u="` + svc.urn + `">` +
 		args + `</u:` + action + `></s:Body></s:Envelope>`
 	for attempt := 0; attempt < 2; attempt++ {
-		req, err := http.NewRequestWithContext(ctx, "POST", c.base+hostsControl, strings.NewReader(envelope))
+		req, err := http.NewRequestWithContext(ctx, "POST", c.base+svc.control, strings.NewReader(envelope))
 		if err != nil {
 			return nil, errors.New("Anfrage nicht möglich")
 		}
 		req.Header.Set("Content-Type", `text/xml; charset="utf-8"`)
-		req.Header.Set("SoapAction", hostsService+"#"+action)
+		req.Header.Set("SoapAction", svc.urn+"#"+action)
 		if c.chal != nil {
-			req.Header.Set("Authorization", c.digest("POST", hostsControl))
+			req.Header.Set("Authorization", c.digest("POST", svc.control))
 			c.tried = true
 		}
 		resp, err := c.http.Do(req)
@@ -186,7 +237,9 @@ func (c *client) soap(ctx context.Context, action, args string) ([]byte, error) 
 		resp.Body.Close()
 		switch resp.StatusCode {
 		case http.StatusOK:
-			return data, nil
+			return parseResponse(data)
+		case http.StatusNotFound, http.StatusInternalServerError:
+			return nil, errUnavailable // Dienst/Aktion fehlt oder UPnP-Fehler (z. B. nicht unterstuetzt)
 		case http.StatusUnauthorized:
 			ch := parseChallenge(resp.Header.Get("WWW-Authenticate"))
 			if ch == nil {
@@ -199,7 +252,7 @@ func (c *client) soap(ctx context.Context, action, args string) ([]byte, error) 
 			}
 			c.chal, c.nc = ch, 0
 		default:
-			return nil, fmt.Errorf("Router antwortet mit Status %d (TR-064 aktiv? Dienst vorhanden?)", resp.StatusCode)
+			return nil, fmt.Errorf("Router antwortet mit Status %d", resp.StatusCode)
 		}
 	}
 	return nil, ErrAuth
