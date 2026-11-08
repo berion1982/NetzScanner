@@ -17,6 +17,13 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.7] – 2026-11-08
+### Hinzugefügt
+- **Topologie, erster Schritt** (I-010, Teil 1): Der Scan liest den Standard-Gateway des eigenen Rechners (Linux `/proc/net/route`, Windows `route print`, macOS `route -n get default`; ohne Rechte). Das Gerät mit dieser IP bekommt die Rolle „router“, alle anderen Geräte mit MAC (= selbes Subnetz) den Router als Uplink – die Topologie-Seite zeigt damit statt einer flachen Reihe einen Stern unter dem Router.
+### Hinweis
+- Das ist **keine echte Verkabelung**: Switch-Ports/Uplinks brauchen LLDP/CDP (Raw-Sockets, Rechte) oder SNMP (Community/Login) – offen als Teil 2 von I-010. Hilfe-Seite erklärt das.
+- Nur mit Beispieltexten getestet; im echten LAN (Sascha) prüfen, ob der Router oben steht.
+
 ## [0.5.6] – 2026-11-08
 ### Geändert
 - **Hilfe-Seite vervollständigt** (I-042): neue Abschnitte zu Namensquellen samt „(Vorschlag)“, Hersteller/MAC-Präfix, Ports und Risiko-Ports (inkl. TLS-Infos), Rechten und TCP-Fallback, Datenschutz, Lesezeichen-Export sowie Startoptionen (`--listen`, `--demo`, `--allow-public`, `--diagnose`, `--version`). Nur Text, keine Funktionsänderung.
