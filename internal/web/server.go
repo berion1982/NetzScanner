@@ -49,12 +49,14 @@ type server struct {
 	total      int
 	errMsg     string
 	hosts      []model.Host
-	names      map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
-	users      map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
-	locs       map[string]string // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
-	cats       map[string]string // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
-	customCats []string          // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
-	macs       map[string]string // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
+	names      map[string]string          // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
+	users      map[string]string          // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
+	locs       map[string]string          // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
+	cats       map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
+	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
+	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
+	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
+	macs       map[string]string          // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
 	finished   time.Time
 }
 
@@ -78,6 +80,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
 	mux.HandleFunc("POST /api/hosts/location", s.handleLocation)
 	mux.HandleFunc("POST /api/hosts/category", s.handleCategory)
+	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
+	mux.HandleFunc("POST /api/topology/snmp/clear", s.handleSNMPClear)
 	mux.HandleFunc("GET /api/categories", s.handleCategories)
 	mux.HandleFunc("POST /api/categories", s.handleCategoryAdd)
 	mux.HandleFunc("POST /api/categories/delete", s.handleCategoryDelete)
@@ -144,6 +148,18 @@ func (s *server) viewLocked() []model.Host {
 		if match {
 			hosts[i].Username = s.users[hosts[i].IP]
 			hosts[i].Location = s.locs[hosts[i].IP]
+		}
+		// Topologie per SNMP (I-010 Teil 2): gilt nur, solange hinter der IP dieselbe MAC steckt.
+		if l, ok := s.snmpLinks[hosts[i].IP]; ok && l.mac != "" && l.mac == scan.NormMAC(hosts[i].MAC) {
+			hosts[i].Uplink, hosts[i].UplinkPort, hosts[i].UplinkShared = l.Uplink, l.Port, l.Shared
+		}
+		if sw, ok := s.snmpSwitch[hosts[i].IP]; ok {
+			if hosts[i].Role == "" {
+				hosts[i].Role = "switch"
+			}
+			if sw.Descr != "" {
+				hosts[i].OS = sw.Descr + " (SNMP)"
+			}
 		}
 		// Kategorie: Wahl des Nutzers hat Vorrang, sonst Vermutung aus dem Scan (I-015).
 		if c, ok := s.cats[hosts[i].IP]; ok && match {

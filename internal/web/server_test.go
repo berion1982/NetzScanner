@@ -399,3 +399,27 @@ func TestCustomCategoryPersist(t *testing.T) {
 		t.Errorf("nach Neustart fehlt die Kategorie: %s", rec.Body.String())
 	}
 }
+
+// SNMP-Endpunkt (I-010 Teil 2): Eingaben werden geprueft; die Community wird nie zurueckgegeben.
+func TestSNMPValidation(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	cases := map[string]int{
+		`{"community":"","targets":["192.168.1.1"]}`:             400, // Community fehlt
+		`{"community":"geheim","targets":[]}`:                    400, // keine Ziele
+		`{"community":"geheim","targets":["8.8.8.8"]}`:           400, // nicht in der Geraeteliste
+		`{"community":"gehäim","targets":["192.168.1.1"]}`:       400, // Nicht-ASCII
+		`{"community":"geheim","targets":["1.1.1.1","2.2.2.2"]}`: 400,
+	}
+	for body, want := range cases {
+		rec := postJSON(h, "/api/topology/snmp", body)
+		if rec.Code != want {
+			t.Errorf("%s: %d, erwartet %d", body, rec.Code, want)
+		}
+		if strings.Contains(rec.Body.String(), "geheim") {
+			t.Errorf("Community in der Antwort: %s", rec.Body.String())
+		}
+	}
+	if rec := postJSON(h, "/api/topology/snmp/clear", `{}`); rec.Code != 200 {
+		t.Errorf("clear: %d", rec.Code)
+	}
+}
