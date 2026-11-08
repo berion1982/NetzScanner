@@ -17,6 +17,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
 | I-007 | Hersteller aus der MAC (Netzwerkchip) auch in Tabelle und Export anzeigen, mit Hinweis „Chip-Hersteller, nicht zwingend Gerätehersteller“ (Vorschlag Sascha; Basis ist I-003, im Detail-Panel schon vorhanden) | mittel | S | offen |
 | I-008 | Weitere Namensquellen: SSDP/UPnP (TV, Router, Mediaserver), LLMNR, HTTP-Server-Header, SNMP sysName | mittel | M | offen |
+| I-009 | Namen, die nur wie eine Kennung aussehen (z. B. `001788FFFE476CE2` = MAC/EUI-64 einer Hue Bridge), nicht als „bekannt“ werten, sondern als Platzhalter behandeln und besser aus Hersteller (OUI `00:17:88`), mDNS/SSDP oder HTTP-Titel ableiten, z. B. „Philips Hue Bridge (Vorschlag)“ | mittel | S | offen |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
 
 ## WLAN
@@ -44,6 +45,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-021 | Gerätenamen in der Oberfläche anpassen (Anzeigename, wirkt auf Export/Lesezeichen) | hoch | S | erledigt (0.3.1) |
 | I-022 | Login-Test je Gerät: SSH, SNMPv3, Web (HTTP-Anmeldung), später LDAP/WinRM/SMB (Domain-Admins); Ergebnis „ok/fehlgeschlagen“ in der Liste | hoch | L | offen |
 | I-023 | Router-/Server-Infos nach erfolgreichem Login auslesen (Modell, Firmware, Schnittstellen, Domäne) | mittel | L | offen |
+| I-024 | **Geräteliste direkt beim Router/DHCP-Server abfragen** (Vorschlag Sascha): nach Login Namen, MAC, IP und **feste IP-Reservierungen** auslesen und den Scan-Ergebnissen zuordnen (Name aus der Liste statt „unbekannt“). Router: FritzBox (TR-064/Web-API), SNMP, SSH; Windows-DHCP-Server: Leases/Reservierungen per WinRM/PowerShell (`Get-DhcpServerv4Lease`) oder RPC – **machbar ist es nur teilweise, Ich weiß es nicht** für jeden Router; je Modell prüfen. Braucht Eingabefelder für Adresse + Zugangsdaten (Sicherheitsregeln von I-020 gelten: nur RAM, nie loggen/exportieren) | hoch | L | offen (baut auf I-020/I-022 auf) |
 
 **Sicherheitshinweise zu I-020/I-022 (müssen bei der Umsetzung beachtet werden):**
 - Passwörter dürfen nur über eine lokale Verbindung eingegeben werden. Bei `--listen 0.0.0.0` (HTTP ohne Verschlüsselung) Eingabe sperren oder TLS verlangen.
