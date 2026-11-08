@@ -12,6 +12,14 @@ nav button:hover,nav button.on{background:#21262d;color:var(--txt)}
 nav small{margin-top:auto;color:var(--mut);font-size:11px}
 main{flex:1;min-width:0;padding:20px}
 section{display:none}section.on{display:block}
+.scanbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px}
+.scanbar input{background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:7px 10px;font:inherit}
+.scanbar input.t{width:200px}.scanbar input.p{width:160px}
+.btn{background:#238636;border:1px solid #2ea043;color:#fff;border-radius:6px;padding:7px 14px;font:inherit;cursor:pointer}
+.btn.stop{background:#8b2a2a;border-color:var(--bad)}.btn:disabled{opacity:.5;cursor:default}
+.prog{flex:1;min-width:160px;color:var(--mut)}
+.bar{height:6px;background:#21262d;border-radius:3px;margin-top:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);width:0}
+.err{color:var(--bad)}.empty{padding:24px;color:var(--mut)}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
 .tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
 .tile small{color:var(--mut)}.tile div{font-size:28px;font-weight:600}
@@ -43,8 +51,14 @@ line{stroke:#3a4656;stroke-width:1.5}
 <small id="ver">…</small></nav>
 <main>
 <section id="ov" class="on">
+ <div class="card scanbar">
+  <label>Ziel <input class="t" id="target" placeholder="192.168.1.0/24"></label>
+  <label>Ports <input class="p" id="ports" placeholder="leer = Standardliste"></label>
+  <button class="btn" id="go">Scan starten</button>
+  <div class="prog" id="prog">Bereit.</div>
+ </div>
  <div class="tiles" id="tiles"></div>
- <div class="row"><div class="card tbl"><table><thead><tr><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <div class="row"><div class="card tbl"><table><thead><tr><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
@@ -57,7 +71,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
  <h2>Topologie</h2><p>Zeigt, welches Gerät an welchem hängt (Router → Switch → Geräte). Quelle: Uplink-Angaben (später LLDP/SNMP).</p>
- <h2>Hinweis</h2><p>Aktuell werden <b>Demo-Daten</b> angezeigt, der Scan-Kern folgt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
+ <h2>Hinweis</h2><p>Ziel eingeben (z. B. <code>192.168.1.0/24</code> oder eine einzelne IP), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
 </section>
 </main>
 <script>
@@ -82,6 +96,8 @@ function showDetails(h) {
   const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
   add("IP", h.ip); add("MAC", h.mac); add("Hersteller", h.vendor); add("System (Vermutung)", h.os);
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
+  const banners = h.ports.filter(p => p.banner).map(p => p.number + ": " + p.banner).join("\n");
+  if (banners) { dl.append(el("dt", { text: "Banner (unverifiziert)" }), el("dd", { style: "white-space:pre-wrap", text: banners })); }
   dl.append(el("dt", { text: "Web-Zugänge" }), el("dd", {}, h.webLinks.length ? linkButtons(h) : ["–"]));
   document.querySelectorAll(".detail").forEach(d => d.replaceChildren(el("h3", { text: h.name }), dl.cloneNode(true)));
 }
@@ -95,6 +111,7 @@ function renderTiles(hosts) {
 }
 
 function renderTable(hosts) {
+  document.getElementById("empty").style.display = hosts.length ? "none" : "block";
   document.getElementById("tb").replaceChildren(...hosts.map(h => {
     const tr = el("tr", { class: "r" });
     tr.append(
@@ -140,6 +157,40 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
   b.classList.add("on"); document.getElementById(b.dataset.t).classList.add("on");
 }));
 
-fetch("/api/hosts").then(r => r.json()).then(h => { renderTiles(h); renderTable(h); renderMap(h); });
+function loadHosts() { return fetch("/api/hosts").then(r => r.json()).then(h => { renderTiles(h); renderTable(h); renderMap(h); }); }
+
+// JSON-POST mit dem vom Server verlangten Content-Type.
+const post = (u, b) => fetch(u, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b || {}) });
+const goBtn = document.getElementById("go"), progEl = document.getElementById("prog");
+let timer = null, running = false;
+
+// Fortschritt abfragen (jede Sekunde, solange ein Scan laeuft).
+function poll() {
+  fetch("/api/scan").then(r => r.json()).then(s => {
+    running = s.running;
+    goBtn.textContent = running ? "Abbrechen" : "Scan starten"; goBtn.className = running ? "btn stop" : "btn";
+    progEl.replaceChildren();
+    if (running) {
+      const pct = s.total ? Math.round(100 * s.done / s.total) : 0;
+      progEl.append(el("div", { text: "Scanne " + s.target + " … " + s.done + "/" + s.total + " Adressen" }), el("div", { class: "bar" }, [el("i", { style: "width:" + pct + "%" })]));
+    } else if (s.error) { progEl.append(el("span", { class: "err", text: s.error })); }
+    else if (s.finished && s.finished.indexOf("0001") !== 0) { progEl.textContent = "Fertig: " + s.hosts + " Geräte gefunden (" + s.target + ")."; }
+    else { progEl.textContent = "Bereit."; }
+    if (!running && timer) { clearInterval(timer); timer = null; loadHosts(); }
+  });
+}
+function startPolling() { if (!timer) { timer = setInterval(poll, 1000); } poll(); }
+
+goBtn.addEventListener("click", () => {
+  if (running) { post("/api/scan/cancel"); return; }
+  post("/api/scan", { target: document.getElementById("target").value, ports: document.getElementById("ports").value })
+    .then(r => r.json().then(b => ({ ok: r.ok, b })))
+    .then(({ ok, b }) => { if (!ok) { progEl.replaceChildren(el("span", { class: "err", text: b.error })); } else { startPolling(); } });
+});
+
+// Start: Daten laden, Netzvorschlag eintragen, laufenden Scan ggf. weiter anzeigen.
+loadHosts();
+fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
+poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
 fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });
 </script></body></html>
