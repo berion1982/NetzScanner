@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.5.4 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.5.5 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -23,10 +23,10 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - **I-002 umgesetzt (0.5.0):** mDNS + NetBIOS in `internal/scan/udpnames.go`; nur mit lokalen Test-Servern geprüft → Sascha bitte im LAN testen: weniger „(unbekannt)“? Neue Ideen: I-007 (Hersteller in Tabelle/Export), I-008 (SSDP/LLMNR/SNMP).
 - **I-008 teilweise (0.5.3):** LLMNR + SSDP/UPnP in `internal/scan/ssdp.go` (nur lokal getestet) → Sascha bitte im LAN testen (TV, Router, Mediaserver). Offen: SNMP sysName (braucht Community, später mit Logins), HTTP-Server-Header.
 - **I-044 umgesetzt (0.5.4):** Live-Ergebnisse (`Options.OnHost`, `upsertHost` im Server, Feld `pending`, Polling lädt die Liste jede Sekunde). Im LAN prüfen, ob es flüssig wirkt (Tabelle wird je Sekunde neu gezeichnet).
-- **Neue Ideen (nur in `IDEAS.md`, nicht umgesetzt):** I-045 (Format-Hinweis unter dem Ziel-Feld), I-046 (Bereichsschreibweise `a-b`), I-042 erweitert (alles Wissenswerte in die Hilfe). Achtung: Teilbereiche gehen heute nur per CIDR.
+- **I-045/I-046 umgesetzt (0.5.5):** Ziel-Feld versteht Bereiche (`a.b.c.10-50`, `a.b.c.1-a.b.d.9`) und Komma-Listen (`ExpandTarget` in `targets.go`); Format-Hinweis unter dem Feld, Hilfe mit Tabelle. **I-042 (Hilfe vollständig) bleibt offen** – bisher nur Ziel-Formate und Live-Ergebnisse ergänzt.
 - **I-009 umgesetzt (0.5.1):** MAC-/EUI-64-artige Namen (`looksLikeIdentifier` in `names.go`) werden verworfen; letzter Ausweg „<Hersteller> (Vorschlag)“ (Quelle `hersteller`). Im LAN prüfen (Hue Bridge); wirkt voll erst mit großer OUI-Liste (I-003).
 - **Neue Idee (nur in `IDEAS.md`, nicht umgesetzt):** I-024 (Router-/Windows-DHCP-Geräteliste nach Login abfragen, baut auf I-020/I-022 auf; Machbarkeit je Router offen).
-- Empfohlene Reihenfolge: FTP/Telnet als Risiko → Topologie (I-010) → Logins (I-020/I-022) → I-024.
+- Empfohlene Reihenfolge: I-042 (Hilfe vervollständigen) → FTP/Telnet als Risiko → Topologie (I-010) → Logins (I-020/I-022) → I-024.
 
 ## Offen für Sascha
 - **Entscheidung I-003:** volle OUI-Liste per `scripts/update-oui.sh` selbst erzeugen, Host `standards-oui.ieee.org` freigeben, oder nmap-Liste trotz Lizenzfrage?

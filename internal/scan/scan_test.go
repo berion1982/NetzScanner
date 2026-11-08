@@ -16,6 +16,36 @@ import (
 	"github.com/berion1982/netzscanner/internal/model"
 )
 
+// I-046: Bereiche und Listen im Ziel-Feld.
+func TestExpandTargetRanges(t *testing.T) {
+	count := func(in string) int {
+		ips, err := ExpandTarget(in, false)
+		if err != nil {
+			return -1
+		}
+		return len(ips)
+	}
+	for in, want := range map[string]int{
+		"192.168.1.10-50": 41, "192.168.1.10-192.168.1.50": 41, "192.168.1.250-192.168.2.5": 12,
+		"192.168.1.5-5": 1, " 192.168.1.5 , 192.168.1.5 ": 1, // Duplikate entfallen
+		"192.168.1.5, 192.168.1.20-22": 4, "192.168.1.0/30, 192.168.1.9": 3,
+		"192.168.0.0-192.168.255.255": MaxTargets,
+	} {
+		if got := count(in); got != want {
+			t.Errorf("ExpandTarget(%q) = %d, erwartet %d", in, got, want)
+		}
+	}
+	for _, bad := range []string{
+		"192.168.1.50-10", "192.168.1.10-300", "192.168.1.10-", "-5", "192.168.1.x-5", "192.168.1.1,", ",192.168.1.1",
+		"192.168.1.1-::1", "10.0.0.0-10.2.0.0", "192.168.1.1, 8.8.8.8", "192.168.255.250-193.0.0.5", // Bereich ueber die Privatgrenze
+		"192.168.0.0/16, 10.0.0.0/16", // zusammen > MaxTargets
+	} {
+		if _, err := ExpandTarget(bad, false); err == nil {
+			t.Errorf("%q haette abgelehnt werden muessen", bad)
+		}
+	}
+}
+
 // Zielauswertung: Groessen, Grenzen und Sperre oeffentlicher Adressen.
 func TestExpandTarget(t *testing.T) {
 	if ips, err := ExpandTarget("192.168.1.0/24", false); err != nil || len(ips) != 254 {

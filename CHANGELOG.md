@@ -17,6 +17,14 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.5] – 2026-11-08
+### Hinzugefügt
+- **Bereiche im Ziel-Feld** (I-046): neben Netz (`192.168.1.0/28`) und Einzel-IP jetzt Bereiche in Kurzform (`192.168.1.10-50`) und ausführlich (`192.168.1.250-192.168.2.5`) sowie mehrere Angaben mit Komma (`192.168.1.5, 192.168.1.20-30`). Doppelte Adressen werden nur einmal gescannt.
+- **Format-Hinweis** (I-045): kleine Zeile unter dem Ziel-Feld mit den erlaubten Schreibweisen; Hilfe-Seite mit eigener Tabelle „Ziel eingeben“.
+### Sicherheit/Grenzen
+- Unverändert: nur IPv4, höchstens 65.536 Adressen je Scan (auch für Bereiche und Listen zusammen), öffentliche Adressen gesperrt – bei Bereichen wird **jede** Adresse geprüft (ein Bereich über die Privatgrenze wird abgelehnt). Anfang hinter Ende, Zahl > 255 oder Müll ergibt eine Fehlermeldung.
+- Bei Bereichen bleiben Netz- und Broadcast-Adresse enthalten (nur bei CIDR-Netzen bis /30 entfallen sie), weil der Bereich ausdrücklich angegeben wurde.
+
 ## [0.5.4] – 2026-11-08
 ### Hinzugefügt
 - **Live-Ergebnisse beim Scan** (I-044): Gefundene Geräte erscheinen sofort in der Liste und werden Stück für Stück ergänzt – erst IP und offene Ports, dann MAC/Hersteller, zuletzt der Name (bis dahin grau „(wird ermittelt …)“). Fortschrittszeile zeigt die bisher gefundene Anzahl. Angeklickte Zeile, Auswahl und Umbenennen bleiben beim Nachladen erhalten; die Details werden nicht neu gezeichnet, solange man in einem Feld tippt.
