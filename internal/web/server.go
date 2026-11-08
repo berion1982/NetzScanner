@@ -43,27 +43,28 @@ type Options struct {
 type server struct {
 	opt Options
 
-	mu         sync.Mutex
-	running    bool
-	cancel     context.CancelFunc
-	target     string
-	done       int
-	total      int
-	errMsg     string
-	hosts      []model.Host
-	names      map[string]string          // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
-	users      map[string]string          // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
-	locs       map[string]string          // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
-	cats       map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
-	routerData *router.Info               // Router-Info und WLANs der letzten Abfrage (nur im RAM, I-055)
-	routerInfo map[string]routerEntry     // Router-Geraeteliste: normalisierte MAC -> Eintrag (nur im RAM, I-024)
-	dhcpRows   []dhcp.Entry               // alle Zeilen der letzten DHCP-Abfrage (Reiter "Reservierungen", nur im RAM, I-057)
-	dhcpInfo   map[string]dhcpEntry       // Windows-DHCP-Server: normalisierte MAC -> Eintrag (nur im RAM, I-056)
-	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
-	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
-	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
-	macs       map[string]string          // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
-	finished   time.Time
+	mu          sync.Mutex
+	running     bool
+	cancel      context.CancelFunc
+	target      string
+	done        int
+	total       int
+	errMsg      string
+	hosts       []model.Host
+	names       map[string]string          // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
+	users       map[string]string          // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
+	locs        map[string]string          // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
+	cats        map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
+	routerData  *router.Info               // Router-Info und WLANs der letzten Abfrage (nur im RAM, I-055)
+	routerHosts []router.Host              // komplette Router-Geraeteliste der letzten Abfrage (fuer die Reservierungsliste, nur im RAM)
+	routerInfo  map[string]routerEntry     // Router-Geraeteliste: normalisierte MAC -> Eintrag (nur im RAM, I-024)
+	dhcpRows    []dhcp.Entry               // alle Zeilen der letzten DHCP-Abfrage (Reiter "Reservierungen", nur im RAM, I-057)
+	dhcpInfo    map[string]dhcpEntry       // Windows-DHCP-Server: normalisierte MAC -> Eintrag (nur im RAM, I-056)
+	snmpLinks   map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
+	snmpSwitch  map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
+	customCats  []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
+	macs        map[string]string          // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
+	finished    time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
