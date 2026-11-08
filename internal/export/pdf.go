@@ -219,7 +219,7 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 			pdf.Line(px(up)+bw/2, py(up)+bh, px(n)+bw/2, py(n))
 		}
 	}
-	// 2) Kaesten mit Name (fett) und IP. Router/Switch farbig hervorheben.
+	// 2) Kaesten mit Name (fett), IP und ggf. Standort. Router/Switch farbig hervorheben.
 	nameFont, ipFont := 8*scale, 7*scale
 	if nameFont < 3 {
 		nameFont, ipFont = 3, 2.6
@@ -237,13 +237,23 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 		pdf.SetDrawColor(90, 90, 90)
 		pdf.RoundedRect(px(n), py(n), bw, bh, 1.2*scale, "1234", "DF")
 		pdf.SetTextColor(20, 20, 20)
+		// Ohne Standort: zwei Zeilen (Name, IP) wie bisher; mit Standort eine dritte Zeile.
+		nameY, ipY, nameH, ipH := 0.14, 0.52, 0.40, 0.34
+		if h.Location != "" {
+			nameY, ipY, nameH, ipH = 0.06, 0.34, 0.28, 0.26
+		}
 		pdf.SetFont("Helvetica", "B", nameFont)
-		pdf.SetXY(px(n), py(n)+bh*0.14)
-		pdf.CellFormat(bw, bh*0.40, fitText(pdf, t(h.Name), bw-1), "", 0, "C", false, 0, "")
+		pdf.SetXY(px(n), py(n)+bh*nameY)
+		pdf.CellFormat(bw, bh*nameH, fitText(pdf, t(h.Name), bw-1), "", 0, "C", false, 0, "")
 		pdf.SetFont("Helvetica", "", ipFont)
 		pdf.SetTextColor(70, 70, 70)
-		pdf.SetXY(px(n), py(n)+bh*0.52)
-		pdf.CellFormat(bw, bh*0.34, fitText(pdf, t(h.IP), bw-1), "", 0, "C", false, 0, "")
+		pdf.SetXY(px(n), py(n)+bh*ipY)
+		pdf.CellFormat(bw, bh*ipH, fitText(pdf, t(h.IP), bw-1), "", 0, "C", false, 0, "")
+		if h.Location != "" { // Standort (Freitext des Nutzers) kursiv unter der IP
+			pdf.SetFont("Helvetica", "I", ipFont)
+			pdf.SetXY(px(n), py(n)+bh*0.62)
+			pdf.CellFormat(bw, bh*0.26, fitText(pdf, t(h.Location), bw-1), "", 0, "C", false, 0, "")
+		}
 	}
 	// Hinweis zur Aussagekraft (gleich wie in der Hilfe der Oberflaeche).
 	pdf.SetFont("Helvetica", "I", 7)
