@@ -170,6 +170,6 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [0.8.0] – 2026-11-08
 ### Hinzugefügt
-- **Betriebssystem-Vermutung** (I-013): Das Feld „System (Vermutung)“ wird jetzt aus dem Scan gefüllt – aus SSH-Bbannern (OpenSSH-Version + Ubuntu/Debian/Raspbian, RouterOS, Dropbear, Windows-OpenSSH), HTTP-Server-Headern (IIS-Version → Windows, Apache/nginx mit „(Ubuntu)“/„(Debian)“ …) und typischen Ports (RDP/RPC/WinRM → Windows, AFP → macOS, Port 62078 → iOS). Es wird nichts zusätzlich gesendet.
+- **Betriebssystem-Vermutung** (I-013): Das Feld „System (Vermutung)“ wird jetzt aus dem Scan gefüllt – aus SSH-Bannern (OpenSSH-Version + Ubuntu/Debian/Raspbian, RouterOS, Dropbear, Windows-OpenSSH), HTTP-Server-Headern (IIS-Version → Windows, Apache/nginx mit „(Ubuntu)“/„(Debian)“ …) und typischen Ports (RDP/RPC/WinRM → Windows, AFP → macOS, Port 62078 → iOS). Es wird nichts zusätzlich gesendet.
 - Anzeige im Detail-Panel und als neue Spalte „System (Vermutung)“ in der PDF-Geräteliste.
 - Grenzen: nur eine **Vermutung**; Versionszuordnung (z. B. OpenSSH 8.9 → Ubuntu 22.04) gilt nur für unveränderte Distributionspakete; ohne Banner (z. B. die meisten Windows-PCs, Handys) bleibt das Feld leer. Offen: Windows-Version per SMB, SNMP, TTL.
