@@ -85,12 +85,16 @@ func Run(ctx context.Context, opt Options, progress Progress) ([]model.Host, err
 
 	// ARP-Tabelle erst NACH den Verbindungsversuchen lesen (sie ist dann gefuellt).
 	arp := ReadARP()
+	gateway := DefaultGateway()
 	var hosts []model.Host
 	for _, ip := range ips {
 		mac := arp[ip.String()]
 		ps := open[ip]
 		if len(ps) == 0 && mac == "" {
 			continue // weder offener Port noch ARP-Eintrag -> nicht gefunden
+		}
+		if isRouterEcho(ip.String(), mac, len(ps), gateway, arp[gateway]) {
+			continue // Antwort des Routers fuer eine fremde Adresse (z. B. VPN-Client), kein eigenes Geraet
 		}
 		hosts = append(hosts, newHost(ip.String(), mac, ps))
 		emit(opt.OnHost, hosts[len(hosts)-1]) // Teilergebnis 2: jetzt mit MAC und Hersteller
