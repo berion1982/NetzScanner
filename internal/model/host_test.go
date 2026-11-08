@@ -27,3 +27,27 @@ func TestFillWebLinksEdgeCases(t *testing.T) {
 		t.Errorf("ungueltige IP darf keine Links liefern: %+v", bad.WebLinks)
 	}
 }
+
+// Eigene Kategorien: Schluessel, Name, Farbton.
+func TestCustomCategoryModel(t *testing.T) {
+	l, ok := CleanCustomLabel("  Mein   Labor ")
+	if !ok || l != "Mein Labor" {
+		t.Fatalf("bereinigt: %q %v", l, ok)
+	}
+	k := CustomKey(l)
+	if !ValidCategory(k) || CategoryLabel(k) != "Mein Labor" || !IsCustom(k) {
+		t.Errorf("Schluessel %q nicht gueltig", k)
+	}
+	if ValidCategory(CustomPrefix) || ValidCategory("kaffee") {
+		t.Error("ungueltige Kategorie akzeptiert")
+	}
+	if _, ok := CleanCustomLabel("IOT"); ok {
+		t.Error("Name wie feste Kategorie sollte abgelehnt werden")
+	}
+	if CategoryRank(k) != len(Categories) {
+		t.Error("eigene Kategorie gehoert hinter die festen")
+	}
+	if h := CategoryHue(k); h < 0 || h > 359 || h != CategoryHue(k) {
+		t.Errorf("Farbton %d", h)
+	}
+}

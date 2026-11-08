@@ -333,3 +333,69 @@ func TestNoStoreWithoutFile(t *testing.T) {
 		t.Fatal(rec.Code)
 	}
 }
+
+// Eigene Kategorien (I-017): anlegen, zuweisen, ungueltige/unbekannte ablehnen, loeschen.
+func TestCustomCategory(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	// Zuweisen ohne Anlegen -> Fehler.
+	if rec := postJSON(h, "/api/hosts/category", `{"ip":"192.168.1.10","category":"custom:Drucker"}`); rec.Code != 400 {
+		t.Errorf("nicht angelegt: %d", rec.Code)
+	}
+	// Ungueltige Namen: leer, zu lang, wie feste Kategorie.
+	for _, name := range []string{"", "   ", strings.Repeat("x", 31), "server", "a\x01b"} {
+		body, _ := json.Marshal(map[string]string{"name": name})
+		if rec := postJSON(h, "/api/categories", string(body)); rec.Code != 400 {
+			t.Errorf("Name %q sollte abgelehnt werden: %d", name, rec.Code)
+		}
+	}
+	// Anlegen (doppelt = idempotent), zuweisen.
+	for i := 0; i < 2; i++ {
+		if rec := postJSON(h, "/api/categories", `{"name":"  Drucker  "}`); rec.Code != 200 {
+			t.Fatalf("anlegen: %d", rec.Code)
+		}
+	}
+	list := func() []customInfo {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/categories", nil))
+		var l []customInfo
+		if err := json.Unmarshal(rec.Body.Bytes(), &l); err != nil {
+			t.Fatal(err)
+		}
+		return l
+	}
+	if l := list(); len(l) != 1 || l[0].Key != "custom:Drucker" || l[0].Label != "Drucker" {
+		t.Fatalf("Liste: %+v", l)
+	}
+	if rec := postJSON(h, "/api/hosts/category", `{"ip":"192.168.1.10","category":"custom:Drucker"}`); rec.Code != 200 {
+		t.Fatalf("zuweisen: %d", rec.Code)
+	}
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/hosts", nil))
+	if !strings.Contains(rec.Body.String(), `"category":"custom:Drucker"`) {
+		t.Errorf("Geraet hat die eigene Kategorie nicht")
+	}
+	// Loeschen: Geraet faellt auf die Vermutung zurueck.
+	if rec := postJSON(h, "/api/categories/delete", `{"key":"custom:Drucker"}`); rec.Code != 200 {
+		t.Fatalf("loeschen: %d", rec.Code)
+	}
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/hosts", nil))
+	if strings.Contains(rec.Body.String(), "custom:Drucker") || len(list()) != 0 {
+		t.Errorf("Kategorie nach Loeschen noch vorhanden")
+	}
+}
+
+// Eigene Kategorien ueberleben einen Neustart (auch ohne zugeordnetes Geraet).
+func TestCustomCategoryPersist(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "eingaben.json")
+	h := NewHandler(Options{DataFile: file})
+	if rec := postJSON(h, "/api/categories", `{"name":"Gäste"}`); rec.Code != 200 {
+		t.Fatalf("anlegen: %d", rec.Code)
+	}
+	h2 := NewHandler(Options{DataFile: file}) // "Neustart"
+	rec := httptest.NewRecorder()
+	h2.ServeHTTP(rec, httptest.NewRequest("GET", "/api/categories", nil))
+	if !strings.Contains(rec.Body.String(), "custom:Gäste") {
+		t.Errorf("nach Neustart fehlt die Kategorie: %s", rec.Body.String())
+	}
+}

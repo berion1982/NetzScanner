@@ -40,6 +40,8 @@ type storeEntry struct {
 type storeFile struct {
 	Version int                   `json:"version"`
 	Entries map[string]storeEntry `json:"entries"` // Schluessel = IP
+	// Custom: eigene Kategorien (Schluessel "custom:<Name>"); auch ohne zugeordnete Geraete gemerkt (I-017).
+	Custom []string `json:"customCategories,omitempty"`
 }
 
 // DefaultStorePath liefert den Standardpfad (Konfigurationsordner des Benutzers), "" wenn unbekannt.
@@ -78,6 +80,18 @@ func (s *server) loadStore() {
 			break
 		}
 		s.applyEntry(ip, e)
+	}
+	// Eigene Kategorien: nur gueltige, ohne Doppelte, begrenzt.
+	for _, k := range f.Custom {
+		if model.IsCustom(k) && model.ValidCategory(k) && !s.hasCustomLocked(k) && len(s.customCats) < model.MaxCustomCategories {
+			s.customCats = append(s.customCats, k)
+		}
+	}
+	// Geraete mit eigener Kategorie, die nicht in der Liste steht, bekommen sie wieder (Datei von Hand bearbeitet o. ae.).
+	for _, c := range s.cats {
+		if model.IsCustom(c) && !s.hasCustomLocked(c) && len(s.customCats) < model.MaxCustomCategories {
+			s.customCats = append(s.customCats, c)
+		}
 	}
 }
 
@@ -123,7 +137,7 @@ func (s *server) persistLocked() {
 			delete(s.macs, ip)
 		}
 	}
-	f := storeFile{Version: storeVersion, Entries: map[string]storeEntry{}}
+	f := storeFile{Version: storeVersion, Entries: map[string]storeEntry{}, Custom: s.customCats}
 	add := func(ip string) {
 		if _, done := f.Entries[ip]; done {
 			return
@@ -174,6 +188,7 @@ func (s *server) claimLocked(ip string) {
 func (s *server) clearStoreLocked() {
 	s.names, s.users = map[string]string{}, map[string]string{}
 	s.locs, s.cats, s.macs = map[string]string{}, map[string]string{}, map[string]string{}
+	s.customCats = nil
 	if s.opt.DataFile != "" {
 		if err := os.Remove(s.opt.DataFile); err != nil && !os.IsNotExist(err) {
 			log.Printf("Eingaben-Datei konnte nicht entfernt werden: %v", err)
