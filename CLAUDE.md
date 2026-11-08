@@ -3,6 +3,10 @@
 Projekt: **NetzScanner** (Go + eingebettete dunkle Web-UI). Besitzer: Sascha. Sprache: Deutsch.
 Zuerst `HANDOVER.md` lesen – dort steht der aktuelle Stand und der nächste Schritt.
 
+## Ideenliste
+- Neue Ideen zuerst in `IDEAS.md` eintragen (ID, Prio, Aufwand, Status). Pro Chat genau **eine** Idee umsetzen.
+- Nach der Umsetzung Status + Version in `IDEAS.md` setzen. Verworfenes nie löschen, sondern mit Grund markieren.
+
 ## Token sparen (wichtig)
 - Nicht das ganze Repo lesen. Erst `HANDOVER.md`, dann gezielt mit Grep/Glob nur die betroffenen Dateien.
 - Große Dateien nur mit `offset`/`limit` lesen. Keine Dateien nach dem Edit erneut lesen.

@@ -14,6 +14,9 @@
 - Doku: README, CHANGELOG, CLAUDE.md, ADR-0001.
 - Design-Konzepte (statische HTML, dunkel): `docs/design/index.html` mit A, B, C.
 
+## Ideenliste
+Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
+
 ## Offen / Entscheidungen von Sascha
 1. Design entschieden: Mix A+B, plus klickbare Web-Zugänge (umgesetzt in 0.2.0).
 2. **Sascha: ersten echten Scan im eigenen LAN ausführen und Ergebnis/Probleme melden** (Container hat kein LAN).

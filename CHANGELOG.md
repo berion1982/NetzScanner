@@ -3,6 +3,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/), Versionierung: [SemV
 Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [Unreleased]
+### Hinzugefügt
+- `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.
 
 ## [0.3.0] – 2026-11-08
 ### Hinzugefügt
