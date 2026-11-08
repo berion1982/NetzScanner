@@ -9,8 +9,11 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/berion1982/netzscanner/internal/model"
 )
 
 // Zielauswertung: Groessen, Grenzen und Sperre oeffentlicher Adressen.
@@ -268,5 +271,51 @@ func TestUDPParsersRobust(t *testing.T) {
 	loop := append(make([]byte, 12), 0xC0, 12) // Zeiger auf sich selbst
 	if _, ok := readName(loop, 12); ok {
 		t.Error("Zeigerschleife muss abgelehnt werden")
+	}
+}
+
+// I-044: Teilergebnisse. Der Callback meldet das Geraet zuerst mit Ports und
+// "Pending", am Ende mit fertigem Namen (Pending=false); die letzte Meldung
+// entspricht dem Endergebnis.
+func TestRunPartialResults(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			c.Close()
+		}
+	}()
+	port := ln.Addr().(*net.TCPAddr).Port
+
+	var mu sync.Mutex
+	var events []model.Host
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	hosts, err := Run(ctx, Options{Target: "127.0.0.1", Ports: []int{port}, Timeout: time.Second,
+		OnHost: func(h model.Host) { mu.Lock(); events = append(events, h); mu.Unlock() }}, nil)
+	if err != nil || len(hosts) != 1 {
+		t.Fatalf("Run: %v, %+v", err, hosts)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(events) < 2 {
+		t.Fatalf("erwartet mindestens 2 Teilergebnisse, bekam %d", len(events))
+	}
+	first, last := events[0], events[len(events)-1]
+	if !first.Pending || len(first.Ports) != 1 || first.Name != pendingName {
+		t.Errorf("erste Meldung muss Ports + Pending haben: %+v", first)
+	}
+	if last.Pending || last.Name == pendingName || last.Name != hosts[0].Name {
+		t.Errorf("letzte Meldung muss fertig sein und dem Endergebnis entsprechen: %+v / %+v", last, hosts[0])
+	}
+	if hosts[0].Pending {
+		t.Error("Endergebnis darf nicht Pending sein")
 	}
 }

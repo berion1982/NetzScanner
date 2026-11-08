@@ -84,6 +84,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Hilfe</h2>
  <p>Der NetzScanner zeigt alle Geräte im Netz mit IP, Name, MAC-Adresse und offenen Ports.</p>
  <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
+ <h2>Live-Ergebnisse beim Scan</h2><p>Während ein Scan läuft, erscheinen gefundene Geräte sofort in der Liste und werden Stück für Stück ergänzt: zuerst IP und offene Ports, dann MAC und Hersteller, zuletzt der Name. Solange der Name gesucht wird, steht dort grau „(wird ermittelt …)“. Du kannst schon Geräte anklicken, auswählen oder umbenennen; die Details aktualisieren sich von selbst, außer du tippst gerade in ein Feld. Bei „Abbrechen“ bleibt, was bis dahin gefunden wurde.</p>
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen gelten nur, solange das Programm läuft.</p>
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Gerätename und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Hersteller und Web-Links. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
@@ -213,8 +214,8 @@ function renderTable(hosts) {
     cb.addEventListener("change", () => { cb.checked ? selected.add(h.ip) : selected.delete(h.ip); updateSelection(); });
     tr.append(
       el("td", {}, [cb]),
-      el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.known ? "--ok" : "--warn") + ")" })]),
-      el("td", { text: h.ip }), el("td", { text: h.name }), el("td", { text: h.mac }),
+      el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.pending ? "--mut" : h.known ? "--ok" : "--warn") + ")" })]),
+      el("td", { text: h.ip }), el("td", { text: h.name, style: h.pending ? "color:var(--mut);font-style:italic" : "" }), el("td", { text: h.mac }),
       el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
       el("td", { class: "webcol" }, linkButtons(h)));
     tr.addEventListener("click", e => {
@@ -255,12 +256,24 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
   b.classList.add("on"); document.getElementById(b.dataset.t).classList.add("on");
 }));
 
+// Signatur eines Geraets: aendert sie sich, muss das Detail-Panel neu aufgebaut werden.
+const sig = h => JSON.stringify([h.name, h.mac, h.vendor, h.known, h.pending, h.ports.map(p => p.number)]);
 function loadHosts() {
   return fetch("/api/hosts").then(r => r.json()).then(h => {
+    const old = hostsCache.find(x => x.ip === currentIp);
     hostsCache = h;
     // Auswahl bereinigen: nur IPs behalten, die es noch gibt.
     const ips = new Set(h.map(x => x.ip)); [...selected].forEach(ip => { if (!ips.has(ip)) selected.delete(ip); });
     renderTiles(h); renderTable(h); renderMap(h); updateSelection();
+    // Live-Update (I-044): die angeklickte Zeile bleibt markiert; die Details werden nur
+    // neu gezeichnet, wenn sich das Geraet geaendert hat UND der Nutzer gerade nicht in
+    // einem Eingabefeld des Detail-Panels tippt (sonst ginge die Eingabe verloren).
+    const cur = h.find(x => x.ip === currentIp);
+    if (cur) {
+      const tr = document.querySelector('#tb tr[data-ip="' + currentIp + '"]'); if (tr) tr.classList.add("sel");
+      const typing = document.activeElement && document.activeElement.closest && document.activeElement.closest(".detail");
+      if (!old || (sig(old) !== sig(cur) && !typing)) showDetails(cur);
+    }
   });
 }
 document.getElementById("selall").addEventListener("change", e => {
@@ -292,8 +305,9 @@ function poll() {
     goBtn.textContent = running ? "Abbrechen" : "Scan starten"; goBtn.className = running ? "btn stop" : "btn";
     progEl.replaceChildren();
     if (running) {
+      loadHosts(); // Teilergebnisse laufend anzeigen (I-044)
       const pct = s.total ? Math.round(100 * s.done / s.total) : 0;
-      progEl.append(el("div", { text: "Scanne " + s.target + " … " + s.done + "/" + s.total + " Adressen" }), el("div", { class: "bar" }, [el("i", { style: "width:" + pct + "%" })]));
+      progEl.append(el("div", { text: "Scanne " + s.target + " … " + s.done + "/" + s.total + " Adressen · " + s.hosts + " Geräte bisher – Angaben werden noch ergänzt" }), el("div", { class: "bar" }, [el("i", { style: "width:" + pct + "%" })]));
     } else if (s.error) { progEl.append(el("span", { class: "err", text: s.error })); }
     else if (s.finished && s.finished.indexOf("0001") !== 0) { progEl.textContent = "Fertig: " + s.hosts + " Geräte gefunden (" + s.target + ")."; }
     else { progEl.textContent = "Bereit."; }

@@ -20,6 +20,12 @@ type Options struct {
 	Timeout     time.Duration // Verbindungs-Timeout je Port (Standard 800ms)
 	Concurrency int           // gleichzeitige Verbindungen gesamt (Standard 256)
 	AllowPublic bool          // auch oeffentliche Adressen erlauben
+	// OnHost wird waehrend des Scans mit Teilergebnissen aufgerufen (I-044): erst wenn
+	// offene Ports gefunden wurden, dann mit MAC/Hersteller, dann mit dem Namen. Das
+	// Geraet kann dabei mehrfach (mit mehr Angaben) gemeldet werden; Host.Pending ist
+	// true, solange der Name noch gesucht wird. Wird aus mehreren Goroutinen
+	// aufgerufen und muss daher selbst threadsicher sein. nil = keine Teilergebnisse.
+	OnHost func(model.Host)
 }
 
 // Progress meldet den Fortschritt: erledigte IPs / Gesamtzahl.
@@ -64,6 +70,8 @@ func Run(ctx context.Context, opt Options, progress Progress) ([]model.Host, err
 				mu.Lock()
 				open[ip] = found
 				mu.Unlock()
+				// Teilergebnis 1: Geraet mit offenen Ports (noch ohne MAC und Namen).
+				emit(opt.OnHost, newHost(ip.String(), "", found))
 			}
 			if progress != nil {
 				progress(int(done.Add(1)), len(ips))
@@ -84,22 +92,50 @@ func Run(ctx context.Context, opt Options, progress Progress) ([]model.Host, err
 		if len(ps) == 0 && mac == "" {
 			continue // weder offener Port noch ARP-Eintrag -> nicht gefunden
 		}
-		sort.Slice(ps, func(i, j int) bool { return ps[i].Number < ps[j].Number })
-		hosts = append(hosts, model.Host{IP: ip.String(), MAC: mac, Vendor: Vendor(mac), Ports: orEmpty(ps)})
+		hosts = append(hosts, newHost(ip.String(), mac, ps))
+		emit(opt.OnHost, hosts[len(hosts)-1]) // Teilergebnis 2: jetzt mit MAC und Hersteller
 	}
-	resolveNames(ctx, hosts)
+	// Teilergebnis 3: Namen werden parallel ermittelt; jedes Geraet wird gemeldet, sobald es fertig ist.
+	resolveNames(ctx, hosts, func(h model.Host) { emit(opt.OnHost, FinishHost(h)) })
 	for i := range hosts {
-		// Nur belastbare Quellen (DNS, Zertifikat) gelten als "bekannt"; ein HTTP-Titel
-		// ist nur ein Vorschlag und bleibt gelb markiert.
-		src := hosts[i].NameSource
-		hosts[i].Known = hosts[i].Name != "" && (src == "dns" || src == "dns-geraet" || src == "mdns" || src == "netbios" || src == "zertifikat")
-		if hosts[i].Name == "" {
-			hosts[i].Name = "(unbekannt)"
-		}
-		hosts[i].FillWebLinks()
+		hosts[i] = FinishHost(hosts[i])
 	}
 	return hosts, nil
 }
+
+// emit ruft den Teilergebnis-Callback auf (falls gesetzt).
+func emit(f func(model.Host), h model.Host) {
+	if f != nil {
+		f(h)
+	}
+}
+
+// newHost baut ein noch unvollstaendiges Geraet (Name wird noch gesucht -> Pending).
+func newHost(ip, mac string, ports []model.Port) model.Host {
+	sort.Slice(ports, func(i, j int) bool { return ports[i].Number < ports[j].Number })
+	h := model.Host{IP: ip, MAC: mac, Vendor: Vendor(mac), Ports: orEmpty(ports), Name: pendingName, Pending: true}
+	h.FillWebLinks()
+	return h
+}
+
+// FinishHost (auch vom Webserver beim Abbruch genutzt) setzt nach der Namenssuche "bekannt", den Anzeigenamen und Pending=false.
+func FinishHost(h model.Host) model.Host {
+	// Nur belastbare Quellen (DNS, Zertifikat u.a.) gelten als "bekannt"; ein HTTP-Titel
+	// oder Hersteller-Vorschlag ist nur ein Vorschlag und bleibt gelb markiert.
+	switch h.NameSource {
+	case "dns", "dns-geraet", "mdns", "netbios", "llmnr", "ssdp", "zertifikat":
+		h.Known = h.Name != ""
+	}
+	if h.Name == "" || h.Name == pendingName {
+		h.Name = "(unbekannt)"
+	}
+	h.Pending = false
+	h.FillWebLinks()
+	return h
+}
+
+// pendingName ist der Platzhalter, solange die Namenssuche laeuft.
+const pendingName = "(wird ermittelt …)"
 
 // scanHost prueft alle Ports einer IP; jede Verbindung nimmt einen Platz im Semaphor.
 func scanHost(ctx context.Context, ip netip.Addr, ports []int, timeout time.Duration, sem chan struct{}) []model.Port {

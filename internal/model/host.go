@@ -42,10 +42,11 @@ type Host struct {
 	Vendor      string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
 	OS          string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
 	Ports       []Port    `json:"ports"`
-	Uplink      string    `json:"uplink,omitempty"` // Topologie: ID (IP) des vorgelagerten Geraets
-	Role        string    `json:"role,omitempty"`   // "router", "switch" oder leer
-	Known       bool      `json:"known"`            // false = unbekanntes Geraet
-	WebLinks    []WebLink `json:"webLinks"`         // wird durch FillWebLinks berechnet
+	Uplink      string    `json:"uplink,omitempty"`  // Topologie: ID (IP) des vorgelagerten Geraets
+	Role        string    `json:"role,omitempty"`    // "router", "switch" oder leer
+	Known       bool      `json:"known"`             // false = unbekanntes Geraet
+	Pending     bool      `json:"pending,omitempty"` // true = Scan laeuft noch, Angaben (Name) unvollstaendig
+	WebLinks    []WebLink `json:"webLinks"`          // wird durch FillWebLinks berechnet
 }
 
 // webPorts ordnet Ports, die typischerweise eine Weboberflaeche liefern,

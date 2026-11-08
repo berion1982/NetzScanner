@@ -17,6 +17,16 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.4] – 2026-11-08
+### Hinzugefügt
+- **Live-Ergebnisse beim Scan** (I-044): Gefundene Geräte erscheinen sofort in der Liste und werden Stück für Stück ergänzt – erst IP und offene Ports, dann MAC/Hersteller, zuletzt der Name (bis dahin grau „(wird ermittelt …)“). Fortschrittszeile zeigt die bisher gefundene Anzahl. Angeklickte Zeile, Auswahl und Umbenennen bleiben beim Nachladen erhalten; die Details werden nicht neu gezeichnet, solange man in einem Feld tippt.
+- Wird ein Scan abgebrochen, bleiben die bis dahin gefundenen Geräte in der Liste (vorher leer).
+- Hilfe-Seite: Abschnitt „Live-Ergebnisse beim Scan“.
+### Technik
+- `scan.Options.OnHost` meldet Teilergebnisse; neues Feld `pending` am Gerät; der Server führt sie nach IP sortiert zusammen (`upsertHost`). Abfrage weiter per Polling (1 s), keine neue Abhängigkeit.
+### Hinweis
+- Im Browser nur mit lokalem Scan geprüft (zu schnell, um die Zwischenstufen zu sehen); die Stufen sind per Go-Test abgesichert. Eindruck im echten LAN steht aus.
+
 ## [0.5.3] – 2026-11-08
 ### Hinzugefügt
 - **Weitere Namensquellen** (I-008): **LLMNR** (UDP 5355, v. a. Windows) und **SSDP/UPnP** (UDP 1900: Fernseher, Router, Mediaserver) – das Gerät wird direkt gefragt; bei SSDP wird der „friendlyName“ aus der UPnP-Beschreibung gelesen. Reihenfolge: DNS → DNS des Geräts → mDNS → NetBIOS → LLMNR → SSDP → Zertifikat → Seitentitel. Quelle steht im Detail-Panel.
