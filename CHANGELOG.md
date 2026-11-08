@@ -179,3 +179,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Standort pro Gerät** (I-014): Im Detail-Panel gibt es ein Freitextfeld „Standort“ (z. B. „Büro, Raum 2“, max. 64 Zeichen). Der Standort steht in der Tabelle, in der **CSV** (neue Spalte „Standort“ nach „Gerätename“), in HTML/Markdown und in der PDF-Geräteliste. Neuer Endpunkt `POST /api/hosts/location`.
 - Achtung: Die CSV hat wieder eine Spalte mehr (Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Standort, Offene Ports).
 - Wie Anzeigenamen und Benutzernamen liegt der Standort nur im Arbeitsspeicher und ist nach dem Beenden des Programms weg.
+
+## [0.9.1] – 2026-11-08
+### Geändert
+- **Standort in allen Exporten** (I-014): CSV, HTML, Markdown und PDF-Liste hatten ihn schon; neu steht er auch in den Kästen der **PDF-Topologiekarte** (dritte Zeile, kursiv, nur wenn eingetragen). Lesezeichen enthalten bewusst keinen Standort.
