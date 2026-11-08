@@ -43,6 +43,7 @@ type snmpSwitchResult struct {
 	IP      string `json:"ip"`
 	Name    string `json:"name,omitempty"`
 	Entries int    `json:"entries"`         // Zeilen der MAC-Adresstabelle
+	LLDP    int    `json:"lldp"`            // direkte Nachbarn laut LLDP (I-051)
 	Error   string `json:"error,omitempty"` // Klartext-Grund bei Fehler
 }
 
@@ -106,7 +107,7 @@ func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 	info := map[string]scan.SwitchInfo{}
 	for _, ip := range targets {
 		d, err := scan.QuerySwitch(ctx, ip, comm)
-		sr := snmpSwitchResult{IP: ip, Name: d.SysName, Entries: len(d.FDB)}
+		sr := snmpSwitchResult{IP: ip, Name: d.SysName, Entries: len(d.FDB), LLDP: len(d.LLDP)}
 		if err != nil {
 			sr.Error = err.Error()
 		} else {

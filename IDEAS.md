@@ -24,7 +24,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
 | I-050 | WLANs in Reichweite erkennen (SSID, BSSID/MAC, Kanal, Frequenzband, Signalstärke, Verschlüsselung) und in einer **separaten Datei** ablegen (CSV, später auch lesbare Tabelle); zusätzlich kennzeichnen, mit welchem WLAN der Scan-Rechner selbst verbunden ist | mittel | L | offen |
-| I-051 | **LLDP-MIB per SNMP** (herstellerneutral): direkte Nachbarn (Switch↔Switch, Switch↔Access-Point) aus `lldpRemTable` lesen. Genauer als die MAC-Tabelle, weil sie die echte Verkabelung nennt und Access Points/Router einschließt; läuft bei LANCOM, Netgear, Cisco, HP/Aruba, Ubiquiti, MikroTik, sofern LLDP am Gerät aktiv ist | hoch | M | offen (Empfehlung: als Nächstes) |
+| I-051 | **LLDP-MIB per SNMP** (herstellerneutral): direkte Nachbarn (Switch↔Switch, Switch↔Access-Point) aus `lldpRemTable` lesen. Genauer als die MAC-Tabelle, weil sie die echte Verkabelung nennt und Access Points/Router einschließt; läuft bei LANCOM, Netgear, Cisco, HP/Aruba, Ubiquiti, MikroTik, sofern LLDP am Gerät aktiv ist | hoch | M | erledigt (0.17.0), Praxistest im LAN offen |
 | I-052 | **Hersteller/Modell des Switches aus `sysObjectID`** (Enterprise-Nummer → LANCOM, Netgear, Cisco, HP, TP-Link, Zyxel, Ubiquiti, MikroTik …) für Rolle, System-Spalte und gezielte Hinweise („SNMP am Gerät einschalten“) | mittel | S | offen |
 | I-053 | **SNMP v3** (Benutzer, Authentifizierung/Verschlüsselung) zusätzlich zu v2c; Zugangsdaten nur im RAM (siehe I-020) | mittel | M | offen |
 | I-054 | **VLAN-Communities** (`community@vlan`, vor allem Cisco) und Fallback-Verhalten, wenn ein Gerät nur eine der beiden Bridge-MIBs liefert | niedrig | M | offen |

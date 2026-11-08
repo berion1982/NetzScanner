@@ -96,3 +96,44 @@ func TestNormMACAndOID(t *testing.T) {
 		t.Error("kaputte OID muss leer ergeben")
 	}
 }
+
+// LLDP (I-051): Router R -- Switch A -- Switch B; B ist bei A als Nachbar auf Port "pB" sichtbar,
+// der AP hinter B nur per LLDP von B (seine MAC taucht in keiner MAC-Tabelle auf).
+func TestBuildLinksLLDP(t *testing.T) {
+	hosts := []model.Host{
+		{IP: "10.0.0.1", MAC: "AA:00:00:00:00:01"},  // Router
+		{IP: "10.0.0.2", MAC: "AA:00:00:00:00:0A"},  // Switch A
+		{IP: "10.0.0.3", MAC: "AA:00:00:00:00:0B"},  // Switch B
+		{IP: "10.0.0.20", MAC: "AA:00:00:00:00:20"}, // Access Point an B
+	}
+	a := SwitchData{IP: "10.0.0.2", LLDP: []LLDPNeighbor{
+		{LocalPort: "up", MAC: NormMAC("AA:00:00:00:00:01")},
+		{LocalPort: "pB", MAC: NormMAC("AA:00:00:00:00:0B")},
+	}}
+	b := SwitchData{IP: "10.0.0.3", LLDP: []LLDPNeighbor{
+		{LocalPort: "up", MAC: NormMAC("AA:00:00:00:00:0A")},
+		{LocalPort: "p5", IP: "10.0.0.20"}, // Zuordnung ueber Management-IP
+	}}
+	links := BuildLinks(hosts, []SwitchData{a, b}, "AA:00:00:00:00:01")
+	want := map[string][2]string{"10.0.0.3": {"10.0.0.2", "pB"}, "10.0.0.20": {"10.0.0.3", "p5"}}
+	for ip, w := range want {
+		if l := links[ip]; l.Uplink != w[0] || l.Port != w[1] {
+			t.Errorf("%s: %+v, erwartet %v", ip, l, w)
+		}
+	}
+	if _, ok := links["10.0.0.2"]; ok {
+		t.Error("Switch A haengt am Router (Uplink-Port), nicht unter B")
+	}
+}
+
+func TestParseChassisID(t *testing.T) {
+	if m, _ := parseChassisID([]byte{0xaa, 0, 0, 0, 0, 0x0b}, 4); m != "aa000000000b" {
+		t.Errorf("MAC: %q", m)
+	}
+	if _, ip := parseChassisID([]byte{1, 10, 0, 0, 20}, 5); ip != "10.0.0.20" {
+		t.Errorf("IP: %q", ip)
+	}
+	if m, ip := parseChassisID([]byte{1, 2}, 4); m != "" || ip != "" {
+		t.Error("Unsinn muss leer bleiben")
+	}
+}

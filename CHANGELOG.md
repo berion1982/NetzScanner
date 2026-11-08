@@ -267,3 +267,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Wichtig:** Die Knöpfe „Topologie als PDF“, „SNMP lesen“ und „Router lesen“ wurden bei jedem Auswählen/Neuzeichnen der Tabelle **erneut registriert** (der Code stand versehentlich in `updateSelection`). Ein Klick konnte dadurch **mehrere gleiche Anfragen** auslösen – beim Router-Login also mehrere Anmeldeversuche. Die Handler werden jetzt einmalig registriert.
 ### Sicherheit / Grenzen
 - Es werden nur `Get*`-Aktionen benutzt (ein Test stellt sicher, dass weder Schlüssel gelesen noch etwas gesetzt wird). Nur gegen einen Test-Server geprüft, **nicht an einer echten FRITZ!Box**; Feldnamen stammen aus dem TR-064-Standard bzw. dem Gedächtnis und können je Modell abweichen. Mesh-Topologie und IP-Reservierungen (I-055 c/d) sind noch offen.
+
+## [0.17.0] – 2026-11-08
+### Hinzugefügt
+- **LLDP-Nachbarn per SNMP** (I-051): `internal/scan/lldp.go` liest die `lldpRemTable` (LLDP-MIB) der abgefragten Switches. Nachbarn werden über Chassis-MAC oder Management-IPv4 den gescannten Geräten zugeordnet und haben Vorrang vor der MAC-Tabelle; ein Router als Nachbar legt den Uplink-Port des Switches fest. Die Switch-Antwort zeigt „MAC-Einträge, LLDP-Nachbarn“.
+### Hinweis (unbestätigt, im LAN prüfen)
+- LLDP muss am Gerät aktiv sein; die Chassis-ID kann von der im Scan gesehenen MAC abweichen (dann Fallback MAC-Tabelle). Annahme: lokale LLDP-Portnummer = ifIndex. Nur mit Test-Daten geprüft, nicht an LANCOM/Netgear.
