@@ -23,8 +23,10 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
-- **Empfehlung: I-051 (LLDP-MIB per SNMP)** – herstellerneutral, nennt die echte Verkabelung inkl. Access Points; danach I-052 (Hersteller/Modell aus `sysObjectID`), I-053 (SNMP v3), I-054 (VLAN-Communities). Saschas Geräte: **LANCOM und Netgear** (Annahme: Standard-BRIDGE-MIB reicht, ungeprüft; unverwaltete Netgear-Switches haben kein SNMP). Danach Logins (I-020/I-022) → I-024.
-- **Zuletzt erledigt (0.13.0–0.14.2):** eigene Kategorien (I-017), OS-Spalte in CSV/HTML/Markdown, Home Assistant (Port 8123/22222 → „Home Assistant (Linux-basiert)“, Kategorie Server), SNMP-Topologie (I-010 Teil 2), Tabelle kompakter (Web-Knöpfe „🌐 Port“ hinter dem Namen, Hersteller gekürzt, **System-Spalte aus der Tabelle entfernt** – bleibt in Details, PDF und Exporten).
+- **Empfehlung (Reihenfolge):** (1) **I-055 (c) Mesh-Topologie** aus der FritzBox – Nutzen für Saschas Heimnetz sofort sichtbar, aber Dienste/Felder unsicher („Ich weiß es nicht“), erst an der echten Box probieren; (2) **I-051 (LLDP-MIB per SNMP)** – herstellerneutral, nennt die echte Verkabelung inkl. Access Points; danach I-052 (Hersteller/Modell aus `sysObjectID`), I-053 (SNMP v3), I-054 (VLAN-Communities). Saschas Geräte: **LANCOM und Netgear** (Annahme: Standard-BRIDGE-MIB reicht, ungeprüft; unverwaltete Netgear-Switches haben kein SNMP). Danach Logins (I-020/I-022) → I-024.
+- **Von Sascha bestätigt (v0.16.0):** Router-Login an der FritzBox mit Router-Info und WLAN **funktioniert** (Rückmeldung „Funktioniert“); damit sind die Feldnamen in `internal/router/info.go` zumindest für seine Box brauchbar. Offen aus I-055: **(c) Mesh-Topologie** (echte Uplinks aus der Box, evtl. ohne SNMP) und **(d) feste IP-Reservierungen**.
+- **Zuletzt erledigt (0.15.0–0.16.0):** Router-Login FRITZ!Box per TR-064 (I-024 teilweise: Namen, Verbindungsart, nur Loopback, ein Versuch pro Klick), Router-Info + WLAN-Netze + WLAN-Clients mit Signal (I-055 a+b, Export Markdown/CSV ohne externe IP), Fix: Klick-Handler wurden mehrfach registriert (in `updateSelection` verschachtelt).
+- **Früher erledigt (0.13.0–0.14.2):** eigene Kategorien (I-017), OS-Spalte in CSV/HTML/Markdown, Home Assistant (Port 8123/22222 → „Home Assistant (Linux-basiert)“, Kategorie Server), SNMP-Topologie (I-010 Teil 2), Tabelle kompakter (Web-Knöpfe „🌐 Port“ hinter dem Namen, Hersteller gekürzt, **System-Spalte aus der Tabelle entfernt** – bleibt in Details, PDF und Exporten).
 - **Neu in 0.6.0–0.16.0 (alles nur lokal/mit Tests geprüft, im LAN noch nicht):** CSV mit Hersteller (0.6.0, I-007), **Topologie-PDF** (0.7.0, I-012), **Betriebssystem-Vermutung** (0.8.0, I-013, teilweise: Banner/Ports), **Standort** (0.9.0, I-014), **Kategorien** (0.10.0, I-015: Vermutung in `internal/scan/category.go`, im LAN prüfen, ob sie bei deinen Geräten stimmt). Sascha bitte im LAN testen: PDF-Button, OS-Vermutung bei Linux-Servern/Windows-Servern, Standort eintragen und in CSV prüfen, Karte mit vielen Geräten (Sammelgruppen) in Web und PDF, Neustart behält Eingaben.
 - **I-013 Rest (offen):** Windows-Version per SMB/NTLM, SNMP sysDescr (Community nötig), TTL-Fingerprint (ICMP-Rechte), SSDP-SERVER-Header. (OS-Spalte in Tabelle/CSV/HTML/Markdown seit 0.13.1 erledigt.)
 - **I-014 Folgeidee erledigt (0.11.0, I-016):** Eingaben liegen in `eingaben.json` (`internal/web/store.go`); im LAN prüfen: Neustart behält Namen/Standorte? Offen: Verschlüsselung der Datei, Export/Import.
@@ -36,8 +38,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - **I-007 umgesetzt (0.5.8):** Spalte „Hersteller (Chip)“ in Tabelle, Detail und HTML/Markdown (mit Fußnote); CSV seit 0.6.0 mit Hersteller-Spalte.
 - **I-010 Teil 1 umgesetzt (0.5.7):** `internal/scan/gateway.go` – Standard-Gateway → Rolle „router“ + Uplink für alle Geräte mit MAC (Sternansicht, keine echte Verkabelung). **Teil 2 offen:** LLDP/CDP (Rechte nötig) und SNMP (Community nötig, ARP-/MAC-/Interface-Tabellen) für echte Switch-Uplinks. Im LAN prüfen: steht die FritzBox oben?
 - **I-009 umgesetzt (0.5.1):** MAC-/EUI-64-artige Namen (`looksLikeIdentifier` in `names.go`) werden verworfen; letzter Ausweg „<Hersteller> (Vorschlag)“ (Quelle `hersteller`). Im LAN prüfen (Hue Bridge).
-- **Neue Idee (nur in `IDEAS.md`, nicht umgesetzt):** I-024 (Router-/Windows-DHCP-Geräteliste nach Login abfragen, baut auf I-020/I-022 auf; Machbarkeit je Router offen).
-- Empfohlene Reihenfolge: I-051 → I-052 → Logins (I-020/I-022) → I-024 (I-010 Teil 2 per SNMP v2c ist seit 0.14.0 umgesetzt).
+- **I-024 teilweise umgesetzt (0.15.0):** nur FRITZ!Box (TR-064). Offen: andere Router (LANCOM-Router/Access Points: Machbarkeit unbekannt), Windows-DHCP, IP-Reservierungen (= I-055 d).
+- Empfohlene Reihenfolge: I-055 (c/d) → I-051 → I-052 → weitere Logins (I-020/I-022, andere Router) → I-024-Rest (I-010 Teil 2 per SNMP v2c seit 0.14.0, FritzBox-Login seit 0.15.0 umgesetzt).
 
 ## Offen für Sascha
 - **Topologie im LAN prüfen:** Steht die FritzBox oben, hängen die Geräte darunter? **SNMP (0.14.0) an LANCOM/Netgear testen:** SNMP v2c am Switch einschalten, Switch-IPs + Community im Topologie-Tab eingeben; stimmen die Ports? Bei Fehlern Modell und Meldung zurückmelden. Entschieden: SNMP (nicht LLDP zuerst); LLDP-MIB per SNMP folgt als I-051.
@@ -47,7 +49,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - Weitere Geräte im LAN prüfen: fehlen welche, sind MACs/Namen falsch? (I-005)
 - **Neue Funktionen im LAN prüfen (0.6.0–0.16.0):** Funktioniert „Topologie als PDF“ (Karte lesbar, Liste vollständig)? Stimmt die OS-Vermutung bei deinen Servern? Passt die neue CSV-Spaltenreihenfolge (Hersteller nach MAC, Standort nach Gerätename) zum Zielprogramm?
 - Mag das Zielprogramm die zusätzliche letzte CSV-Spalte „Betriebssystem (Vermutung)“? Passt die Home-Assistant-Erkennung (läuft er auf Port 8123)? Soll die Eingaben-Datei verschlüsselt werden oder ein Export/Import der Eingaben kommen?
-- WLAN-Idee I-050: nur eigene Umgebung oder alle sichtbaren WLANs?
+- **Router-Login (0.15.0/0.16.0):** bestätigt. Hinweis: Die Eingabemaske merkt sich nichts; Passwort nach dem Klick weg. Bitte beim nächsten Test prüfen, ob ein Klick wirklich nur **einen** Anmeldeversuch auslöst (Fritz-Ereignisprotokoll: „Anmeldung… fehlgeschlagen“ zählen).
+- WLAN-Idee I-050 (Umgebungs-WLANs; die FritzBox-WLAN-Daten aus I-055 betreffen nur die eigenen Netze): nur eigene Umgebung oder alle sichtbaren WLANs?
 
 ## Roadmap
 | Version | Inhalt |
