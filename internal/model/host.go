@@ -142,6 +142,8 @@ type Host struct {
 	OS             string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
 	Ports          []Port    `json:"ports"`
 	Uplink         string    `json:"uplink,omitempty"`         // Topologie: ID (IP) des vorgelagerten Geraets
+	UplinkPort     string    `json:"uplinkPort,omitempty"`     // Topologie per SNMP: Port am Uplink-Switch (z. B. "Gi1/0/5")
+	UplinkShared   int       `json:"uplinkShared,omitempty"`   // Topologie per SNMP: wie viele MACs an diesem Port gesehen wurden (>1 = Switch/AP dahinter)
 	Role           string    `json:"role,omitempty"`           // "router", "switch" oder leer
 	Category       string    `json:"category"`                 // Kategorie (CatNetwork ...): Vermutung aus dem Scan oder Wahl des Nutzers
 	CategoryManual bool      `json:"categoryManual,omitempty"` // true = Nutzer hat die Kategorie selbst gesetzt

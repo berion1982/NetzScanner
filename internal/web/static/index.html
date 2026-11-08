@@ -84,6 +84,10 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
+ <details class="row" style="margin-bottom:8px;display:block"><summary style="cursor:pointer">Echte Verbindungen per SNMP lesen (optional)</summary>
+  <p style="color:var(--mut);margin:6px 0">Switches (verwaltbar, mit SNMP) nennen, an welchem Port welches Gerät hängt. Trage die <b>IP-Adressen der Switches</b> (aus der Geräteliste, mit Komma) und eine <b>Nur-Lesen-Community</b> ein. Die Community wird nicht gespeichert und nicht protokolliert; SNMP v2c ist im Netz unverschlüsselt.</p>
+  <div class="rename"><input id="snmptargets" placeholder="Switch-IPs, z. B. 192.168.178.2, 192.168.178.3" aria-label="Switch-Adressen" autocomplete="off"><input id="snmpcomm" type="password" placeholder="Community" aria-label="SNMP-Community" autocomplete="off"><button id="snmpbtn" class="ok" type="button">Lesen</button><button id="snmpclr" type="button">Zurücksetzen</button></div>
+  <div class="msg" id="snmpmsg" style="white-space:pre-wrap"></div></details>
  <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><span id="pdfmsg" class="msg"></span></div>
  <div class="legend" id="legend" aria-label="Kategorien ein-/ausblenden"></div>
  <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 780 340"></svg></div>
@@ -97,7 +101,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen werden zwischengespeichert (siehe „Datenschutz und Zwischenspeicher“).</p>
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort, offene Ports und Kategorie sowie als letzte Spalte die Betriebssystem-Vermutung (nur eine Vermutung, kann falsch sein) – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
- <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Geräte mit gleichem Uplink und gleicher Kategorie sind in einer <b>Sammelgruppe</b> (gestrichelter Rahmen mit Anzahl) zusammengefasst; eine Linie führt vom Router zur Gruppe. Einzelne Geräte stehen ohne Rahmen. Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Über „+ Eigene Kategorie anlegen …“ erfindest du eigene Kategorien (z. B. „Drucker“, „Gäste“; Name bis 30 Zeichen, bis zu 20 Stück). Sie bekommen automatisch eine Farbe, erscheinen in Legende, Karte, Tabelle, Exporten und PDF und werden mit den Eingaben gespeichert. Mit „Kategorie … löschen“ entfernst du eine eigene Kategorie wieder; betroffene Geräte werden dann automatisch eingeordnet. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
+ <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b> oder <b>IoT</b> eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Geräte mit gleichem Uplink und gleicher Kategorie sind in einer <b>Sammelgruppe</b> (gestrichelter Rahmen mit Anzahl) zusammengefasst; eine Linie führt vom Router zur Gruppe. Einzelne Geräte stehen ohne Rahmen. Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port → IoT, SSH + Web → Server, sonst Client) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Über „+ Eigene Kategorie anlegen …“ erfindest du eigene Kategorien (z. B. „Drucker“, „Gäste“; Name bis 30 Zeichen, bis zu 20 Stück). Sie bekommen automatisch eine Farbe, erscheinen in Legende, Karte, Tabelle, Exporten und PDF und werden mit den Eingaben gespeichert. Mit „Kategorie … löschen“ entfernst du eine eigene Kategorie wieder; betroffene Geräte werden dann automatisch eingeordnet. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Mit <b>SNMP</b> (Bereich „Echte Verbindungen per SNMP lesen“) liest der NetzScanner die MAC-Adresstabellen deiner Switches und hängt jedes Gerät an den Switch, an dem es steckt; im Detail-Panel steht der Port. Das ist ebenfalls eine <b>Vermutung</b> (Regel: Port mit den wenigsten gesehenen MACs, ohne den Port Richtung Router): Hinter nicht abgefragten Switches oder Access Points erscheinen mehrere Geräte am selben Port; Switches mit VLAN-Community („community@vlan“) werden evtl. nur teilweise gelesen. Die Community ist ein Zugangsdatum: nur im Arbeitsspeicher, nie gespeichert oder exportiert. Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
  <table class="ht"><tbody>
  <tr><td><code>192.168.1.0/24</code></td><td>ganzes Netz (254 Geräte); Netz- und Broadcast-Adresse entfallen. Kleinere Teilnetze: <code>/28</code> = 14, <code>/26</code> = 62 Geräte</td></tr>
@@ -237,6 +241,7 @@ function buildDetails(h) {
   const SRC = { dns: "DNS", "dns-geraet": "DNS des Geräts", mdns: "mDNS (Bonjour)", netbios: "NetBIOS", llmnr: "LLMNR", ssdp: "UPnP/SSDP (Gerätename)", zertifikat: "TLS-Zertifikat", "http-titel": "Titel der Webseite (Vermutung)", hersteller: "Hersteller aus der MAC (Vorschlag)", nutzer: "manuell" };
   if (h.nameSource) add("Namensquelle", SRC[h.nameSource] || h.nameSource);
   add("IP", h.ip); add("MAC", h.mac); add("Hersteller (Chip)", h.vendor ? h.vendor + " – nicht zwingend der Gerätehersteller" : ""); add("System (Vermutung)", h.os);
+  if (h.uplinkPort) add("Anschluss (SNMP)", h.uplink + ", Port " + h.uplinkPort + (h.uplinkShared > 1 ? " (" + h.uplinkShared + " Geräte an diesem Port – evtl. Switch/AP dahinter)" : ""));
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
   const banners = h.ports.filter(p => p.banner).map(p => p.number + ": " + p.banner).join("\n");
   if (banners) { dl.append(el("dt", { text: "Banner (unverifiziert)" }), el("dd", { style: "white-space:pre-wrap", text: banners })); }
@@ -319,6 +324,22 @@ function showDetails(h) {
 function updateSelection() {
   document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
   // Topologie als PDF (alle Geraete, Karte + Liste): Server erzeugt die Datei, Browser speichert sie.
+// SNMP: Switches abfragen (Community nur im Anfragekoerper; das Feld wird danach geleert).
+document.getElementById("snmpbtn").addEventListener("click", () => {
+  const msg = document.getElementById("snmpmsg"), comm = document.getElementById("snmpcomm");
+  const targets = document.getElementById("snmptargets").value.split(/[,\s]+/).filter(Boolean);
+  msg.className = "msg"; msg.textContent = "Lese …";
+  post("/api/topology/snmp", { community: comm.value, targets }).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
+    comm.value = "";
+    if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
+    msg.textContent = b.switches.map(x => x.ip + (x.name ? " (" + x.name + ")" : "") + ": " + (x.error ? "Fehler – " + x.error : x.entries + " Einträge")).join("\n") +
+      "\n" + b.linked + " Gerät(e) einem Switch-Port zugeordnet.";
+    loadHosts();
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "Abfrage fehlgeschlagen."; });
+});
+document.getElementById("snmpclr").addEventListener("click", () => {
+  post("/api/topology/snmp/clear", {}).then(() => { document.getElementById("snmpmsg").textContent = "Zurückgesetzt (Sternansicht)."; loadHosts(); });
+});
 document.getElementById("pdfbtn").addEventListener("click", () => {
   const msg = document.getElementById("pdfmsg");
   msg.className = "msg"; msg.textContent = "…";
@@ -471,7 +492,7 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
 }));
 
 // Signatur eines Geraets: aendert sie sich, muss das Detail-Panel neu aufgebaut werden.
-const sig = h => JSON.stringify([h.name, h.mac, h.vendor, h.location, h.category, h.known, h.pending, h.ports.map(p => p.number)]);
+const sig = h => JSON.stringify([h.uplink, h.uplinkPort, h.name, h.mac, h.vendor, h.location, h.category, h.known, h.pending, h.ports.map(p => p.number)]);
 function loadHosts() {
   return fetch("/api/hosts").then(r => r.json()).then(h => {
     const old = hostsCache.find(x => x.ip === currentIp);

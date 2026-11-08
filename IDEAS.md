@@ -35,7 +35,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 ## Topologie
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
-| I-010 | LLDP/CDP und SNMP (ARP-/MAC-/Interface-Tabellen) für echte Uplinks | hoch | L | teilweise (0.5.7: Stern unter Standard-Gateway; offen: LLDP/CDP, SNMP) |
+| I-010 | LLDP/CDP und SNMP (ARP-/MAC-/Interface-Tabellen) für echte Uplinks | hoch | L | teilweise (0.5.7: Stern unter Standard-Gateway; 0.14.0: SNMP v2c-Switch-Ports; offen: SNMP v3, LLDP/CDP) |
 | I-011 | Traceroute für Segmente hinter Routern | niedrig | M | offen |
 | I-013 | **Betriebssystem/Version auslesen** (Vorschlag Sascha): Vermutung aus SSH-Banner (OpenSSH-Version → Ubuntu/Debian-Release), HTTP-Server-Header (IIS, Apache/nginx mit Distribution) und typischen Ports (RDP, AFP, iOS); ohne Zusatzverkehr. Anzeige im Detail-Panel und PDF-Liste. **Nicht enthalten / Ideen dazu:** Windows-Version per SMB/NTLM, SNMP sysDescr (Community nötig), TTL-Fingerprint (ICMP-Rechte), SSDP-SERVER-Header | mittel | M | teilweise erledigt (0.8.0): Banner/Port-Vermutung; OS-Spalte in Tabelle/CSV/HTML/Markdown erledigt (0.13.1); Home Assistant per Port 8123 (0.13.2); Rest offen |
 | I-014 | **Standort pro Gerät** (Vorschlag Sascha): Freitext im Detail-Panel (z. B. „Büro, Raum 2“), Anzeige in Tabelle, CSV, HTML/Markdown und PDF-Liste. Nur im RAM wie die Namen; dauerhaftes Speichern wäre eine Folgeidee | mittel | S | erledigt (0.9.0, PDF-Karte 0.9.1) |

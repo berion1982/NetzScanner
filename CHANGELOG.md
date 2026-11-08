@@ -230,3 +230,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.13.3] – 2026-11-08
 ### Geändert
 - **Home Assistant → Kategorie „Server“** (I-015): Geräte mit offenem Port 8123 werden automatisch als Server eingeordnet, auch wenn der Chip-Hersteller sonst nach IoT aussieht. Die Wahl im Detail-Panel überschreibt das weiterhin.
+
+## [0.14.0] – 2026-11-08
+### Hinzugefügt
+- **Echte Verbindungen per SNMP** (I-010, Teil 2): Im Topologie-Tab (Bereich „Echte Verbindungen per SNMP lesen“) gibst du die IPs deiner Switches (müssen in der Geräteliste stehen) und eine Nur-Lesen-Community ein. Der NetzScanner liest per SNMP v2c Name, Beschreibung und die MAC-Adresstabelle (BRIDGE-MIB und Q-BRIDGE-MIB) und hängt jedes Gerät an den Switch, an dem es steckt – auch Switches untereinander. Im Detail-Panel steht der Port („Anschluss (SNMP)“); die Karte (Web und PDF) zeigt die echte Hierarchie. Abgefragte Switches bekommen die Rolle „switch“ (Kategorie Netzwerkgeräte) und ihre Systembeschreibung als System-Vermutung.
+- Regel: Der Uplink-Port eines Switches ist der Port, an dem die MAC des Routers gelernt wurde (sonst der Port mit den meisten MACs); ein Gerät hängt an dem anderen Port mit den wenigsten gesehenen MACs. „Zurücksetzen“ bringt die Sternansicht zurück.
+- Neue Bibliothek: `github.com/gosnmp/gosnmp` (reines Go, kein CGO).
+### Sicherheit / Grenzen
+- Die Community wird nur im Anfragekoerper übertragen, nicht gespeichert, nicht protokolliert, nicht in Exporte oder Antworten geschrieben; das Feld wird nach dem Lesen geleert. Abgefragt werden nur Adressen aus der Geräteliste (höchstens 10).
+- **Ungeprüft an echter Hardware** (nur Logiktests). Bekannte Grenzen: SNMP v2c ist unverschlüsselt; v3 fehlt; hinter nicht abgefragten Switches/Access Points erscheinen Geräte am selben Port; VLAN-Communities (`community@vlan`) werden evtl. nur teilweise gelesen; LLDP/CDP bleibt offen.
