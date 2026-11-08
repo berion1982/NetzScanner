@@ -334,3 +334,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Mesh-Topologie der FRITZ!Box** (I-055 c, Teil 2): Der Router-Login liest zusätzlich die Mesh-Liste (`X_AVM-DE_GetMeshListPath`, JSON). Geräte werden dem Knoten zugeordnet, an dem sie laut Box hängen (Repeater/Box; Zuordnung über MAC, sonst IP; nicht gescannte Zwischenknoten werden übersprungen). Das ersetzt die Sternansicht; SNMP hat weiter Vorrang. Detail-Panel zeigt „Mesh-Verbindung“ (WLAN/LAN, Mbit/s, dBm). Code: `internal/router/mesh.go`, `internal/web/mesh.go`; Ergebnis nur im RAM.
 ### Hinweis
 - Format und Annahme (node_1 = Vorgänger, Raten in kbit/s) stammen aus der Ausgabe von Saschas Box; andere Modelle sind **ungeprüft**. Fehlt die Mesh-Liste, erscheint ein Hinweis in den Router-Infos, der Login läuft trotzdem.
+
+## [0.23.1] – 2026-11-08
+### Geändert
+- **Router-Login, Diagnose der Zuordnung:** Nach dem Login zeigt die Meldung Geräte mit **gleicher IP, aber anderer MAC** (Router / Scan, bis zu 8 Beispiele). Anlass: An Saschas Box wurde 0 von 49 Router-Geräten dem Scan zugeordnet, obwohl beide MACs haben; die Ursache ist noch unbekannt. Ohne Zuordnung greift auch die Mesh-Topologie (0.23.0) nicht.

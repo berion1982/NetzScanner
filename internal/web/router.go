@@ -135,12 +135,21 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 	}
 	matched := 0
 	var only []onlyRouter
+	// Diagnose: Gleiche IP in Scan und Router, aber MAC passt nicht (oder fehlt) -> Beispiele zeigen.
+	scanMACByIP := map[string]string{}
+	for _, h := range hosts {
+		scanMACByIP[h.IP] = h.MAC
+	}
+	var macDiff []string
 	for _, e := range list {
 		m := scan.NormMAC(e.MAC)
 		if m == "" {
 			continue
 		}
 		info[m] = routerEntry{Name: e.Name, Iface: e.Iface, Active: e.Active}
+		if sm, same := scanMACByIP[e.IP]; same && e.IP != "" && scan.NormMAC(sm) != m && len(macDiff) < 8 {
+			macDiff = append(macDiff, e.IP+": Router "+e.MAC+" / Scan "+sm)
+		}
 		if inScan[m] {
 			matched++
 		} else if len(only) < maxOnlyRouter {
@@ -168,7 +177,7 @@ func (s *server) handleFritzbox(w http.ResponseWriter, r *http.Request) {
 	s.routerData = &ri
 	s.meshLinks = buildMeshLinks(res.Mesh, hosts)
 	s.mu.Unlock()
-	writeJSON(w, http.StatusOK, map[string]any{"entries": len(list), "matched": matched, "onlyRouter": only, "info": res.Info, "sources": sources})
+	writeJSON(w, http.StatusOK, map[string]any{"entries": len(list), "matched": matched, "onlyRouter": only, "info": res.Info, "sources": sources, "macDiff": macDiff})
 }
 
 // handleRouterClear verwirft die Router-Angaben (Namen/Verbindungsart).
