@@ -25,7 +25,7 @@ type Meta struct {
 }
 
 // csvHeader sind die Spalten der CSV, in der vom Nutzer festgelegten Reihenfolge.
-var csvHeader = []string{"Benutzername", "IP", "MAC", "Gerätename", "Offene Ports"}
+var csvHeader = []string{"Benutzername", "IP", "MAC", "Hersteller (Chip)", "Gerätename", "Offene Ports"}
 
 // portList liefert die Portnummern als "22, 80, 443".
 func portList(h model.Host) string {
@@ -47,7 +47,8 @@ func safeCell(s string) string {
 	return s
 }
 
-// WriteCSV schreibt die Geraete als CSV: Benutzername, IP, MAC, Gerätename, Offene Ports.
+// WriteCSV schreibt die Geraete als CSV: Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Offene Ports.
+// Der Hersteller ist der Chip-Hersteller laut MAC (nicht zwingend der Geraetehersteller).
 //
 // excelDE=true: Semikolon als Trennzeichen und UTF-8-BOM, damit deutsches Excel Umlaute
 // und Spalten richtig erkennt. false: Standard-CSV mit Komma ohne BOM (fuer andere Programme).
@@ -66,7 +67,7 @@ func WriteCSV(w io.Writer, hosts []model.Host, excelDE bool) error {
 		return err
 	}
 	for _, h := range hosts {
-		row := []string{safeCell(h.Username), safeCell(h.IP), safeCell(h.MAC), safeCell(h.Name), portList(h)}
+		row := []string{safeCell(h.Username), safeCell(h.IP), safeCell(h.MAC), safeCell(h.Vendor), safeCell(h.Name), portList(h)}
 		if err := cw.Write(row); err != nil {
 			return err
 		}
