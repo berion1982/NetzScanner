@@ -17,6 +17,18 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
 
+## WLAN
+| ID | Idee | Prio | Aufwand | Status |
+|---|---|---|---|---|
+| I-050 | WLANs in Reichweite erkennen (SSID, BSSID/MAC, Kanal, Frequenzband, Signalstärke, Verschlüsselung) und in einer **separaten Datei** ablegen (CSV, später auch lesbare Tabelle); zusätzlich kennzeichnen, mit welchem WLAN der Scan-Rechner selbst verbunden ist | mittel | L | offen |
+
+**Hinweise zu I-050 (Annahmen, noch nicht geprüft):**
+- Geht nur, wenn der Rechner einen WLAN-Adapter hat (Raspberry Pi hat meist einen); ohne Adapter „nicht verfügbar“ melden, kein Fehler.
+- Plattformabhängig, ohne CGO über vorhandene Systemwerkzeuge: Linux `nmcli`/`iw`, Windows `netsh wlan show networks mode=bssid`, macOS Systemwerkzeuge. Ausgabeformate und Rechte (z. B. Standortfreigabe unter macOS für SSIDs – vermutlich nötig) müssen je System getestet werden.
+- Der Cloud-Container hat kein WLAN, Tests nur mit Beispieltexten der Werkzeuge möglich; echter Test bei Sascha nötig.
+- Es werden nur öffentlich ausgesendete Daten gelistet (passiv); keine Passwörter, kein Verbinden.
+- Offene Frage an Sascha: Nur WLANs der eigenen Umgebung auflisten oder auch fremde (Nachbarn)? Standard-Vorschlag: alle sichtbaren, mit Spalte „eigenes Netz“.
+
 ## Topologie
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
