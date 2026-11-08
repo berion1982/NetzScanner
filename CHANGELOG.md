@@ -9,8 +9,13 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.3.2] – 2026-11-08
 ### Behoben
 - Gerätename „_gateway“ (gemeldet bei der FritzBox): Der System-Resolver lieferte einen lokalen Pseudonamen (vermutlich vom NSS-Modul `myhostname`). Es wird jetzt der eingebaute Go-Resolver genutzt, und Namen mit führendem `_` werden verworfen.
+### Hinzugefügt
+- Mehrstufige Namenssuche, wenn der System-DNS keinen Namen liefert (FritzBox zeigte „(unbekannt)“): 1. DNS, 2. DNS direkt beim Gerät (wenn Port 53 offen), 3. Name im TLS-Zertifikat, 4. Titel der Weboberfläche (nur Vorschlag, bleibt „unbekannt“ markiert).
+- Die Namensquelle wird im Detail-Panel angezeigt.
+### Sicherheit
+- Zertifikate werden nur gelesen (ohne Prüfung, da Geräte meist selbst signiert sind); es werden keine Zugangsdaten gesendet.
 ### Bekannt
-- Gerätetyp (z. B. „FritzBox“) wird noch nicht erkannt, siehe I-006 in `IDEAS.md`.
+- Echter Gerätetyp-Erkennung (z. B. „FritzBox“ aus mehreren Hinweisen) bleibt offen: I-006. Die Quellen 2 und 4 sind nur gegen Test-Server geprüft, nicht gegen eine echte FritzBox.
 
 ## [0.3.1] – 2026-11-08
 ### Hinzugefügt

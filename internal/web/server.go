@@ -109,6 +109,7 @@ func (s *server) handleHosts(w http.ResponseWriter, r *http.Request) {
 			hosts[i].ScannedName = hosts[i].Name
 			hosts[i].Name = n
 			hosts[i].Known = true
+			hosts[i].NameSource = "nutzer"
 		}
 	}
 	writeJSON(w, http.StatusOK, hosts)

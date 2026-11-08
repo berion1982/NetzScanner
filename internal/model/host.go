@@ -24,6 +24,7 @@ type WebLink struct {
 type Host struct {
 	IP          string    `json:"ip"`
 	Name        string    `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
+	NameSource  string    `json:"nameSource,omitempty"`  // Herkunft des Namens: dns, dns-geraet, zertifikat, http-titel, nutzer
 	ScannedName string    `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
 	MAC         string    `json:"mac"`
 	Vendor      string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)

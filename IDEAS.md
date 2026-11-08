@@ -14,7 +14,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-002 | Namen per mDNS und NetBIOS | mittel | M | offen |
 | I-003 | Vollständige IEEE-OUI-Herstellerliste einbetten (Lizenz/Quelle prüfen) | mittel | S | offen |
 | I-004 | TLS-Zertifikatsinfos (CN, Ablauf) bei HTTPS-Ports | niedrig | S | offen |
-| I-006 | Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
+| I-006 | (teilweise in 0.3.2: Namen aus Zertifikat/Titel) Gerätetyp erkennen (z. B. FritzBox, NAS, Drucker) über Hersteller, HTTP-Titel/Server, TLS-Zertifikat, UPnP/SSDP; als Vorschlag für den Namen anzeigen | hoch | M | offen |
 | I-005 | Echter LAN-Scan durch Sascha, Fehler/Lücken melden | hoch | S | offen |
 
 ## Topologie
