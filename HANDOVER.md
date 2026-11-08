@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.4.0 (Export CSV/HTML/Markdown) (Scan-Kern + Auswahl + Umbenennen; nur localhost getestet) · **Datum:** 2026-11-08
+**Stand:** v0.4.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -8,21 +8,23 @@
 - Änderungen immer als PR. Keine GitHub-Actions-Tests.
 
 ## Was existiert
-- Export: `internal/export` (CSV/HTML/Markdown), API `POST /api/export` (nur ausgewählte IPs), Benutzername je Gerät (`users` in server.go, RAM). Nächste Export-Idee: Lesezeichen (I-032) – gleiche Auswahl, neues Format `bookmarks`.
-- Auswahl (Client, `selected` in index.html) und Umbenennen (Server, `names` in server.go, RAM). Export soll die Auswahl als IP-Liste an den Server senden (I-030).
-- Scan: `internal/scan` (targets, ports, arp, oui, banner, scanner), API in `internal/web/server.go`. Start: `./dist/netzscanner`, dann Ziel eingeben.
-- UI: `internal/web` (Server + `static/index.html`), Modell `internal/model`, Start: `./dist/netzscanner` → http://127.0.0.1:8484
-- Grundgerüst: `cmd/netzscanner`, `internal/version`, `scripts/build.sh` (7 Plattformen, getestet).
-- Doku: README, CHANGELOG, CLAUDE.md, ADR-0001.
-- Design-Konzepte (statische HTML, dunkel): `docs/design/index.html` mit A, B, C.
+- **Start:** `./dist/netzscanner` → http://127.0.0.1:8484 (`--demo` Demo-Daten, `--listen`, `--allow-public`, `--diagnose <IP>`, `--version`). Bauen: `scripts/build.sh` (7 Plattformen).
+- **Scan** (`internal/scan`): Ziel-Parser, TCP-Portscan, ARP/MAC, Banner, OUI (kleine Tabelle), Namenssuche in `names.go` (DNS → DNS des Geräts → TLS-Zertifikat → Seitentitel), `diagnose.go`.
+- **Web** (`internal/web`): Server, Scan-API, Umbenennen und Benutzername (RAM, `names`/`users` in `server.go`), Export-API, Oberfläche `static/index.html` (Übersicht, Topologie, Hilfe, Auswahl per Häkchen).
+- **Export** (`internal/export`): CSV (Excel Deutsch / Standard), HTML, Markdown – ohne Passwörter, mit Schutz vor CSV-Injection.
+- **Modell** `internal/model` (Host, Port, WebLink), **Version** `internal/version`.
+- **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, Design-Konzepte in `docs/design/`.
 
 ## Ideenliste
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
-## Offen / Entscheidungen von Sascha
-1. Design entschieden: Mix A+B, plus klickbare Web-Zugänge (umgesetzt in 0.2.0).
-2. **Sascha: ersten echten Scan im eigenen LAN ausführen und Ergebnis/Probleme melden** (Container hat kein LAN).
-3. Test-Netz für echte Scans? (Im Cloud-Container ist kein echtes LAN verfügbar.)
+## Nächster Schritt (Vorschlag)
+- **I-032 Lesezeichen-Datei** (Netscape-Bookmark-HTML, Firefox + Chrome, Lesezeichenleiste) auf Basis der Auswahl. Ob die Markierung „Lesezeichenleiste“ in beiden Browsern greift, ist **unbestätigt** → Sascha muss den Import testen. Danach: I-003 (OUI-Liste), FTP/Telnet als Risiko, dann Topologie (I-010).
+
+## Offen für Sascha
+- Rückmeldung zum Export-Import im Zielprogramm (mag es das `'` bei Formel-Zeichen und die Spaltennamen?).
+- Weitere Geräte im LAN prüfen: fehlen welche, sind MACs/Namen falsch? (I-005)
+- WLAN-Idee I-050: nur eigene Umgebung oder alle sichtbaren WLANs?
 
 ## Roadmap
 | Version | Inhalt |
