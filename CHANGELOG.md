@@ -244,3 +244,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Geändert
 - **Tabelle kompakter:** Neue Spalte „Web“ direkt hinter dem Namen mit kleinen Knöpfen „🌐 Port“ je Weboberfläche (Klick öffnet sie in neuem Tab); Geräte ohne Weboberfläche zeigen einen grauen Strich. Die breite Web-Spalte am Zeilenende entfällt.
 - Hersteller werden gekürzt (Rechtsform-Zusätze wie „Inc.“/„GmbH“/„Technologies“ entfallen, max. 18 Zeichen); der volle Name steht im Tooltip und im Detail-Panel. System und Standort werden mit „…“ gekürzt, die Ports umbrechen.
+
+## [0.14.2] – 2026-11-08
+### Geändert
+- **Spalte „System (Vermutung)“ aus der Tabelle entfernt** (Wunsch Sascha, Tabelle zu breit). Die Vermutung steht weiter im Detail-Panel, im PDF sowie in CSV/HTML/Markdown.
