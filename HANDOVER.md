@@ -3,6 +3,7 @@
 **Stand:** v0.20.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
+- **Leitlinie:** Der NetzScanner **sammelt und exportiert** Daten (lesend). Kein Zurückschreiben/Importieren in Router oder Server (z. B. DHCP-Reservierungen) – das übernehmen deren eigene Werkzeuge.
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
 - Repo-Freigabe erteilt: Dateien, Commits, Pushes, PRs. Löschen nur nach Rückfrage.
 - Änderungen immer als PR. Keine GitHub-Actions-Tests.
@@ -23,7 +24,7 @@
 Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 
 ## Nächster Schritt (Vorschlag)
-- **0.20.0 (I-057):** Reiter „Reservierungen“ (`internal/web/reservations.go`, `internal/export/reservations.go`), Export CSV/Markdown. **Offen: I-058 Import/Zurückschreiben** – Sascha fragen, ob nur Datei einlesen (Vergleich/Anzeige) oder wirklich Reservierungen am Windows-Server anlegen (`Add-DhcpServerv4Reservation`, schreibend, riskant, ohne Testserver nicht prüfbar). Außerdem FRITZ!Box-Reservierungen (I-055 d).
+- **0.20.0 (I-057):** Reiter „Reservierungen“ (`internal/web/reservations.go`, `internal/export/reservations.go`), Export CSV/Markdown. **I-058 (Import/Zurückschreiben) verworfen:** Der Scanner ist nur zum **Sammeln und Exportieren** da, Import macht der Windows Server selbst. Offen: FRITZ!Box-Reservierungen (I-055 d).
 - **0.19.0 (I-056):** Reiter „DHCP & Router“ (Router-Login dorthin verschoben) + Windows-DHCP per WinRM (`internal/dhcp`, `internal/web/dhcp.go`). **Ungeprüft an echtem Server** – Sascha hat derzeit keinen. Offen: FRITZ!Box-Reservierungen (I-055 d), andere Router, Kerberos/HTTPS für WinRM. Keine festen Einzelgeräte-Tabellen (Regel in CLAUDE.md).
 - **0.18.0 (I-052):** `internal/scan/vendor.go` (sysObjectID → Hersteller, Tabelle ungeprüft). Als Nächstes: I-055 (c) Mesh oder I-053 (SNMP v3). 0.17.0 (LLDP) von Sascha bestätigt („läuft“).
 - **0.17.0 (I-051 LLDP):** `internal/scan/lldp.go`, Nachbarn aus `lldpRemTable` haben in `BuildLinks` Vorrang vor der MAC-Tabelle. **Sascha: an LANCOM/Netgear prüfen** (LLDP am Gerät an? stimmen Ports/Uplinks?). Als Nächstes: I-055 (c) Mesh oder I-052 (sysObjectID).
