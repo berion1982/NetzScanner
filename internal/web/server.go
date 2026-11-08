@@ -69,6 +69,7 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
 	mux.HandleFunc("POST /api/export", s.handleExport)
+	mux.HandleFunc("POST /api/export/topology-pdf", s.handleTopologyPDF)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())
 	})
@@ -401,6 +402,29 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", ctype)
 	w.Header().Set("Content-Disposition", `attachment; filename="netzscanner-`+meta.Generated.Format("20060102-1504")+`.`+ext+`"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = w.Write(buf.Bytes())
+}
+
+// handleTopologyPDF liefert die Topologie (Karte + Geraeteliste) ALLER Geraete als PDF-Download (I-012).
+// Anders als /api/export braucht es keine Auswahl; Zugangsdaten sind nicht enthalten.
+func (s *server) handleTopologyPDF(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	view, target := s.viewLocked(), s.target
+	s.mu.Unlock()
+	if len(view) == 0 {
+		writeJSON(w, http.StatusBadRequest, errBody("keine Geraete in der Liste"))
+		return
+	}
+	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String()}
+	var buf bytes.Buffer
+	if err := export.WritePDF(&buf, view, meta); err != nil {
+		writeJSON(w, http.StatusInternalServerError, errBody("PDF-Export fehlgeschlagen"))
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `attachment; filename="netzscanner-topologie-`+meta.Generated.Format("20060102-1504")+`.pdf"`)
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	_, _ = w.Write(buf.Bytes())

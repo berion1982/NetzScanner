@@ -78,6 +78,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
+ <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><span id="pdfmsg" class="msg"></span></div>
  <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 600 340"></svg></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Knoten anklicken.</p></aside></div>
 </section>
@@ -89,7 +90,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen gelten nur, solange das Programm läuft.</p>
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
- <h2>Topologie</h2><p>Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
+ <h2>Topologie</h2><p>Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
  <table class="ht"><tbody>
  <tr><td><code>192.168.1.0/24</code></td><td>ganzes Netz (254 Geräte); Netz- und Broadcast-Adresse entfallen. Kleinere Teilnetze: <code>/28</code> = 14, <code>/26</code> = 62 Geräte</td></tr>
@@ -223,7 +224,19 @@ function showDetails(h) {
 // Auswahl: Zaehler, Alle-Checkbox, Hervorhebung in Tabelle und Topologie aktualisieren.
 function updateSelection() {
   document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
-  document.getElementById("selnone").disabled = selected.size === 0;
+  // Topologie als PDF (alle Geraete, Karte + Liste): Server erzeugt die Datei, Browser speichert sie.
+document.getElementById("pdfbtn").addEventListener("click", () => {
+  const msg = document.getElementById("pdfmsg");
+  msg.className = "msg"; msg.textContent = "…";
+  post("/api/export/topology-pdf").then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-topologie.pdf" });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    msg.textContent = "PDF gespeichert.";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "PDF-Export fehlgeschlagen."; });
+});
+document.getElementById("selnone").disabled = selected.size === 0;
   document.getElementById("exp").disabled = selected.size === 0;
   const all = document.getElementById("selall");
   all.checked = hostsCache.length > 0 && selected.size === hostsCache.length;

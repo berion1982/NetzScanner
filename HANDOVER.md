@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.6.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.7.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -11,7 +11,7 @@
 - **Start:** `./dist/netzscanner` → http://127.0.0.1:8484 (`--demo` Demo-Daten, `--listen`, `--allow-public`, `--diagnose <IP>`, `--version`). Bauen: `scripts/build.sh` (7 Plattformen).
 - **Scan** (`internal/scan`): Ziel-Parser, TCP-Portscan, ARP/MAC, Banner, OUI (kleine Tabelle), Namenssuche in `names.go` (DNS → DNS des Geräts → TLS-Zertifikat → Seitentitel), `diagnose.go`.
 - **Web** (`internal/web`): Server, Scan-API, Umbenennen und Benutzername (RAM, `names`/`users` in `server.go`), Export-API, Oberfläche `static/index.html` (Übersicht, Topologie, Hilfe, Auswahl per Häkchen).
-- **Export** (`internal/export`): CSV (Excel Deutsch / Standard), HTML, Markdown – ohne Passwörter, mit Schutz vor CSV-Injection.
+- **Export** (`internal/export`): CSV (Excel Deutsch / Standard), HTML, Markdown, **Topologie-PDF** (`pdf.go`, Lib `go-pdf/fpdf`, Endpunkt `POST /api/export/topology-pdf`, alle Geräte; Zeichen außerhalb Windows-1252 erscheinen als „.“) – ohne Passwörter, mit Schutz vor CSV-Injection.
 - **Modell** `internal/model` (Host, Port, WebLink), **Version** `internal/version`.
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, Design-Konzepte in `docs/design/`.
 
