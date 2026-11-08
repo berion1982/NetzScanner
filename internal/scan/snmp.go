@@ -34,6 +34,7 @@ import (
 // OIDs (alle ohne fuehrenden Punkt):
 const (
 	oidSysDescr     = "1.3.6.1.2.1.1.1.0"
+	oidSysObjectID  = "1.3.6.1.2.1.1.2.0"
 	oidSysName      = "1.3.6.1.2.1.1.5.0"
 	oidDot1dFdbPort = "1.3.6.1.2.1.17.4.3.1.2"     // BRIDGE-MIB: dot1dTpFdbPort.<MAC>
 	oidDot1qFdbPort = "1.3.6.1.2.1.17.7.1.2.2.1.2" // Q-BRIDGE-MIB: dot1qTpFdbPort.<FDB-ID>.<MAC> (VLAN-faehig)
@@ -60,6 +61,7 @@ type SwitchData struct {
 	IP       string
 	SysName  string
 	SysDescr string
+	Vendor   string // Hersteller aus der sysObjectID (I-052), "" wenn unbekannt
 	FDB      []FDBEntry
 	LLDP     []LLDPNeighbor // direkte Nachbarn laut LLDP-MIB (I-051)
 }
@@ -73,8 +75,9 @@ type Link struct {
 
 // SwitchInfo sind Zusatzangaben zu einem abgefragten Switch (fuer Rolle und System).
 type SwitchInfo struct {
-	Name  string
-	Descr string
+	Name   string
+	Descr  string
+	Vendor string
 }
 
 // NormMAC macht aus "AA:BB:CC:00:11:22", "aa-bb-..." usw. "aabbcc001122" ("" bei Unsinn).
@@ -109,12 +112,15 @@ func QuerySwitch(ctx context.Context, ip, community string) (SwitchData, error) 
 	defer g.Conn.Close()
 
 	// 1) Name und Beschreibung - dient auch als Test, ob Community/SNMP passen.
-	res, err := g.Get([]string{oidSysName, oidSysDescr})
-	if err != nil || len(res.Variables) < 2 {
+	res, err := g.Get([]string{oidSysName, oidSysDescr, oidSysObjectID})
+	if err != nil || len(res.Variables) < 3 {
 		return data, fmt.Errorf("keine Antwort (Community falsch oder SNMP am Gerät aus?)")
 	}
 	data.SysName = sanitize(pduString(res.Variables[0]))
 	data.SysDescr = sanitize(pduString(res.Variables[1]))
+	if oid, ok := res.Variables[2].Value.(string); ok {
+		data.Vendor = VendorFromObjectID(oid)
+	}
 
 	// 2) Tabellen: Bridge-Port -> ifIndex -> Name.
 	portIf := walkInts(g, oidBasePortIf)
@@ -159,7 +165,7 @@ func QuerySwitch(ctx context.Context, ip, community string) (SwitchData, error) 
 	data.LLDP = queryLLDP(g, names)
 
 	if len(data.FDB) == 0 && len(data.LLDP) == 0 {
-		return data, fmt.Errorf("Gerät antwortet, hat aber weder MAC-Adresstabelle noch LLDP-Nachbarn (kein Switch?)")
+		return data, fmt.Errorf("%s", vendorHint(data.Vendor))
 	}
 	return data, nil
 }

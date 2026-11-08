@@ -137,3 +137,17 @@ func TestParseChassisID(t *testing.T) {
 		t.Error("Unsinn muss leer bleiben")
 	}
 }
+
+func TestVendorFromObjectID(t *testing.T) {
+	cases := map[string]string{
+		".1.3.6.1.4.1.4526.100.4.1": "Netgear",
+		"1.3.6.1.4.1.2356.11.1":     "LANCOM",
+		"1.3.6.1.4.1.99999.1":       "", // unbekannte Nummer
+		"1.3.6.1.2.1.1.2":           "", // keine Enterprise-OID
+	}
+	for oid, want := range cases {
+		if got := VendorFromObjectID(oid); got != want {
+			t.Errorf("%s: %q, erwartet %q", oid, got, want)
+		}
+	}
+}

@@ -273,3 +273,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **LLDP-Nachbarn per SNMP** (I-051): `internal/scan/lldp.go` liest die `lldpRemTable` (LLDP-MIB) der abgefragten Switches. Nachbarn werden über Chassis-MAC oder Management-IPv4 den gescannten Geräten zugeordnet und haben Vorrang vor der MAC-Tabelle; ein Router als Nachbar legt den Uplink-Port des Switches fest. Die Switch-Antwort zeigt „MAC-Einträge, LLDP-Nachbarn“.
 ### Hinweis (unbestätigt, im LAN prüfen)
 - LLDP muss am Gerät aktiv sein; die Chassis-ID kann von der im Scan gesehenen MAC abweichen (dann Fallback MAC-Tabelle). Annahme: lokale LLDP-Portnummer = ifIndex. Nur mit Test-Daten geprüft, nicht an LANCOM/Netgear.
+
+## [0.18.0] – 2026-11-08
+### Hinzugefügt
+- **Hersteller des Switches aus der `sysObjectID`** (I-052): Bei der SNMP-Abfrage wird die Enterprise-Nummer gelesen (`internal/scan/vendor.go`, u. a. LANCOM, Netgear, Cisco, HP, TP-Link, Zyxel, Ubiquiti, MikroTik). Der Hersteller erscheint hinter der Adresse im SNMP-Ergebnis und in der System-Spalte; bei Geräten ohne Tabellen gibt es einen gezielten Hinweis („Bridge-MIB bzw. LLDP am Gerät einschalten“).
+### Hinweis
+- Die Nummern-Tabelle ist aus dem Gedächtnis erstellt und **nicht gegen die IANA-Liste geprüft**; unbekannte Nummern bleiben ohne Herstellernamen.

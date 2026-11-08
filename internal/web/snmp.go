@@ -42,9 +42,10 @@ type snmpResult struct {
 type snmpSwitchResult struct {
 	IP      string `json:"ip"`
 	Name    string `json:"name,omitempty"`
-	Entries int    `json:"entries"`         // Zeilen der MAC-Adresstabelle
-	LLDP    int    `json:"lldp"`            // direkte Nachbarn laut LLDP (I-051)
-	Error   string `json:"error,omitempty"` // Klartext-Grund bei Fehler
+	Vendor  string `json:"vendor,omitempty"` // Hersteller aus sysObjectID (I-052)
+	Entries int    `json:"entries"`          // Zeilen der MAC-Adresstabelle
+	LLDP    int    `json:"lldp"`             // direkte Nachbarn laut LLDP (I-051)
+	Error   string `json:"error,omitempty"`  // Klartext-Grund bei Fehler
 }
 
 // handleSNMP liest die MAC-Adresstabellen der genannten Switches und ordnet die Geraete zu.
@@ -107,12 +108,12 @@ func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 	info := map[string]scan.SwitchInfo{}
 	for _, ip := range targets {
 		d, err := scan.QuerySwitch(ctx, ip, comm)
-		sr := snmpSwitchResult{IP: ip, Name: d.SysName, Entries: len(d.FDB), LLDP: len(d.LLDP)}
+		sr := snmpSwitchResult{IP: ip, Name: d.SysName, Vendor: d.Vendor, Entries: len(d.FDB), LLDP: len(d.LLDP)}
 		if err != nil {
 			sr.Error = err.Error()
 		} else {
 			data = append(data, d)
-			info[ip] = scan.SwitchInfo{Name: d.SysName, Descr: d.SysDescr}
+			info[ip] = scan.SwitchInfo{Name: d.SysName, Descr: d.SysDescr, Vendor: d.Vendor}
 		}
 		res.Switches = append(res.Switches, sr)
 	}

@@ -175,6 +175,10 @@ func (s *server) viewLocked() []model.Host {
 			if sw.Descr != "" {
 				hosts[i].OS = sw.Descr + " (SNMP)"
 			}
+			// Hersteller aus sysObjectID, falls die Beschreibung ihn nicht schon nennt (I-052).
+			if sw.Vendor != "" && !strings.Contains(strings.ToLower(hosts[i].OS), strings.ToLower(sw.Vendor)) {
+				hosts[i].OS = strings.TrimSpace(sw.Vendor + " " + hosts[i].OS)
+			}
 		}
 		// Kategorie: Wahl des Nutzers hat Vorrang, sonst Vermutung aus dem Scan (I-015).
 		if c, ok := s.cats[hosts[i].IP]; ok && match {
