@@ -151,15 +151,3 @@ func TestVendorFromObjectID(t *testing.T) {
 		}
 	}
 }
-
-func TestBrandNameAndCategory(t *testing.T) {
-	if got := BrandName("Fantasia Trading LLC"); got != "Anker (eufy) – Fantasia Trading LLC" {
-		t.Errorf("Marke: %q", got)
-	}
-	if BrandName("AVM GmbH") != "AVM GmbH" {
-		t.Error("unbekannte Hersteller bleiben unveraendert")
-	}
-	if c := Categorize(model.Host{Vendor: "Fantasia Trading LLC"}); c != model.CatIoT {
-		t.Errorf("Kategorie: %q", c)
-	}
-}

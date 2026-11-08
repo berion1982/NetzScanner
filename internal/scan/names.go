@@ -130,7 +130,7 @@ func findName(ctx context.Context, h *model.Host) (name, source string) {
 	}
 	// Letzter Ausweg (I-009): Hersteller aus der MAC als Vorschlag, klar als solcher markiert.
 	if h.Vendor != "" {
-		return BrandName(h.Vendor) + " (Vorschlag)", "hersteller"
+		return h.Vendor + " (Vorschlag)", "hersteller"
 	}
 	return "", ""
 }
