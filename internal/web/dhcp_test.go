@@ -24,3 +24,22 @@ func TestMatchDHCP(t *testing.T) {
 		t.Errorf("Ergebnis: %+v", res)
 	}
 }
+
+// Reiter "Reservierungen": nur feste Reservierungen, numerisch sortiert, Scan-Name ueber die MAC.
+func TestReservationsList(t *testing.T) {
+	s := &server{
+		hosts: []model.Host{{IP: "10.0.0.10", MAC: "AA:BB:CC:00:11:22", Name: "Drucker", Known: true}},
+		dhcpRows: []dhcp.Entry{
+			{Scope: "10.0.0.0", IP: "10.0.0.10", MAC: "AA-BB-CC-00-11-22", Name: "drucker-dhcp", Reserved: true},
+			{Scope: "10.0.0.0", IP: "10.0.0.9", MAC: "AA-BB-CC-00-11-33", Name: "nas", Reserved: true},
+			{Scope: "10.0.0.0", IP: "10.0.0.77", MAC: "AA-BB-CC-00-11-44", Name: "lease-only"}, // kein Lease in der Liste
+		},
+	}
+	got := s.reservations()
+	if len(got) != 2 || got[0].IP != "10.0.0.9" || got[1].IP != "10.0.0.10" {
+		t.Fatalf("Reihenfolge/Auswahl: %+v", got)
+	}
+	if got[1].ScanName != "Drucker" || got[0].ScanName != "" {
+		t.Errorf("Scan-Namen: %+v", got)
+	}
+}

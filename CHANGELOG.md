@@ -288,3 +288,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - **Nicht an einem echten Windows Server geprüft** (nur Auswertung der Antwort und Zuordnung mit Testdaten). Annahmen aus dem Gedächtnis: WinRM ist auf Windows Server ab 2012 R2 standardmäßig an; ein Benutzer braucht „DHCP-Benutzer“ und „Remoteverwaltungsbenutzer“ (oder Admin). Kerberos wird nicht unterstützt (nur NTLM, Anmeldung als `DOMÄNE\benutzer`).
 - Neue Regel in CLAUDE.md: keine festen Einzelgeräte-Werte in Tabellen.
+
+## [0.20.0] – 2026-11-08
+### Hinzugefügt
+- **Neuer Reiter „Reservierungen“** (I-057): Liste der festen DHCP-Reservierungen aus dem zuletzt gelesenen Windows-DHCP-Server (Netz, IP, MAC, Name laut DHCP, Gerät im Scan), numerisch sortiert. Nur im Arbeitsspeicher.
+- **Export der Liste** (`internal/export/reservations.go`): CSV (Excel Deutsch mit Semikolon und BOM oder Standard mit Komma) und lesbares Markdown. Die ersten vier CSV-Spalten (Netz, IP, MAC, Name) sind stabil gehalten, damit die Datei später wieder eingelesen werden kann; Zellen sind gegen Formel-Einschleusung geschützt.
+### Hinweis
+- Das **Wiedereinlesen** (Import in den Scanner bzw. Schreiben zurück zum DHCP-Server) ist **noch nicht gebaut**, siehe I-058 in IDEAS.md. Die Liste stammt wie die DHCP-Abfrage aus 0.19.0 und ist nicht an einem echten Windows Server geprüft.

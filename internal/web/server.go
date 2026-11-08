@@ -18,6 +18,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/berion1982/netzscanner/internal/dhcp"
 	"github.com/berion1982/netzscanner/internal/export"
 	"github.com/berion1982/netzscanner/internal/model"
 	"github.com/berion1982/netzscanner/internal/router"
@@ -56,6 +57,7 @@ type server struct {
 	cats       map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
 	routerData *router.Info               // Router-Info und WLANs der letzten Abfrage (nur im RAM, I-055)
 	routerInfo map[string]routerEntry     // Router-Geraeteliste: normalisierte MAC -> Eintrag (nur im RAM, I-024)
+	dhcpRows   []dhcp.Entry               // alle Zeilen der letzten DHCP-Abfrage (Reiter "Reservierungen", nur im RAM, I-057)
 	dhcpInfo   map[string]dhcpEntry       // Windows-DHCP-Server: normalisierte MAC -> Eintrag (nur im RAM, I-056)
 	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
 	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
@@ -90,6 +92,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/router/export", s.handleRouterExport)
 	mux.HandleFunc("POST /api/dhcp/windows", s.handleWindowsDHCP)
 	mux.HandleFunc("POST /api/dhcp/clear", s.handleDHCPClear)
+	mux.HandleFunc("GET /api/reservations", s.handleReservations)
+	mux.HandleFunc("POST /api/reservations/export", s.handleReservationsExport)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
 	mux.HandleFunc("POST /api/topology/snmp/clear", s.handleSNMPClear)
 	mux.HandleFunc("GET /api/categories", s.handleCategories)
