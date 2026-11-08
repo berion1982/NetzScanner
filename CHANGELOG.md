@@ -4,6 +4,22 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [Unreleased]
 
+## [0.3.0] – 2026-11-08
+### Hinzugefügt
+- Scan-Kern (`internal/scan`): Zielauswertung (CIDR/Einzel-IP, max. /16), TCP-Connect-Portscan ohne Admin-Rechte, Banner-Abfrage, Reverse-DNS, MAC aus der ARP-Tabelle (Linux, Windows, macOS), Hersteller (kleine Beispieltabelle).
+- Scan-API (`POST /api/scan`, Status, Abbruch) und Scan-Leiste in der Oberfläche mit Fortschritt.
+- Startoptionen `--demo` (Demo-Daten) und `--allow-public`.
+### Geändert
+- Ohne `--demo` startet die Liste leer; es werden nur noch echte Scan-Ergebnisse gezeigt.
+### Sicherheit
+- Öffentliche Adressen sind standardmäßig gesperrt.
+- POST nur mit `application/json` und passendem Origin (Schutz vor Cross-Site-Aufrufen auf localhost).
+- Banner und Namen aus dem Netz werden bereinigt und nur als Text angezeigt.
+### Bekannte Grenzen
+- MAC nur im selben Subnetz; Geräte ohne offene Port-Antwort und ohne ARP-Eintrag werden nicht gefunden.
+- Hersteller-Tabelle unvollständig; keine OS-Erkennung; Topologie noch ohne LLDP/SNMP (0.4.0).
+- Nur lokal getestet (localhost); echter LAN-Scan steht aus.
+
 ## [0.2.0] – 2026-11-08
 ### Hinzugefügt
 - Eingebauter Webserver (`--listen`, Standard nur lokal `127.0.0.1:8484`) mit eingebetteter dunkler Oberfläche.
