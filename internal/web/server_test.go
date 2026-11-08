@@ -203,3 +203,27 @@ func TestUpsertHost(t *testing.T) {
 		t.Errorf("Teilergebnis nach Scan-Ende darf nicht aufgenommen werden: %+v", s.hosts)
 	}
 }
+
+// Standort setzen -> erscheint in /api/hosts und in der CSV; Fehlerfaelle werden abgewiesen.
+func TestLocation(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	if rec := postJSON(h, "/api/hosts/location", `{"ip":"192.168.1.10","location":"Büro, Raum 2"}`); rec.Code != 200 {
+		t.Fatalf("Standort: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := postJSON(h, "/api/hosts/location", `{"ip":"10.9.9.9","location":"x"}`); rec.Code != 404 {
+		t.Errorf("unbekannte IP: %d", rec.Code)
+	}
+	if rec := postJSON(h, "/api/hosts/location", `{"ip":"192.168.1.10","location":"a\u0007b"}`); rec.Code != 400 {
+		t.Errorf("Steuerzeichen: %d", rec.Code)
+	}
+	rec := postJSON(h, "/api/export", `{"format":"csv","ips":["192.168.1.10"]}`)
+	if !strings.Contains(rec.Body.String(), `"Büro, Raum 2"`) {
+		t.Errorf("Standort fehlt in der CSV: %q", rec.Body.String())
+	}
+	// Leer = loeschen
+	postJSON(h, "/api/hosts/location", `{"ip":"192.168.1.10","location":""}`)
+	rec = postJSON(h, "/api/export", `{"format":"csv","ips":["192.168.1.10"]}`)
+	if strings.Contains(rec.Body.String(), "Büro") {
+		t.Errorf("Standort nicht geloescht: %q", rec.Body.String())
+	}
+}

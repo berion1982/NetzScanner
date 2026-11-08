@@ -74,7 +74,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <div class="tiles" id="tiles"></div>
  <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button><span style="flex:1"></span>
   <select id="fmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="html">Lesbare Tabelle (HTML)</option><option value="md">Lesbare Tabelle (Markdown)</option><option value="bookmarks">Lesezeichen (Firefox/Chrome, Leiste)</option><option value="bookmarks-folder">Lesezeichen (Ordner „NetzScanner“)</option></select>
-  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
+  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th>Standort</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
@@ -88,7 +88,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
  <h2>Live-Ergebnisse beim Scan</h2><p>Während ein Scan läuft, erscheinen gefundene Geräte sofort in der Liste und werden Stück für Stück ergänzt: zuerst IP und offene Ports, dann MAC und Hersteller, zuletzt der Name. Solange der Name gesucht wird, steht dort grau „(wird ermittelt …)“. Du kannst schon Geräte anklicken, auswählen oder umbenennen; die Details aktualisieren sich von selbst, außer du tippst gerade in ein Feld. Bei „Abbrechen“ bleibt, was bis dahin gefunden wurde.</p>
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen gelten nur, solange das Programm läuft.</p>
- <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
+ <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
  <h2>Topologie</h2><p>Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
@@ -100,6 +100,8 @@ line{stroke:#3a4656;stroke-width:1.5}
  <tr><td><code>192.168.1.5, 192.168.1.20-30</code></td><td>mehrere Angaben, mit Komma getrennt, beliebig gemischt; doppelte Adressen werden nur einmal gescannt</td></tr>
  </tbody></table>
  <p>Grenzen: nur IPv4, höchstens 65.536 Adressen je Scan (= /16), öffentliche Adressen sind gesperrt (nur mit Startoption <code>--allow-public</code>). Der Anfang eines Bereichs muss vor dem Ende liegen.</p>
+ <h2>Standort</h2><p>Im Detail-Panel kannst du pro Gerät einen Standort als Freitext eintragen (z. B. „Büro, Raum 2“ oder „Keller“). Er erscheint in der Tabelle, in der CSV, in HTML/Markdown und in der PDF-Liste. Wie die Namen gilt er nur, bis das Programm beendet wird.</p>
+ <h2>Betriebssystem (Vermutung)</h2><p>Der NetzScanner leitet das System aus Daten ab, die er ohnehin liest: SSH-Banner (z. B. „OpenSSH 8.9 Ubuntu“ → Ubuntu 22.04), HTTP-Server-Header (z. B. „Microsoft-IIS/10.0“) und typische Ports (RDP → Windows). Es ist nur eine <b>Vermutung</b>: Banner können verändert sein, die Versionszuordnung gilt für unveränderte Distributionspakete, und ohne Hinweis bleibt das Feld leer. Zu sehen im Detail-Panel und in der PDF-Geräteliste.</p>
  <h2>Wie kommt der Gerätename zustande?</h2>
  <p>Der Scan probiert nacheinander mehrere Quellen und nimmt die erste, die einen brauchbaren Namen liefert. Die Quelle steht im Detail-Panel.</p>
  <table class="ht"><tbody>
@@ -117,7 +119,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <h2>Hersteller (MAC-Präfix)</h2><p>Die Spalte „Hersteller (Chip)“ in Tabelle, Details und lesbarem Export nennt den Hersteller des <b>Netzwerkchips</b> – bei einem Fernseher kann hier z. B. der WLAN-Chip-Hersteller stehen, nicht Samsung oder LG. Der Hersteller wird aus den ersten drei Byte der MAC-Adresse (OUI) bestimmt. Die eingebaute Liste ist derzeit nur klein; Geräte mit unbekanntem Präfix haben deshalb keinen Hersteller. MACs gibt es nur im eigenen Subnetz (ARP-Tabelle); manche Geräte nutzen zufällige (private) MACs, dann passt der Hersteller nicht.</p>
  <h2>Ports und Risiken</h2><p>Geprüft wird eine Standardliste häufiger Dienste (oder deine eigene Portliste). Der Dienstname ist nur eine Vermutung anhand der Portnummer, kein Beweis. Als <b>Risiko-Ports</b> (rot) zählen derzeit <code>21</code> (FTP), <code>23</code> (Telnet), <code>445</code> (SMB) und <code>3389</code> (RDP) – unverschlüsselte oder oft angegriffene Dienste, die man sich genauer ansehen sollte. „Risiko“ heißt nicht „unsicher“, sondern „prüfen“. Bei HTTPS-Ports zeigt das Detail-Panel Zertifikat-Inhaber, Aussteller und Ablauf („ABGELAUFEN“ / „läuft bald ab“); das Zertifikat wird nur gelesen, nicht geprüft.</p>
  <h2>Rechte und Fallback</h2><p>Der Scan läuft ohne Administrator-Rechte: Geräte werden per TCP-Verbindung gefunden, die MAC kommt aus der ARP-Tabelle des Betriebssystems. Echte ICMP-Pings (Raw-Sockets) bräuchten Rechte und sind noch nicht eingebaut. Geräte ohne offene Ports und ohne ARP-Eintrag (z. B. Firewall-geschützte) bleiben unsichtbar.</p>
- <h2>Datenschutz</h2><p>Alles liegt nur im Arbeitsspeicher: Namen, Benutzernamen und Scan-Ergebnisse verschwinden beim Beenden des Programms. Passwörter werden nie abgefragt, gespeichert, geloggt oder exportiert. Es gehen keine Daten ins Internet; der Server hört standardmäßig nur auf diesem Rechner.</p>
+ <h2>Datenschutz</h2><p>Alles liegt nur im Arbeitsspeicher: Namen, Benutzernamen, Standorte und Scan-Ergebnisse verschwinden beim Beenden des Programms. Passwörter werden nie abgefragt, gespeichert, geloggt oder exportiert. Es gehen keine Daten ins Internet; der Server hört standardmäßig nur auf diesem Rechner.</p>
  <h2>Lesezeichen für den Browser</h2><p>Im Export gibt es „Lesezeichen“: eine HTML-Datei mit den Web-Links der ausgewählten Geräte zum Importieren in Firefox oder Chrome/Edge (zwei Varianten: Ordner in der Lesezeichenleiste oder normaler Ordner „NetzScanner“). Enthalten sind nur URLs, keine Zugangsdaten. Ob die Leisten-Variante in beiden Browsern greift, ist noch nicht bestätigt.</p>
  <h2>Startoptionen und Fehlersuche</h2>
  <table class="ht"><tbody>
@@ -168,6 +170,15 @@ function saveUser(ip, user, msgEl) {
     });
 }
 
+// Standort speichern (leer = loeschen).
+function saveLocation(ip, location, msgEl) {
+  post("/api/hosts/location", { ip, location }).then(r => r.json().then(b => ({ ok: r.ok, b })))
+    .then(({ ok, b }) => {
+      if (!ok) { msgEl.className = "msg err"; msgEl.textContent = b.error; return; }
+      loadHosts().then(() => { const h = hostsCache.find(x => x.ip === ip); if (h) showDetails(h); });
+    });
+}
+
 // Baut ein Detail-Panel (Name bearbeiten + Infos). Jedes Panel bekommt eigene Elemente,
 // damit die Eingabefelder und Knoepfe in beiden Reitern funktionieren.
 function buildDetails(h) {
@@ -211,7 +222,16 @@ function buildDetails(h) {
   uSave.addEventListener("click", () => saveUser(h.ip, uInput.value, uMsg));
   uInput.addEventListener("keydown", e => { if (e.key === "Enter") uSave.click(); });
   const uRow = el("div", { class: "rename" }, [uInput, uSave]);
+  // Standort (optional, Freitext) - wird in Tabelle und Exporten angezeigt.
+  const lInput = el("input", { maxlength: "64", "aria-label": "Standort", autocomplete: "off", placeholder: "z. B. Büro, Raum 2" });
+  lInput.value = h.location || "";
+  const lMsg = el("div", { class: "msg" });
+  const lSave = el("button", { class: "ok", text: "Speichern" });
+  lSave.addEventListener("click", () => saveLocation(h.ip, lInput.value, lMsg));
+  lInput.addEventListener("keydown", e => { if (e.key === "Enter") lSave.click(); });
+  const lRow = el("div", { class: "rename" }, [lInput, lSave]);
   return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg,
+    el("small", { style: "color:var(--mut)", text: "Standort (optional)" }), lRow, lMsg,
     el("small", { style: "color:var(--mut)", text: "Benutzername (optional, kein Passwort)" }), uRow, uMsg, dl];
 }
 
@@ -266,6 +286,7 @@ function renderTable(hosts) {
       el("td", {}, [cb]),
       el("td", {}, [el("span", { class: "dot", style: "background:var(" + (h.pending ? "--mut" : h.known ? "--ok" : "--warn") + ")" })]),
       el("td", { text: h.ip }), el("td", { text: h.name, style: h.pending ? "color:var(--mut);font-style:italic" : "" }), el("td", { text: h.mac }), el("td", { text: h.vendor || "", title: "Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)" }),
+      el("td", { text: h.location || "" }),
       el("td", {}, h.ports.map(p => el("span", { class: "tag" + (RISKY.includes(p.number) ? " risk" : ""), text: String(p.number) }))),
       el("td", { class: "webcol" }, linkButtons(h)));
     tr.addEventListener("click", e => {
@@ -307,7 +328,7 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
 }));
 
 // Signatur eines Geraets: aendert sie sich, muss das Detail-Panel neu aufgebaut werden.
-const sig = h => JSON.stringify([h.name, h.mac, h.vendor, h.known, h.pending, h.ports.map(p => p.number)]);
+const sig = h => JSON.stringify([h.name, h.mac, h.vendor, h.location, h.known, h.pending, h.ports.map(p => p.number)]);
 function loadHosts() {
   return fetch("/api/hosts").then(r => r.json()).then(h => {
     const old = hostsCache.find(x => x.ip === currentIp);

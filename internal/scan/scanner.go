@@ -116,6 +116,7 @@ func emit(f func(model.Host), h model.Host) {
 func newHost(ip, mac string, ports []model.Port) model.Host {
 	sort.Slice(ports, func(i, j int) bool { return ports[i].Number < ports[j].Number })
 	h := model.Host{IP: ip, MAC: mac, Vendor: Vendor(mac), Ports: orEmpty(ports), Name: pendingName, Pending: true}
+	h.OS = GuessOS(h) // Betriebssystem-Vermutung aus Bannern/Ports (I-013)
 	h.FillWebLinks()
 	return h
 }

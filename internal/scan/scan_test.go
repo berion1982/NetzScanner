@@ -389,3 +389,47 @@ func TestApplyGateway(t *testing.T) {
 		t.Errorf("ohne Router kein Uplink: %+v", hs2[0])
 	}
 }
+
+// Betriebssystem-Vermutung aus SSH-Banner, HTTP-Server-Header und Ports (I-013).
+func TestGuessOS(t *testing.T) {
+	host := func(banner string, ports ...int) model.Host {
+		h := model.Host{}
+		for _, n := range ports {
+			h.Ports = append(h.Ports, model.Port{Number: n})
+		}
+		if banner != "" {
+			h.Ports = append(h.Ports, model.Port{Number: 22, Banner: banner})
+		}
+		return h
+	}
+	cases := []struct {
+		name string
+		h    model.Host
+		want string // Teilstring der Vermutung; "" = keine Vermutung
+	}{
+		{"Ubuntu 22.04", host("SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6"), "Ubuntu 22.04"},
+		{"Ubuntu 24.04", host("SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.5"), "Ubuntu 24.04"},
+		{"Ubuntu unbekannte OpenSSH", host("SSH-2.0-OpenSSH_9.9p1 Ubuntu-1"), "Ubuntu (SSH"},
+		{"Debian 12", host("SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3"), "Debian 12"},
+		{"Debian 11", host("SSH-2.0-OpenSSH_8.4p1 Debian-5+deb11u3"), "Debian 11"},
+		{"Raspbian", host("SSH-2.0-OpenSSH_8.4p1 Raspbian-5+deb11u1"), "Raspberry Pi OS"},
+		{"Windows OpenSSH", host("SSH-2.0-OpenSSH_for_Windows_8.1"), "Windows"},
+		{"MikroTik", host("SSH-2.0-ROSSSH"), "MikroTik"},
+		{"Dropbear", host("SSH-2.0-dropbear_2022.83"), "Dropbear"},
+		{"OpenSSH ohne Distribution", host("SSH-2.0-OpenSSH_8.0"), "Distribution unbekannt"},
+		{"IIS 10", host("Microsoft-IIS/10.0"), "IIS 10.0"},
+		{"IIS 8.5", host("Microsoft-IIS/8.5"), "Server 2012 R2"},
+		{"Apache Ubuntu", host("Apache/2.4.52 (Ubuntu)"), "Ubuntu (Server-Header)"},
+		{"nginx Debian", host("nginx/1.22.1 (Debian)"), "Debian (Server-Header)"},
+		{"RDP offen", host("", 3389), "Windows"},
+		{"iPhone-Port", host("", 62078), "iOS"},
+		{"nichts Aussagekraeftiges", host("lighttpd/1.4.55", 80), ""},
+		{"keine Ports", host(""), ""},
+	}
+	for _, c := range cases {
+		got := GuessOS(c.h)
+		if c.want == "" && got != "" || !strings.Contains(got, c.want) {
+			t.Errorf("%s: GuessOS = %q, erwartet Teil %q", c.name, got, c.want)
+		}
+	}
+}
