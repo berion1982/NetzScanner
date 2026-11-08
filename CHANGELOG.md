@@ -161,3 +161,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.6.0] – 2026-11-08
 ### Geändert
 - **CSV enthält jetzt den Chip-Hersteller** (I-007): neue Spalte „Hersteller (Chip)“ direkt nach „MAC“ (Reihenfolge: Benutzername, IP, MAC, Hersteller (Chip), Gerätename, Offene Ports). Achtung: Die Spaltenanzahl ändert sich – ein Import mit fester Spaltenzuordnung muss ggf. angepasst werden. Der Hersteller ist der Chip-Hersteller, nicht zwingend der Gerätehersteller; Zellen werden wie alle anderen gegen CSV-Injection entschärft.
+
+## [0.7.0] – 2026-11-08
+### Hinzugefügt
+- **Topologie als PDF exportieren** (I-012): Button „Topologie als PDF“ im Reiter Topologie. Das PDF (A4 quer) zeigt auf Seite 1 die Karte aller Geräte (Router oben, Geräte darunter; bei vielen Geräten umgebrochen und verkleinert), danach eine Geräteliste mit Name, IP, MAC, Hersteller (Chip) und offenen Ports. Keine Zugangsdaten im PDF.
+- Neue Abhängigkeit: `github.com/go-pdf/fpdf` (reines Go, kein CGO).
+- Grenze: Es werden nur PDF-Standardschriften genutzt; Zeichen außerhalb von Windows-1252 (z. B. Kyrillisch) erscheinen als „.“. Wie die Weboberfläche zeigt das PDF eine Sternansicht, keine echte Verkabelung.

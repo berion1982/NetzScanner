@@ -2,6 +2,7 @@ package export
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -93,5 +94,26 @@ func TestBookmarks(t *testing.T) {
 	}
 	if BookmarkCount(hs) != 1 {
 		t.Error("BookmarkCount falsch")
+	}
+}
+
+// Das PDF muss gueltig beginnen/enden, auch bei leerer Liste, Umlauten, Sonderzeichen und vielen Geraeten.
+func TestWritePDF(t *testing.T) {
+	meta := Meta{Target: "192.168.1.0/24", Version: "NetzScanner test"}
+	hosts := sample()
+	hosts[0].Name = "Büro-NAS Ünïcode Привет \n=1+1"
+	hosts[0].Role = "router"
+	for i := 0; i < 120; i++ { // viele Geraete: Umbruch in Zeilen, Skalierung, mehrere Listenseiten
+		hosts = append(hosts, model.Host{IP: "192.168.1." + strconv.Itoa(i+20), Name: "gerät-" + strconv.Itoa(i), MAC: "AA:BB:CC:00:00:01",
+			Vendor: "Hersteller GmbH & Co. KG", Uplink: "192.168.1.10", Ports: []model.Port{{Number: 22, Service: "ssh"}, {Number: 80, Service: "http"}}})
+	}
+	for _, hs := range [][]model.Host{nil, sample(), hosts} {
+		var b bytes.Buffer
+		if err := WritePDF(&b, hs, meta); err != nil {
+			t.Fatalf("WritePDF: %v", err)
+		}
+		if !bytes.HasPrefix(b.Bytes(), []byte("%PDF-")) || !bytes.Contains(b.Bytes()[b.Len()-32:], []byte("%%EOF")) {
+			t.Errorf("kein gueltiges PDF (%d Hosts, %d Byte)", len(hs), b.Len())
+		}
 	}
 }
