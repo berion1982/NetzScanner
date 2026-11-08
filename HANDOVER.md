@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.12.0 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.12.1 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -59,7 +59,8 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.10.0 ✅ | Topologie-Kategorien Server/Client/Netzwerk/IoT (I-015) |
 | 0.11.0 ✅ | Eingaben zwischenspeichern (I-016) |
 | 0.11.1 ✅ | Fix: Karte bricht bei vielen Geräten um, Namen gekürzt |
-| 0.12.0 ✅ | Karte: Sammelgruppen je Kategorie (nur Web, PDF offen) |
+| 0.12.0 ✅ | Karte: Sammelgruppen je Kategorie (Web) |
+| 0.12.1 ✅ | PDF-Karte mit Sammelgruppen |
 | 0.10.0 (Plan) | Rest von I-008 (SNMP sysName), ICMP mit Rechten, Rest von I-013 (SMB/SNMP/TTL) |
 | 0.11.0 (Plan) | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute (I-010) |
 | 0.12.0 (Plan) | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM (I-020/I-022, I-024) |
