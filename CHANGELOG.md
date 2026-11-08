@@ -17,6 +17,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Enthalten ist vorerst nur die kleine Startliste: Der Download der IEEE-Liste war in der Entwicklungsumgebung gesperrt. Die vollständige Liste muss noch erzeugt und eingecheckt werden.
 
+## [0.5.6] – 2026-11-08
+### Geändert
+- **Hilfe-Seite vervollständigt** (I-042): neue Abschnitte zu Namensquellen samt „(Vorschlag)“, Hersteller/MAC-Präfix, Ports und Risiko-Ports (inkl. TLS-Infos), Rechten und TCP-Fallback, Datenschutz, Lesezeichen-Export sowie Startoptionen (`--listen`, `--demo`, `--allow-public`, `--diagnose`, `--version`). Nur Text, keine Funktionsänderung.
+
 ## [0.5.5] – 2026-11-08
 ### Hinzugefügt
 - **Bereiche im Ziel-Feld** (I-046): neben Netz (`192.168.1.0/28`) und Einzel-IP jetzt Bereiche in Kurzform (`192.168.1.10-50`) und ausführlich (`192.168.1.250-192.168.2.5`) sowie mehrere Angaben mit Komma (`192.168.1.5, 192.168.1.20-30`). Doppelte Adressen werden nur einmal gescannt.

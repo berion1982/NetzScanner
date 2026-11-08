@@ -99,6 +99,33 @@ line{stroke:#3a4656;stroke-width:1.5}
  <tr><td><code>192.168.1.5, 192.168.1.20-30</code></td><td>mehrere Angaben, mit Komma getrennt, beliebig gemischt; doppelte Adressen werden nur einmal gescannt</td></tr>
  </tbody></table>
  <p>Grenzen: nur IPv4, höchstens 65.536 Adressen je Scan (= /16), öffentliche Adressen sind gesperrt (nur mit Startoption <code>--allow-public</code>). Der Anfang eines Bereichs muss vor dem Ende liegen.</p>
+ <h2>Wie kommt der Gerätename zustande?</h2>
+ <p>Der Scan probiert nacheinander mehrere Quellen und nimmt die erste, die einen brauchbaren Namen liefert. Die Quelle steht im Detail-Panel.</p>
+ <table class="ht"><tbody>
+ <tr><td><code>dns</code></td><td>Rückwärts-Auflösung über den eingestellten DNS-Server</td></tr>
+ <tr><td><code>dns-geraet</code></td><td>DNS-Anfrage direkt beim Gerät (wenn es Port 53 offen hat, z. B. Router)</td></tr>
+ <tr><td><code>mdns</code></td><td>Bonjour/mDNS (Apple, Drucker, viele IoT-Geräte)</td></tr>
+ <tr><td><code>netbios</code></td><td>NetBIOS-Name (Windows, NAS)</td></tr>
+ <tr><td><code>llmnr</code></td><td>Windows-Namensauflösung im lokalen Netz</td></tr>
+ <tr><td><code>ssdp</code></td><td>UPnP-Beschreibung (TV, Router, Mediaserver)</td></tr>
+ <tr><td><code>zertifikat</code></td><td>Name aus dem HTTPS-Zertifikat des Geräts</td></tr>
+ <tr><td><code>http-titel</code></td><td>Titel der Weboberfläche des Geräts</td></tr>
+ <tr><td><code>hersteller</code></td><td>letzter Ausweg: Herstellername aus der MAC, als <b>„(Vorschlag)“</b> markiert – eine Vermutung, kein echter Name</td></tr>
+ </tbody></table>
+ <p>Kennungs-artige Namen (z. B. eine MAC-Adresse als Name) werden verworfen. Bleibt nichts übrig, steht „(unbekannt)“; du kannst das Gerät dann selbst umbenennen.</p>
+ <h2>Hersteller (MAC-Präfix)</h2><p>Der Hersteller wird aus den ersten drei Byte der MAC-Adresse (OUI) bestimmt. Die eingebaute Liste ist derzeit nur klein; Geräte mit unbekanntem Präfix haben deshalb keinen Hersteller. MACs gibt es nur im eigenen Subnetz (ARP-Tabelle); manche Geräte nutzen zufällige (private) MACs, dann passt der Hersteller nicht.</p>
+ <h2>Ports und Risiken</h2><p>Geprüft wird eine Standardliste häufiger Dienste (oder deine eigene Portliste). Der Dienstname ist nur eine Vermutung anhand der Portnummer, kein Beweis. Als <b>Risiko-Ports</b> (rot) zählen derzeit <code>21</code> (FTP), <code>23</code> (Telnet), <code>445</code> (SMB) und <code>3389</code> (RDP) – unverschlüsselte oder oft angegriffene Dienste, die man sich genauer ansehen sollte. „Risiko“ heißt nicht „unsicher“, sondern „prüfen“. Bei HTTPS-Ports zeigt das Detail-Panel Zertifikat-Inhaber, Aussteller und Ablauf („ABGELAUFEN“ / „läuft bald ab“); das Zertifikat wird nur gelesen, nicht geprüft.</p>
+ <h2>Rechte und Fallback</h2><p>Der Scan läuft ohne Administrator-Rechte: Geräte werden per TCP-Verbindung gefunden, die MAC kommt aus der ARP-Tabelle des Betriebssystems. Echte ICMP-Pings (Raw-Sockets) bräuchten Rechte und sind noch nicht eingebaut. Geräte ohne offene Ports und ohne ARP-Eintrag (z. B. Firewall-geschützte) bleiben unsichtbar.</p>
+ <h2>Datenschutz</h2><p>Alles liegt nur im Arbeitsspeicher: Namen, Benutzernamen und Scan-Ergebnisse verschwinden beim Beenden des Programms. Passwörter werden nie abgefragt, gespeichert, geloggt oder exportiert. Es gehen keine Daten ins Internet; der Server hört standardmäßig nur auf diesem Rechner.</p>
+ <h2>Lesezeichen für den Browser</h2><p>Im Export gibt es „Lesezeichen“: eine HTML-Datei mit den Web-Links der ausgewählten Geräte zum Importieren in Firefox oder Chrome/Edge (zwei Varianten: Ordner in der Lesezeichenleiste oder normaler Ordner „NetzScanner“). Enthalten sind nur URLs, keine Zugangsdaten. Ob die Leisten-Variante in beiden Browsern greift, ist noch nicht bestätigt.</p>
+ <h2>Startoptionen und Fehlersuche</h2>
+ <table class="ht"><tbody>
+ <tr><td><code>--listen ADRESSE:PORT</code></td><td>Adresse des Webservers (Standard <code>127.0.0.1:8484</code>; für andere Rechner z. B. <code>0.0.0.0:8484</code>)</td></tr>
+ <tr><td><code>--demo</code></td><td>Demo-Daten zum Ansehen der Oberfläche</td></tr>
+ <tr><td><code>--allow-public</code></td><td>öffentliche IP-Adressen scannen erlauben (nur mit Erlaubnis!)</td></tr>
+ <tr><td><code>--diagnose IP</code></td><td>ein Gerät Schritt für Schritt prüfen (Ports, Namensquellen) und Ergebnis ausgeben – hilft, wenn ein Name oder Port fehlt</td></tr>
+ <tr><td><code>--version</code></td><td>Version und Builddatum; die Version steht auch unten in der Oberfläche und in den Exporten</td></tr>
+ </tbody></table>
  <h2>Hinweis</h2><p>Ziel eingeben (siehe oben), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
 </section>
 </main>
