@@ -7,6 +7,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Lesezeichen-Export** (I-032): Netscape-Bookmark-HTML für Firefox und Chrome/Edge mit den Web-Links der ausgewählten Geräte. Zwei Varianten: Ordner als Lesezeichenleiste markiert (`PERSONAL_TOOLBAR_FOLDER`) oder normaler Ordner „NetzScanner“ (Fallback). Nur URLs, keine Zugangsdaten; Namen werden maskiert. Ohne Web-Link bei der Auswahl kommt eine Fehlermeldung.
 - Hinweis: Ob die Leisten-Markierung in beiden Browsern greift, ist **unbestätigt** (Import-Test durch Sascha nötig).
 
+## [0.4.2] – 2026-11-08
+### Hinzugefügt
+- **TLS-Zertifikatsinfos** (I-004): Bei HTTPS-Ports (443, 5001, 8443) liest der Scan Inhaber, Aussteller, Ablaufdatum und „selbst signiert“; das Detail-Panel zeigt sie samt Hinweis „ABGELAUFEN“ bzw. „läuft bald ab“ (< 30 Tage). Das Zertifikat wird nur gelesen, nicht geprüft; Texte werden bereinigt.
+
 ## [Unreleased]
 ### Hinzugefügt
 - `IDEAS.md`: Ideenliste mit Priorität, Aufwand und Status; Regel dazu in `CLAUDE.md`.

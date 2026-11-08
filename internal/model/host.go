@@ -12,6 +12,17 @@ type Port struct {
 	Number  int    `json:"number"`
 	Service string `json:"service,omitempty"` // z.B. "ssh" (Vermutung anhand Portnummer/Banner)
 	Banner  string `json:"banner,omitempty"`  // optional: gelesener Dienst-Banner
+	Cert    *Cert  `json:"cert,omitempty"`    // nur bei TLS-Ports (z.B. 443): Infos zum Zertifikat
+}
+
+// Cert fasst das TLS-Zertifikat eines Ports zusammen (nur gelesen, nicht geprueft).
+type Cert struct {
+	Subject    string `json:"subject"`    // Common Name bzw. erster DNS-Name
+	Issuer     string `json:"issuer"`     // Aussteller (Common Name)
+	NotAfter   string `json:"notAfter"`   // Ablaufdatum, Format JJJJ-MM-TT
+	DaysLeft   int    `json:"daysLeft"`   // Tage bis zum Ablauf (negativ = abgelaufen)
+	Expired    bool   `json:"expired"`    // true, wenn das Ablaufdatum vorbei ist
+	SelfSigned bool   `json:"selfSigned"` // Aussteller == Inhaber (selbst signiert)
 }
 
 // WebLink ist ein per Klick erreichbarer Web-Zugang (Router-Oberflaeche, NAS ...).

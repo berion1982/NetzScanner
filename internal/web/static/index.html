@@ -140,6 +140,13 @@ function buildDetails(h) {
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
   const banners = h.ports.filter(p => p.banner).map(p => p.number + ": " + p.banner).join("\n");
   if (banners) { dl.append(el("dt", { text: "Banner (unverifiziert)" }), el("dd", { style: "white-space:pre-wrap", text: banners })); }
+  // TLS-Zertifikate (I-004): Aussteller, Ablauf, Hinweis bei abgelaufen/selbst signiert
+  const certs = h.ports.filter(p => p.cert).map(p => {
+    const c = p.cert;
+    const note = c.expired ? " – ABGELAUFEN" : (c.daysLeft < 30 ? " – läuft bald ab" : "");
+    return p.number + ": " + (c.subject || "?") + " (von " + (c.issuer || "?") + (c.selfSigned ? ", selbst signiert" : "") + "), gültig bis " + c.notAfter + note;
+  }).join("\n");
+  if (certs) { dl.append(el("dt", { text: "TLS-Zertifikat" }), el("dd", { style: "white-space:pre-wrap", text: certs })); }
   dl.append(el("dt", { text: "Web-Zugänge" }), el("dd", {}, h.webLinks.length ? linkButtons(h) : ["–"]));
 
   // Name bearbeiten

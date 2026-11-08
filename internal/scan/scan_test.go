@@ -2,6 +2,8 @@ package scan
 
 import (
 	"context"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -152,5 +154,22 @@ func TestCertNameAndTitle(t *testing.T) {
 	pport := plain.Listener.Addr().(*net.TCPAddr).Port
 	if got := httpTitle(ctx, "127.0.0.1", pport); got != "FRITZ!Box 7590" {
 		t.Errorf("httpTitle = %q", got)
+	}
+}
+
+// summarizeCert: abgelaufen, selbst signiert und Tage bis Ablauf werden richtig erkannt.
+func TestSummarizeCert(t *testing.T) {
+	now := time.Date(2026, 11, 8, 0, 0, 0, 0, time.UTC)
+	name := pkix.Name{CommonName: "fritz.box"}
+	c := &x509.Certificate{Subject: name, Issuer: name, NotAfter: now.Add(10 * 24 * time.Hour)}
+	got := summarizeCert(c, now)
+	if got.Subject != "fritz.box" || !got.SelfSigned || got.Expired || got.DaysLeft != 10 || got.NotAfter != "2026-11-18" {
+		t.Errorf("unerwartet: %+v", got)
+	}
+	c.NotAfter = now.Add(-48 * time.Hour)
+	c.Issuer = pkix.Name{CommonName: "CA"}
+	got = summarizeCert(c, now)
+	if !got.Expired || got.DaysLeft != -2 || got.SelfSigned {
+		t.Errorf("abgelaufen falsch: %+v", got)
 	}
 }
