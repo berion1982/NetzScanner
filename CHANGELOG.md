@@ -216,3 +216,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinzugefügt
 - **Eigene Kategorien** (I-017): Im Detail-Panel gibt es unter „Kategorie“ den Eintrag „+ Eigene Kategorie anlegen …“ (Name bis 30 Zeichen, bis zu 20 Stück, nicht wie eine feste Kategorie). Eigene Kategorien bekommen automatisch eine feste Farbe (aus dem Namen), erscheinen in Legende (ein-/ausblendbar), Karte mit Sammelgruppen, Tabelle, CSV/HTML/Markdown und im Topologie-PDF (Legende bricht bei vielen Kategorien um). „Kategorie … löschen“ entfernt sie wieder; betroffene Geräte fallen auf die automatische Vermutung zurück (es werden keine Geräte gelöscht).
 - Neue Endpunkte `GET/POST /api/categories` und `POST /api/categories/delete`; die Liste steht in `eingaben.json` (Feld `customCategories`) und überlebt Neustarts auch ohne zugeordnete Geräte. Intern ist der Schlüssel `custom:<Name>`.
+
+## [0.13.1] – 2026-11-08
+### Hinzugefügt
+- **Betriebssystem-Spalte** (I-013, Teil): „System (Vermutung)“ jetzt auch in der Geräte-Tabelle sowie in CSV (neue letzte Spalte „Betriebssystem (Vermutung)“, bestehende Spalten unverändert), HTML und Markdown. Weiterhin nur eine Vermutung aus SSH-Banner, HTTP-Server-Header und Ports; der Wert wird in der CSV gegen Formeln abgesichert.
