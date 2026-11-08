@@ -362,3 +362,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.23.6] – 2026-11-08
 ### Geändert
 - **Topologie-PDF, Hinweis unter der Karte:** Der Text richtet sich nach der Datenquelle der Verbindungen (`topologyNote` in `internal/export/pdf.go`): Mesh-Liste der FRITZ!Box, SNMP, beides oder – ohne beides – wie bisher „Sternansicht“. Vorher stand auch bei Mesh-/SNMP-Daten „keine echte Verkabelung“.
+
+## [0.23.7] – 2026-11-08
+### Hinzugefügt
+- **Hinweis bei gleicher MAC:** Haben mehrere Geräte dieselbe MAC-Adresse, markiert der Scanner sie mit ⚠ (Tabelle, Detail-Panel „MAC mehrfach“) und nennt die anderen IPs; der Hinweis lautet, im Router gegenzuprüfen. Hintergrund: Ein Router beantwortet ARP manchmal auch für fremde Adressen (Proxy-ARP, z. B. VPN-Clients), oder ein Gerät hat mehrere Adressen – das lässt sich aus dem Scan nicht unterscheiden. Es wird **nichts ausgeblendet** (`MarkSharedMAC` in `internal/scan/gateway.go`, Feld `Host.SameMAC`, wird bei jeder Ansicht berechnet). Allgemeine Regel ohne Geräte-/Adresstabelle. Hilfe ergänzt.
+### Hinweis
+- Eine zuvor erwogene automatische Ausblendung solcher Einträge wurde verworfen (Entscheidung Sascha: lieber Hinweis).

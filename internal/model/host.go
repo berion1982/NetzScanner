@@ -148,6 +148,7 @@ type Host struct {
 	WifiSSID       string    `json:"wifiSSID,omitempty"`       // WLAN, an dem das Geraet laut Router haengt (I-055)
 	WifiSignal     int       `json:"wifiSignal,omitempty"`     // Signalstaerke in Prozent laut Router (0 = unbekannt)
 	WifiSpeed      int       `json:"wifiSpeed,omitempty"`      // WLAN-Verbindungsgeschwindigkeit in Mbit/s laut Router
+	SameMAC        []string  `json:"sameMac,omitempty"`        // andere IPs mit derselben MAC (Hinweis: im Router gegenpruefen, siehe scan.MarkSharedMAC)
 	MeshLink       string    `json:"meshLink,omitempty"`       // Mesh der FRITZ!Box: Art/Geschwindigkeit/Signal der Verbindung zum Uplink (I-055 c)
 	UplinkPort     string    `json:"uplinkPort,omitempty"`     // Topologie per SNMP: Port am Uplink-Switch (z. B. "Gi1/0/5")
 	UplinkShared   int       `json:"uplinkShared,omitempty"`   // Topologie per SNMP: wie viele MACs an diesem Port gesehen wurden (>1 = Switch/AP dahinter)

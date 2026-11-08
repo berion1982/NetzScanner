@@ -211,6 +211,7 @@ func (s *server) viewLocked() []model.Host {
 			hosts[i].Category = scan.Categorize(hosts[i])
 		}
 	}
+	scan.MarkSharedMAC(hosts) // gleiche MAC bei mehreren IPs: nur Hinweis, nichts ausblenden
 	return hosts
 }
 

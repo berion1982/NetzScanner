@@ -112,3 +112,29 @@ func ApplyGateway(hosts []model.Host, gateway string) {
 		}
 	}
 }
+
+// MarkSharedMAC vermerkt bei jedem Geraet die IPs, die dieselbe MAC-Adresse haben (Host.SameMAC).
+// Gleiche MAC bei mehreren IPs ist oft ein Scheineintrag (ein Router beantwortet ARP fuer fremde Adressen,
+// Proxy-ARP z. B. fuer VPN-Clients) oder ein Geraet mit mehreren Adressen. Der Scanner kann das nicht
+// unterscheiden und blendet deshalb NICHTS aus; er weist nur darauf hin, dass der Router gegenzupruefen ist.
+// Allgemeine Regel ohne Geraete-/Adresstabelle. Geraete ohne MAC werden ignoriert. Aendert nur die uebergebene Kopie.
+func MarkSharedMAC(hosts []model.Host) {
+	ips := map[string][]string{} // normalisierte MAC -> alle IPs
+	for _, h := range hosts {
+		if k := NormMAC(h.MAC); k != "" {
+			ips[k] = append(ips[k], h.IP)
+		}
+	}
+	for i := range hosts {
+		hosts[i].SameMAC = nil
+		k := NormMAC(hosts[i].MAC)
+		if k == "" || len(ips[k]) < 2 {
+			continue
+		}
+		for _, ip := range ips[k] {
+			if ip != hosts[i].IP {
+				hosts[i].SameMAC = append(hosts[i].SameMAC, ip)
+			}
+		}
+	}
+}
