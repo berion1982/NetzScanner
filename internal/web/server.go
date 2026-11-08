@@ -32,8 +32,9 @@ var staticFiles embed.FS
 
 // Options steuert den Server.
 type Options struct {
-	Demo        bool // Demo-Daten anzeigen, solange noch kein Scan lief
-	AllowPublic bool // Scans oeffentlicher Adressen erlauben
+	Demo        bool   // Demo-Daten anzeigen, solange noch kein Scan lief
+	AllowPublic bool   // Scans oeffentlicher Adressen erlauben
+	DataFile    string // Datei fuer die zwischengespeicherten Eingaben (I-016); "" = nicht speichern
 }
 
 // server haelt den Zustand des (einen) laufenden bzw. letzten Scans.
@@ -52,12 +53,16 @@ type server struct {
 	users    map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
 	locs     map[string]string // vom Nutzer eingetragene Standorte: IP -> Freitext (nur im RAM)
 	cats     map[string]string // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
+	macs     map[string]string // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
 	finished time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
 func NewHandler(opt Options) http.Handler {
-	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}, cats: map[string]string{}}
+	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}, cats: map[string]string{}, macs: map[string]string{}}
+	if !opt.Demo { // Demo-Daten sind erfunden: nichts laden/speichern
+		s.loadStore()
+	}
 	if opt.Demo {
 		s.hosts = DemoHosts()
 	}
@@ -72,6 +77,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
 	mux.HandleFunc("POST /api/hosts/location", s.handleLocation)
 	mux.HandleFunc("POST /api/hosts/category", s.handleCategory)
+	mux.HandleFunc("POST /api/inputs/clear", s.handleClearInputs)
+	mux.HandleFunc("GET /api/inputs", s.handleInputsInfo)
 	mux.HandleFunc("POST /api/export", s.handleExport)
 	mux.HandleFunc("POST /api/export/topology-pdf", s.handleTopologyPDF)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
@@ -123,16 +130,19 @@ func (s *server) viewLocked() []model.Host {
 	hosts := make([]model.Host, len(s.hosts)) // JSON: [] statt null
 	copy(hosts, s.hosts)
 	for i := range hosts {
-		if n, ok := s.names[hosts[i].IP]; ok {
+		match := s.inputsMatch(hosts[i].IP, hosts[i].MAC) // Eingaben nur, wenn hinter der IP noch dasselbe Geraet steckt
+		if n, ok := s.names[hosts[i].IP]; ok && match {
 			hosts[i].ScannedName = hosts[i].Name
 			hosts[i].Name = n
 			hosts[i].Known = true
 			hosts[i].NameSource = "nutzer"
 		}
-		hosts[i].Username = s.users[hosts[i].IP]
-		hosts[i].Location = s.locs[hosts[i].IP]
+		if match {
+			hosts[i].Username = s.users[hosts[i].IP]
+			hosts[i].Location = s.locs[hosts[i].IP]
+		}
 		// Kategorie: Wahl des Nutzers hat Vorrang, sonst Vermutung aus dem Scan (I-015).
-		if c, ok := s.cats[hosts[i].IP]; ok {
+		if c, ok := s.cats[hosts[i].IP]; ok && match {
 			hosts[i].Category, hosts[i].CategoryManual = c, true
 		} else {
 			hosts[i].Category = scan.Categorize(hosts[i])
@@ -185,11 +195,13 @@ func (s *server) handleRename(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
 		return
 	}
+	s.claimLocked(req.IP)
 	if name == "" {
 		delete(s.names, req.IP)
 	} else {
 		s.names[req.IP] = name
 	}
+	s.persistLocked()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -328,11 +340,13 @@ func (s *server) handleUser(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
 		return
 	}
+	s.claimLocked(req.IP)
 	if user == "" {
 		delete(s.users, req.IP)
 	} else {
 		s.users[req.IP] = user
 	}
+	s.persistLocked()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -354,11 +368,13 @@ func (s *server) handleLocation(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
 		return
 	}
+	s.claimLocked(req.IP)
 	if loc == "" {
 		delete(s.locs, req.IP)
 	} else {
 		s.locs[req.IP] = loc
 	}
+	s.persistLocked()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -381,11 +397,13 @@ func (s *server) handleCategory(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
 		return
 	}
+	s.claimLocked(req.IP)
 	if auto {
 		delete(s.cats, req.IP)
 	} else {
 		s.cats[req.IP] = req.Category
 	}
+	s.persistLocked()
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -492,4 +510,25 @@ func (s *server) handleTopologyPDF(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	_, _ = w.Write(buf.Bytes())
+}
+
+// handleClearInputs loescht alle gespeicherten Eingaben (RAM und Datei) - nur auf Klick des Nutzers.
+func (s *server) handleClearInputs(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	s.clearStoreLocked()
+	s.mu.Unlock()
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleInputsInfo sagt der Oberflaeche, ob (und wie viele Geraete) gespeichert werden.
+func (s *server) handleInputsInfo(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ips := map[string]bool{}
+	for _, m := range []map[string]string{s.names, s.users, s.locs, s.cats} {
+		for ip := range m {
+			ips[ip] = true
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"saving": s.opt.DataFile != "", "devices": len(ips)})
 }

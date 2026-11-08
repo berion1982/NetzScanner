@@ -190,3 +190,16 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Karte: Farbe je Kategorie, Gruppierung je Ebene, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus. Spalte „Kategorie“ in der Tabelle.
 - Exporte: CSV (neue Spalte **hinten**, bestehende Reihenfolge unverändert), HTML, Markdown und PDF (Kastenfarben, Legende, Spalte in der Liste). Lesezeichen bleiben unverändert.
 - Hinweis: Die Heuristik ist ungetestet im echten LAN (z. B. TP-Link-Steckdosen gelten als Netzwerkgerät, Raspberry Pi mit SSH als Server).
+
+## [0.11.0] – 2026-11-08
+### Hinzugefügt
+- **Eingaben zwischenspeichern** (I-016): Anzeigename, Benutzername, Standort und Kategorie werden nach jeder Änderung atomar in `eingaben.json` geschrieben (Standard: Konfigurationsordner des Benutzers, Datei 0600/Ordner 0700) und beim Start geladen. Nie Passwörter, keine Scan-Ergebnisse. Die Datei ist **unverschlüsselt**.
+- Startoptionen `--data DATEI` (anderer Pfad) und `--no-save` (nur Arbeitsspeicher); im `--demo`-Modus wird nie gespeichert.
+- Schutz vor IP-Wechsel: Die MAC wird mitgespeichert; steckt hinter der IP später ein anderes Gerät, werden die alten Eingaben dort nicht angezeigt (und beim Ändern verworfen).
+- Kaputte oder zu große Datei: wird zu `.defekt` umbenannt (nicht gelöscht), das Programm startet normal. Knopf „Gespeicherte Eingaben löschen“ in der Hilfe (mit Rückfrage).
+### Geändert
+- Hilfe: Datenschutz-Abschnitt beschreibt jetzt den Zwischenspeicher.
+
+## [0.11.1] – 2026-11-08
+### Behoben
+- **Topologie-Karte bei vielen Geräten:** Die Kästen einer Ebene überlappten sich und lange Namen liefen heraus. Jetzt wird auf mehrere Zeilen umgebrochen (6 pro Zeile, feste Abstände), Namen werden gekürzt (voller Name als Tooltip) und die Bildhöhe passt sich an.
