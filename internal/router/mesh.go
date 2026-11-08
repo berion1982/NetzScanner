@@ -32,7 +32,10 @@ type MeshNode struct {
 	Model string   `json:"model,omitempty"`
 	Role  string   `json:"role,omitempty"` // "master", "slave" oder "unknown" (kein Mesh-Mitglied)
 	MACs  []string `json:"-"`              // Geraete-MAC und alle Schnittstellen-MACs
-	IPs   []string `json:"-"`              // IP-Adressen ohne "/24"
+	IPs   []string `json:"-"`              // alle IP-Adressen ohne "/24"
+	// MgmtIPs: nur die Adressen mit Merkmal MANAGEMENT = die eigene Adresse des Geräts (bei Repeatern sicherer als
+	// "IPs", die auch alte/fremde Nachbareinträge enthalten können).
+	MgmtIPs []string `json:"-"`
 }
 
 // MeshLink ist eine Verbindung: Parent (naeher an der Box) -> Child.
@@ -52,13 +55,16 @@ type Mesh struct {
 // Rohformat (nur die gebrauchten Felder; unbekannte werden ignoriert).
 type rawMesh struct {
 	Nodes []struct {
-		UID        string                   `json:"uid"`
-		Name       string                   `json:"device_name"`
-		Friendly   string                   `json:"device_friendly_name"`
-		Model      string                   `json:"device_model"`
-		MAC        string                   `json:"device_mac_address"`
-		Role       string                   `json:"mesh_role"`
-		IPs        []struct{ Value string } `json:"ip_addresses"`
+		UID      string `json:"uid"`
+		Name     string `json:"device_name"`
+		Friendly string `json:"device_friendly_name"`
+		Model    string `json:"device_model"`
+		MAC      string `json:"device_mac_address"`
+		Role     string `json:"mesh_role"`
+		IPs      []struct {
+			Value      string
+			Attributes []string
+		} `json:"ip_addresses"`
 		Interfaces []struct {
 			MAC   string `json:"mac_address"`
 			Links []struct {
@@ -99,6 +105,11 @@ func ParseMesh(data []byte) (Mesh, error) {
 			// "192.168.178.72/24" -> "192.168.178.72"; Link-Local (169.254.x.x) ist nutzlos.
 			if a := strings.SplitN(ip.Value, "/", 2)[0]; net.ParseIP(a) != nil && !strings.HasPrefix(a, "169.254.") {
 				node.IPs = append(node.IPs, a)
+				for _, at := range ip.Attributes {
+					if strings.EqualFold(at, "MANAGEMENT") {
+						node.MgmtIPs = append(node.MgmtIPs, a)
+					}
+				}
 			}
 		}
 		for _, ni := range n.Interfaces {

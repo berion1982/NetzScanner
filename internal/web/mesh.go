@@ -24,33 +24,44 @@ const maxMeshDepth = 10
 // buildMeshLinks ordnet Mesh-Knoten den gescannten Geräten zu (über MAC, sonst IP) und liefert
 // je Geräte-IP den nächsten gescannten Vorgänger. Nicht gescannte Zwischenknoten werden übersprungen.
 func buildMeshLinks(m router.Mesh, hosts []model.Host) map[string]meshLink {
-	byMAC, byIP := map[string]string{}, map[string]string{} // MAC/IP -> Knoten-UID
+	byMAC, byMgmt, byIP := map[string]string{}, map[string]string{}, map[string]string{} // -> Knoten-UID
 	for _, n := range m.Nodes {
 		for _, mac := range n.MACs {
 			if k := scan.NormMAC(mac); k != "" {
 				byMAC[k] = n.UID
 			}
 		}
+		for _, ip := range n.MgmtIPs {
+			byMgmt[ip] = n.UID
+		}
 		for _, ip := range n.IPs {
 			byIP[ip] = n.UID
 		}
 	}
-	uidOf := func(h model.Host) string { // MAC hat Vorrang vor IP
-		if k := scan.NormMAC(h.MAC); k != "" {
-			if u, ok := byMAC[k]; ok {
-				return u
-			}
+	// Zuordnung in drei Stufen, damit ein Gerät mit alter/fremder IP im Mesh-Dokument keinem Repeater den
+	// Platz wegnimmt (z. B. ein iPhone, dessen frühere Adresse bei einem Repeater als Nachbar steht):
+	// 1) MAC, 2) eigene (MANAGEMENT-)IP des Knotens, 3) beliebige IP - jeder Knoten wird nur einmal vergeben.
+	hostOfUID, uidOfIP := map[string]model.Host{}, map[string]string{} // Knoten -> Gerät; Geräte-IP -> Knoten
+	claim := func(h model.Host, uid string) {
+		if uid == "" || uidOfIP[h.IP] != "" {
+			return
 		}
-		return byIP[h.IP]
+		if _, taken := hostOfUID[uid]; !taken {
+			hostOfUID[uid], uidOfIP[h.IP] = h, uid
+		}
 	}
-	hostOfUID := map[string]model.Host{}
 	for _, h := range hosts {
-		if u := uidOf(h); u != "" {
-			if _, dup := hostOfUID[u]; !dup {
-				hostOfUID[u] = h
-			}
+		if k := scan.NormMAC(h.MAC); k != "" {
+			claim(h, byMAC[k])
 		}
 	}
+	for _, h := range hosts {
+		claim(h, byMgmt[h.IP])
+	}
+	for _, h := range hosts {
+		claim(h, byIP[h.IP])
+	}
+	uidOf := func(h model.Host) string { return uidOfIP[h.IP] }
 	parent := map[string]router.MeshLink{} // Kind-UID -> erste Verbindung nach oben
 	for _, l := range m.Links {
 		if _, ok := parent[l.Child]; !ok {

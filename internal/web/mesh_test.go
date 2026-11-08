@@ -49,3 +49,30 @@ func TestBuildMeshLinks(t *testing.T) {
 		t.Error("Box darf keinen Uplink bekommen")
 	}
 }
+
+// TestMeshStaleIPDoesNotStealNode: Ein iPhone, dessen alte IP bei einem Repeater als Nachbar steht,
+// darf dem Repeater (eigene MANAGEMENT-IP, andere MAC) den Knoten nicht wegnehmen.
+func TestMeshStaleIPDoesNotStealNode(t *testing.T) {
+	doc := `{"nodes":[
+{"uid":"n-1","device_name":"box","device_mac_address":"AA:00:00:00:00:01","ip_addresses":[{"value":"192.168.178.1/24","attributes":["MANAGEMENT"]}]},
+{"uid":"n-7","device_name":"rep","device_mac_address":"BB:00:00:00:00:07","ip_addresses":[{"value":"192.168.178.112/24","attributes":["NEIGHBOUR_LIST"]},{"value":"192.168.178.123/24","attributes":["MANAGEMENT"]}],
+ "node_interfaces":[{"mac_address":"BB:00:00:00:00:08","node_links":[{"uid":"nl-1","type":"WLAN","state":"CONNECTED","node_1_uid":"n-1","node_2_uid":"n-7"}]}]},
+{"uid":"n-8","device_name":"plug","device_mac_address":"CC:00:00:00:00:08","node_interfaces":[{"mac_address":"CC:00:00:00:00:08","node_links":[{"uid":"nl-2","type":"WLAN","state":"CONNECTED","node_1_uid":"n-7","node_2_uid":"n-8"}]}]}]}`
+	m, err := router.ParseMesh([]byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hosts := []model.Host{
+		{IP: "192.168.178.1", MAC: "AA:00:00:00:00:01"},
+		{IP: "192.168.178.112", MAC: "EA:00:00:00:00:12"}, // iPhone mit anderer MAC
+		{IP: "192.168.178.123", MAC: "86:00:00:00:00:99"}, // Repeater mit zufälliger MAC
+		{IP: "192.168.178.122", MAC: "CC:00:00:00:00:08"},
+	}
+	got := buildMeshLinks(m, hosts)
+	if l := got["192.168.178.122"]; l.Uplink != "192.168.178.123" {
+		t.Errorf("Stecker sollte am Repeater .123 hängen, nicht am iPhone: %+v", l)
+	}
+	if _, ok := got["192.168.178.112"]; ok {
+		t.Error("iPhone hat keinen Knoten und darf keinen Uplink bekommen")
+	}
+}
