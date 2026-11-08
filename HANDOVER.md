@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.3.3 (Scan-Kern + Auswahl + Umbenennen; nur localhost getestet) · **Datum:** 2026-11-08
+**Stand:** v0.4.0 (Export CSV/HTML/Markdown) (Scan-Kern + Auswahl + Umbenennen; nur localhost getestet) · **Datum:** 2026-11-08
 
 ## Entscheidungen (von Sascha bestätigt)
 - Sprache: **Go**, Web-UI im Binary eingebettet (`embed`), Zugriff per Browser. Begründung: `docs/ADR-0001-sprache.md`.
@@ -8,6 +8,7 @@
 - Änderungen immer als PR. Keine GitHub-Actions-Tests.
 
 ## Was existiert
+- Export: `internal/export` (CSV/HTML/Markdown), API `POST /api/export` (nur ausgewählte IPs), Benutzername je Gerät (`users` in server.go, RAM). Nächste Export-Idee: Lesezeichen (I-032) – gleiche Auswahl, neues Format `bookmarks`.
 - Auswahl (Client, `selected` in index.html) und Umbenennen (Server, `names` in server.go, RAM). Export soll die Auswahl als IP-Liste an den Server senden (I-030).
 - Scan: `internal/scan` (targets, ports, arp, oui, banner, scanner), API in `internal/web/server.go`. Start: `./dist/netzscanner`, dann Ziel eingeben.
 - UI: `internal/web` (Server + `static/index.html`), Modell `internal/model`, Start: `./dist/netzscanner` → http://127.0.0.1:8484
@@ -29,10 +30,10 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 | 0.2.0 ✅ | Web-UI (Design A+B), Hilfe, Web-Links, Demo-Daten |
 | 0.3.0 ✅ | Scan-Kern: TCP-Portscan, ARP/MAC, Reverse-DNS, Banner, Scan-API + UI |
 | 0.3.x | mDNS/NetBIOS-Namen, ICMP (mit Rechten), vollständige OUI-Liste, TLS-Zertifikat-Infos |
-| 0.3.y | Export CSV + lesbare Tabelle (HTML/Markdown) |
-| 0.4.0 | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute |
-| 0.5.0 | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM |
-| 0.6.0 | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
+| 0.4.0 ✅ | Export CSV + lesbare Tabelle (HTML/Markdown), Benutzername-Feld |
+| 0.5.0 | Topologie: LLDP/CDP, SNMP (ARP-/MAC-/Interface-Tabellen), Traceroute |
+| 0.6.0 | Login-Abfragen: Router (SSH/SNMPv3), Server/Domain (LDAP/WinRM/SMB) – Zugangsdaten nur im RAM |
+| 0.7.0 | Weitere Exporte (JSON, XLSX), Scan-Vergleich |
 
 ## Erkenntnisse aus dem echten Scan (FritzBox 192.168.178.1)
 - Auf Linux mit systemd-resolved (Stub 127.0.0.53) liefert Reverse-DNS für die Gateway-IP den Pseudonamen `_gateway`. Der richtige Name `fritz.box` kommt erst vom DNS-Server direkt auf dem Gerät (Port 53) – Quelle `dns-geraet` in `internal/scan/names.go`.

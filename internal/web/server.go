@@ -2,6 +2,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -15,6 +16,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/berion1982/netzscanner/internal/export"
 	"github.com/berion1982/netzscanner/internal/model"
 	"github.com/berion1982/netzscanner/internal/scan"
 	"github.com/berion1982/netzscanner/internal/version"
@@ -45,12 +47,13 @@ type server struct {
 	errMsg   string
 	hosts    []model.Host
 	names    map[string]string // vom Nutzer vergebene Anzeigenamen: IP -> Name (nur im RAM)
+	users    map[string]string // vom Nutzer eingetragene Benutzernamen: IP -> Name (nur im RAM, KEINE Passwoerter)
 	finished time.Time
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
 func NewHandler(opt Options) http.Handler {
-	s := &server{opt: opt, names: map[string]string{}}
+	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}}
 	if opt.Demo {
 		s.hosts = DemoHosts()
 	}
@@ -62,6 +65,8 @@ func NewHandler(opt Options) http.Handler {
 
 	mux.HandleFunc("GET /api/hosts", s.handleHosts)
 	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
+	mux.HandleFunc("POST /api/hosts/user", s.handleUser)
+	mux.HandleFunc("POST /api/export", s.handleExport)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())
 	})
@@ -101,7 +106,13 @@ func guardPost(next http.Handler) http.Handler {
 func (s *server) handleHosts(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	// Kopie bauen und Anzeigenamen des Nutzers einsetzen (Scan-Ergebnis bleibt unveraendert).
+	writeJSON(w, http.StatusOK, s.viewLocked())
+}
+
+// viewLocked liefert eine Kopie der Geraeteliste mit den Eingaben des Nutzers
+// (Anzeigename, Benutzername). Das Scan-Ergebnis selbst bleibt unveraendert.
+// Aufrufer muss s.mu halten.
+func (s *server) viewLocked() []model.Host {
 	hosts := make([]model.Host, len(s.hosts)) // JSON: [] statt null
 	copy(hosts, s.hosts)
 	for i := range hosts {
@@ -111,8 +122,9 @@ func (s *server) handleHosts(w http.ResponseWriter, r *http.Request) {
 			hosts[i].Known = true
 			hosts[i].NameSource = "nutzer"
 		}
+		hosts[i].Username = s.users[hosts[i].IP]
 	}
-	writeJSON(w, http.StatusOK, hosts)
+	return hosts
 }
 
 // maxNameRunes ist die maximale Laenge eines Anzeigenamens.
@@ -245,4 +257,105 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// handleUser traegt den Benutzernamen fuer ein Geraet ein (leer = loeschen).
+// Nur der NAME wird gespeichert - Passwoerter nimmt dieses Programm hier nicht an.
+func (s *server) handleUser(w http.ResponseWriter, r *http.Request) {
+	var req struct{ IP, User string }
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	user, err := cleanName(req.User)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody(strings.Replace(err.Error(), "Name", "Benutzername", 1)))
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.hasHostLocked(req.IP) {
+		writeJSON(w, http.StatusNotFound, errBody("Geraet nicht in der Liste"))
+		return
+	}
+	if user == "" {
+		delete(s.users, req.IP)
+	} else {
+		s.users[req.IP] = user
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// hasHostLocked prueft, ob die IP in der aktuellen Liste steht. Aufrufer haelt s.mu.
+func (s *server) hasHostLocked(ip string) bool {
+	for _, h := range s.hosts {
+		if h.IP == ip {
+			return true
+		}
+	}
+	return false
+}
+
+// handleExport erzeugt eine Datei aus den ausgewaehlten Geraeten und liefert sie als Download.
+// format: "csv-excel" (; + BOM), "csv" (Komma), "html" oder "md".
+func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Format string   `json:"format"`
+		IPs    []string `json:"ips"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
+		return
+	}
+	s.mu.Lock()
+	view, target := s.viewLocked(), s.target
+	s.mu.Unlock()
+
+	// Nur ausgewaehlte, tatsaechlich vorhandene Geraete - in der Reihenfolge der Liste.
+	want := map[string]bool{}
+	for _, ip := range req.IPs {
+		want[ip] = true
+	}
+	var chosen []model.Host
+	for _, h := range view {
+		if want[h.IP] {
+			chosen = append(chosen, h)
+			delete(want, h.IP)
+		}
+	}
+	if len(want) > 0 {
+		writeJSON(w, http.StatusBadRequest, errBody("ausgewaehlte Geraete nicht in der Liste"))
+		return
+	}
+	if len(chosen) == 0 {
+		writeJSON(w, http.StatusBadRequest, errBody("keine Geraete ausgewaehlt"))
+		return
+	}
+
+	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String()}
+	var buf bytes.Buffer
+	var ctype, ext string
+	var err error
+	switch req.Format {
+	case "csv-excel":
+		ctype, ext, err = "text/csv; charset=utf-8", "csv", export.WriteCSV(&buf, chosen, true)
+	case "csv":
+		ctype, ext, err = "text/csv; charset=utf-8", "csv", export.WriteCSV(&buf, chosen, false)
+	case "html":
+		ctype, ext, err = "text/html; charset=utf-8", "html", export.WriteHTML(&buf, chosen, meta)
+	case "md":
+		ctype, ext, err = "text/markdown; charset=utf-8", "md", export.WriteMarkdown(&buf, chosen, meta)
+	default:
+		writeJSON(w, http.StatusBadRequest, errBody("unbekanntes Format"))
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errBody("Export fehlgeschlagen"))
+		return
+	}
+	w.Header().Set("Content-Type", ctype)
+	w.Header().Set("Content-Disposition", `attachment; filename="netzscanner-`+meta.Generated.Format("20060102-1504")+`.`+ext+`"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = w.Write(buf.Bytes())
 }

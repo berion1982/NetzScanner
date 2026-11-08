@@ -146,3 +146,41 @@ func TestRename(t *testing.T) {
 		}
 	}
 }
+
+// Benutzername setzen -> erscheint in der Liste und im CSV-Export; Passwoerter gibt es nirgends.
+func TestExportFlow(t *testing.T) {
+	h := NewHandler(Options{Demo: true})
+	if rec := postJSON(h, "/api/hosts/user", `{"ip":"192.168.1.10","user":"admin"}`); rec.Code != 200 {
+		t.Fatalf("Benutzername: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := postJSON(h, "/api/hosts/name", `{"ip":"192.168.1.10","name":"NAS Büro"}`); rec.Code != 200 {
+		t.Fatalf("Name: %d", rec.Code)
+	}
+	rec := postJSON(h, "/api/export", `{"format":"csv","ips":["192.168.1.10","192.168.1.1"]}`)
+	if rec.Code != 200 || !strings.Contains(rec.Header().Get("Content-Disposition"), ".csv") {
+		t.Fatalf("Export: %d %v", rec.Code, rec.Header())
+	}
+	out := rec.Body.String()
+	// Reihenfolge der Liste (fritz.box zuerst), nur die zwei ausgewaehlten Geraete.
+	if !strings.Contains(out, ",192.168.1.1,3C:A6:2F:11:22:33,fritz.box,") ||
+		!strings.Contains(out, "admin,192.168.1.10,00:11:32:AA:BB:CC,NAS Büro,") || strings.Contains(out, "192.168.1.23") {
+		t.Errorf("CSV-Inhalt falsch: %q", out)
+	}
+	for _, f := range []string{"csv-excel", "html", "md"} {
+		if rec := postJSON(h, "/api/export", `{"format":"`+f+`","ips":["192.168.1.1"]}`); rec.Code != 200 || rec.Body.Len() == 0 {
+			t.Errorf("Format %s: Status %d", f, rec.Code)
+		}
+	}
+	for body, want := range map[string]int{
+		`{"format":"csv","ips":[]}`:              400, // nichts ausgewaehlt
+		`{"format":"csv","ips":["10.9.9.9"]}`:    400, // unbekanntes Geraet
+		`{"format":"xls","ips":["192.168.1.1"]}`: 400, // unbekanntes Format
+	} {
+		if rec := postJSON(h, "/api/export", body); rec.Code != want {
+			t.Errorf("%s: Status %d (erwartet %d)", body, rec.Code, want)
+		}
+	}
+	if rec := postJSON(h, "/api/hosts/user", `{"ip":"10.9.9.9","user":"x"}`); rec.Code != 404 {
+		t.Errorf("unbekannte IP: %d", rec.Code)
+	}
+}

@@ -19,7 +19,10 @@ section{display:none}section.on{display:block}
 .btn.stop{background:#8b2a2a;border-color:var(--bad)}.btn:disabled{opacity:.5;cursor:default}
 .prog{flex:1;min-width:160px;color:var(--mut)}
 .bar{height:6px;background:#21262d;border-radius:3px;margin-top:4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc);width:0}
-.selbar{display:flex;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);color:var(--mut)}
+.selbar button.btn{all:revert;background:#238636;border:1px solid #2ea043;color:#fff;border-radius:6px;padding:6px 14px;cursor:pointer;font:inherit}
+.selbar button.btn:disabled{opacity:.5;cursor:default;color:#fff}
+.selbar select{background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 8px;font:inherit}
+.selbar{flex-wrap:wrap;display:flex;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);color:var(--mut)}
 .selbar button{all:unset;cursor:pointer;color:var(--acc)}.selbar button:disabled{color:var(--mut);cursor:default}
 input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px;cursor:pointer}
 tr.chk{background:#1a2638}
@@ -68,7 +71,9 @@ line{stroke:#3a4656;stroke-width:1.5}
   <div class="prog" id="prog">Bereit.</div>
  </div>
  <div class="tiles" id="tiles"></div>
- <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
+ <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button><span style="flex:1"></span>
+  <select id="fmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="html">Lesbare Tabelle (HTML)</option><option value="md">Lesbare Tabelle (Markdown)</option></select>
+  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th>MAC</th><th>Offene Ports</th><th>Web</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="topo">
@@ -80,6 +85,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <p>Der NetzScanner zeigt alle Geräte im Netz mit IP, Name, MAC-Adresse und offenen Ports.</p>
  <h2>Übersicht</h2><p>Oben die Kennzahlen, darunter die Geräteliste. Klick auf eine Zeile zeigt Details rechts.</p>
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen gelten nur, solange das Programm läuft.</p>
+ <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Gerätename und offene Ports – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Hersteller und Web-Links. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
  <h2>Topologie</h2><p>Zeigt, welches Gerät an welchem hängt (Router → Switch → Geräte). Quelle: Uplink-Angaben (später LLDP/SNMP).</p>
  <h2>Hinweis</h2><p>Ziel eingeben (z. B. <code>192.168.1.0/24</code> oder eine einzelne IP), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
@@ -114,6 +120,15 @@ function saveName(ip, name, msgEl) {
     });
 }
 
+// Benutzername speichern (leer = loeschen); das Passwort wird hier nie abgefragt.
+function saveUser(ip, user, msgEl) {
+  post("/api/hosts/user", { ip, user }).then(r => r.json().then(b => ({ ok: r.ok, b })))
+    .then(({ ok, b }) => {
+      if (!ok) { msgEl.className = "msg err"; msgEl.textContent = b.error; return; }
+      loadHosts().then(() => { const h = hostsCache.find(x => x.ip === ip); if (h) showDetails(h); });
+    });
+}
+
 // Baut ein Detail-Panel (Name bearbeiten + Infos). Jedes Panel bekommt eigene Elemente,
 // damit die Eingabefelder und Knoepfe in beiden Reitern funktionieren.
 function buildDetails(h) {
@@ -141,7 +156,17 @@ function buildDetails(h) {
     row.append(reset);
     msg.className = "msg"; msg.style.color = "var(--mut)"; msg.textContent = "Scan-Name: " + h.scannedName;
   }
-  return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg, dl];
+
+  // Benutzername (optional) fuer den Export - bewusst KEIN Passwortfeld.
+  const uInput = el("input", { maxlength: "64", "aria-label": "Benutzername", autocomplete: "off" });
+  uInput.value = h.username || "";
+  const uMsg = el("div", { class: "msg" });
+  const uSave = el("button", { class: "ok", text: "Speichern" });
+  uSave.addEventListener("click", () => saveUser(h.ip, uInput.value, uMsg));
+  uInput.addEventListener("keydown", e => { if (e.key === "Enter") uSave.click(); });
+  const uRow = el("div", { class: "rename" }, [uInput, uSave]);
+  return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg,
+    el("small", { style: "color:var(--mut)", text: "Benutzername (optional, kein Passwort)" }), uRow, uMsg, dl];
 }
 
 // Detail-Panels (beide Reiter) befuellen.
@@ -154,6 +179,7 @@ function showDetails(h) {
 function updateSelection() {
   document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
   document.getElementById("selnone").disabled = selected.size === 0;
+  document.getElementById("exp").disabled = selected.size === 0;
   const all = document.getElementById("selall");
   all.checked = hostsCache.length > 0 && selected.size === hostsCache.length;
   all.indeterminate = selected.size > 0 && selected.size < hostsCache.length;
@@ -232,6 +258,18 @@ function loadHosts() {
 }
 document.getElementById("selall").addEventListener("change", e => {
   hostsCache.forEach(h => e.target.checked ? selected.add(h.ip) : selected.delete(h.ip)); updateSelection();
+});
+// Export: ausgewaehlte IPs an den Server, Datei als Download speichern.
+document.getElementById("exp").addEventListener("click", () => {
+  const msg = document.getElementById("expmsg");
+  msg.className = "msg"; msg.textContent = "…";
+  post("/api/export", { format: document.getElementById("fmt").value, ips: [...selected] }).then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-export.txt" });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    msg.textContent = selected.size + " Geräte exportiert.";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "Export fehlgeschlagen."; });
 });
 document.getElementById("selnone").addEventListener("click", () => { selected.clear(); updateSelection(); });
 

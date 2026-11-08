@@ -52,8 +52,8 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 ## Export
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
-| I-030 | CSV der **vom Nutzer ausgewählten** Geräte: Benutzername, IP, MAC, Gerätename, offene Ports – **ohne Passwörter** (Passwörter werden separat beim Import eingegeben, außerhalb dieses Programms) | hoch | M | offen |
-| I-031 | Lesbare Tabelle (HTML/Markdown) zusätzlich zur CSV | hoch | S | offen |
+| I-030 | CSV der **vom Nutzer ausgewählten** Geräte: Benutzername, IP, MAC, Gerätename, offene Ports – **ohne Passwörter** (Passwörter werden separat beim Import eingegeben, außerhalb dieses Programms) | hoch | M | erledigt (0.4.0) |
+| I-031 | Lesbare Tabelle (HTML/Markdown) zusätzlich zur CSV | hoch | S | erledigt (0.4.0) |
 | I-032 | Lesezeichen-Datei (Netscape-Bookmark-HTML) für Firefox und Chrome mit den ausgewählten Geräten (Web-Links); Ordner als Lesezeichenleiste markiert (`PERSONAL_TOOLBAR_FOLDER="true"`) | mittel | M | offen |
 | I-033 | Weitere Formate: JSON, XLSX | niedrig | M | offen |
 | I-034 | Scan-Vergleich (was ist neu/weg seit dem letzten Scan) | niedrig | L | offen |
