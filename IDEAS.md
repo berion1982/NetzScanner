@@ -37,6 +37,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 |---|---|---|---|---|
 | I-010 | LLDP/CDP und SNMP (ARP-/MAC-/Interface-Tabellen) für echte Uplinks | hoch | L | teilweise (0.5.7: Stern unter Standard-Gateway; offen: LLDP/CDP, SNMP) |
 | I-011 | Traceroute für Segmente hinter Routern | niedrig | M | offen |
+| I-012 | **Topologie als PDF exportieren** (Vorschlag Sascha). Varianten: (a) Browser-Druck mit Druck-CSS „Als PDF speichern“ – ohne Abhängigkeit, aber manuell; (b) PDF serverseitig in Pure Go erzeugen (z. B. `go-pdf/fpdf`, kein CGO) und als Download anbieten, Karte aus denselben Daten wie die SVG-Ansicht zeichnen. Offen: nur ausgewählte oder alle Geräte? Mit Geräteliste (Name, IP, MAC, Hersteller)? Keine Zugangsdaten. | mittel | M | offen (Idee notiert, Variante noch zu wählen) |
 
 ## Zugangsdaten und Login-Test
 | ID | Idee | Prio | Aufwand | Status |
