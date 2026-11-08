@@ -100,6 +100,7 @@ line{stroke:#3a4656;stroke-width:1.5}
  <tr><td><code>192.168.1.5, 192.168.1.20-30</code></td><td>mehrere Angaben, mit Komma getrennt, beliebig gemischt; doppelte Adressen werden nur einmal gescannt</td></tr>
  </tbody></table>
  <p>Grenzen: nur IPv4, höchstens 65.536 Adressen je Scan (= /16), öffentliche Adressen sind gesperrt (nur mit Startoption <code>--allow-public</code>). Der Anfang eines Bereichs muss vor dem Ende liegen.</p>
+ <h2>Betriebssystem (Vermutung)</h2><p>Der NetzScanner leitet das System aus Daten ab, die er ohnehin liest: SSH-Banner (z. B. „OpenSSH 8.9 Ubuntu“ → Ubuntu 22.04), HTTP-Server-Header (z. B. „Microsoft-IIS/10.0“) und typische Ports (RDP → Windows). Es ist nur eine <b>Vermutung</b>: Banner können verändert sein, die Versionszuordnung gilt für unveränderte Distributionspakete, und ohne Hinweis bleibt das Feld leer. Zu sehen im Detail-Panel und in der PDF-Geräteliste.</p>
  <h2>Wie kommt der Gerätename zustande?</h2>
  <p>Der Scan probiert nacheinander mehrere Quellen und nimmt die erste, die einen brauchbaren Namen liefert. Die Quelle steht im Detail-Panel.</p>
  <table class="ht"><tbody>

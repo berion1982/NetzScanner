@@ -37,6 +37,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 |---|---|---|---|---|
 | I-010 | LLDP/CDP und SNMP (ARP-/MAC-/Interface-Tabellen) für echte Uplinks | hoch | L | teilweise (0.5.7: Stern unter Standard-Gateway; offen: LLDP/CDP, SNMP) |
 | I-011 | Traceroute für Segmente hinter Routern | niedrig | M | offen |
+| I-013 | **Betriebssystem/Version auslesen** (Vorschlag Sascha): Vermutung aus SSH-Banner (OpenSSH-Version → Ubuntu/Debian-Release), HTTP-Server-Header (IIS, Apache/nginx mit Distribution) und typischen Ports (RDP, AFP, iOS); ohne Zusatzverkehr. Anzeige im Detail-Panel und PDF-Liste. **Nicht enthalten / Ideen dazu:** Windows-Version per SMB/NTLM, SNMP sysDescr (Community nötig), TTL-Fingerprint (ICMP-Rechte), SSDP-SERVER-Header; OS-Spalte in Tabelle/CSV/HTML | mittel | M | teilweise erledigt (0.8.0): Banner/Port-Vermutung; Rest offen |
 | I-012 | **Topologie als PDF exportieren** (Vorschlag Sascha). Varianten: (a) Browser-Druck mit Druck-CSS „Als PDF speichern“ – ohne Abhängigkeit, aber manuell; (b) PDF serverseitig in Pure Go erzeugen (z. B. `go-pdf/fpdf`, kein CGO) und als Download anbieten, Karte aus denselben Daten wie die SVG-Ansicht zeichnen. Offen: nur ausgewählte oder alle Geräte? Mit Geräteliste (Name, IP, MAC, Hersteller)? Keine Zugangsdaten. | mittel | M | erledigt (0.7.0): Variante b, alle Geräte, Karte + Liste |
 
 ## Zugangsdaten und Login-Test
