@@ -279,3 +279,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Hersteller des Switches aus der `sysObjectID`** (I-052): Bei der SNMP-Abfrage wird die Enterprise-Nummer gelesen (`internal/scan/vendor.go`, u. a. LANCOM, Netgear, Cisco, HP, TP-Link, Zyxel, Ubiquiti, MikroTik). Der Hersteller erscheint hinter der Adresse im SNMP-Ergebnis und in der System-Spalte; bei Geräten ohne Tabellen gibt es einen gezielten Hinweis („Bridge-MIB bzw. LLDP am Gerät einschalten“).
 ### Hinweis
 - Die Nummern-Tabelle ist aus dem Gedächtnis erstellt und **nicht gegen die IANA-Liste geprüft**; unbekannte Nummern bleiben ohne Herstellernamen.
+
+## [0.19.0] – 2026-11-08
+### Hinzugefügt
+- **Neuer Reiter „DHCP & Router“** (I-056) für die Zusatzquellen. Der **Router-Login** (FRITZ!Box) ist von der Übersicht dorthin umgezogen, unverändert in der Funktion.
+- **Windows-DHCP-Server auslesen** (I-056): `internal/dhcp/windows.go` liest per WinRM (Port 5985, NTLM mit Nachrichtenverschlüsselung, Bibliothek `masterzen/winrm`, Pure Go) mit PowerShell **nur lesend** alle Leases und festen Reservierungen (`Get-DhcpServerv4Scope/-Lease/-Reservation`). Zuordnung über die MAC (`POST /api/dhcp/windows`, `/api/dhcp/clear`): Name vom Server füllt „(unbekannt)“ und Hersteller-Vorschläge (Quelle „dhcp“), im Detail-Panel steht „DHCP-Server: feste Reservierung / Lease bis …“, Meldung listet Einträge, die der Scan nicht gefunden hat.
+- Sicherheit wie beim Router-Login: nur Loopback, Zugangsdaten nur im RAM und nie geloggt/exportiert, Server muss in der Geräteliste stehen, Antwort wird bereinigt und begrenzt.
+### Hinweis
+- **Nicht an einem echten Windows Server geprüft** (nur Auswertung der Antwort und Zuordnung mit Testdaten). Annahmen aus dem Gedächtnis: WinRM ist auf Windows Server ab 2012 R2 standardmäßig an; ein Benutzer braucht „DHCP-Benutzer“ und „Remoteverwaltungsbenutzer“ (oder Admin). Kerberos wird nicht unterstützt (nur NTLM, Anmeldung als `DOMÄNE\benutzer`).
+- Neue Regel in CLAUDE.md: keine festen Einzelgeräte-Werte in Tabellen.
