@@ -239,3 +239,8 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Sicherheit / Grenzen
 - Die Community wird nur im Anfragekoerper übertragen, nicht gespeichert, nicht protokolliert, nicht in Exporte oder Antworten geschrieben; das Feld wird nach dem Lesen geleert. Abgefragt werden nur Adressen aus der Geräteliste (höchstens 10).
 - **Ungeprüft an echter Hardware** (nur Logiktests). Bekannte Grenzen: SNMP v2c ist unverschlüsselt; v3 fehlt; hinter nicht abgefragten Switches/Access Points erscheinen Geräte am selben Port; VLAN-Communities (`community@vlan`) werden evtl. nur teilweise gelesen; LLDP/CDP bleibt offen.
+
+## [0.14.1] – 2026-11-08
+### Geändert
+- **Tabelle kompakter:** Neue Spalte „Web“ direkt hinter dem Namen mit kleinen Knöpfen „🌐 Port“ je Weboberfläche (Klick öffnet sie in neuem Tab); Geräte ohne Weboberfläche zeigen einen grauen Strich. Die breite Web-Spalte am Zeilenende entfällt.
+- Hersteller werden gekürzt (Rechtsform-Zusätze wie „Inc.“/„GmbH“/„Technologies“ entfallen, max. 18 Zeichen); der volle Name steht im Tooltip und im Detail-Panel. System und Standort werden mit „…“ gekürzt, die Ports umbrechen.
