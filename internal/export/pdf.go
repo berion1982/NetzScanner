@@ -73,6 +73,7 @@ type pdfFrame struct {
 // "Sammelschiene" links neben den Gruppen der Ebene, damit keine Linie eine andere Gruppe kreuzt.
 type pdfLink struct {
 	from         string  // IP des Uplinks
+	srcLvl       int     // Ebene des Uplinks (fuer den linken Rand, an dem die Linie herausgefuehrt wird)
 	trunkX, busY float64 // senkrechte Schiene / waagerechte Hoehe unter dem Uplink
 	toX, toY     float64 // Ziel: linke Kante der Einheit
 }
@@ -82,7 +83,10 @@ type pdfLayout struct {
 	nodes  map[string]*pdfNode
 	frames []pdfFrame
 	links  []pdfLink
-	height float64
+	// levelMinX: linker Rand je Ebene. Steht ein Uplink INNERHALB einer Gruppe (z. B. Repeater unter "Clients"),
+	// wird seine Linie erst nach links aus der Gruppe herausgefuehrt, damit sie keine fremden Geraete kreuzt.
+	levelMinX map[int]float64
+	height    float64
 }
 
 // pdfUnit ist eine Gruppe (>= 2 Geraete) oder ein Einzelgeraet beim Layouten.
@@ -112,7 +116,7 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 		}
 	}
 	usableW := pdfPageW - 2*pdfMargin
-	lay := pdfLayout{nodes: make(map[string]*pdfNode, len(hosts))}
+	lay := pdfLayout{nodes: make(map[string]*pdfNode, len(hosts)), levelMinX: map[int]float64{}}
 	y := 0.0
 	for d := 0; d <= maxD; d++ {
 		list := levels[d]
@@ -200,12 +204,13 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 					minX = x
 				}
 				if _, ok := byIP[first.Uplink]; ok && first.Uplink != "" && first.Uplink != first.IP {
-					lay.links = append(lay.links, pdfLink{from: first.Uplink, toX: x, toY: toY})
+					lay.links = append(lay.links, pdfLink{from: first.Uplink, srcLvl: pdfDepth(byIP[first.Uplink], byIP), toX: x, toY: toY})
 				}
 				x += u.w + pdfUnitGap
 			}
 			y += rowH + pdfRowGap
 		}
+		lay.levelMinX[d] = minX
 		// Sammelschiene dieser Ebene: links neben den Einheiten, waagerechter Abschnitt knapp ueber der Ebene.
 		for i := firstLink; i < len(lay.links); i++ {
 			lay.links[i].trunkX = minX - pdfGapX
@@ -387,8 +392,14 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 			continue
 		}
 		ux, uy := px(up)+bw/2, py(up)+bh
-		pdf.Line(ux, uy, ux, sy(l.busY))                            // vom Uplink nach unten
-		pdf.Line(ux, sy(l.busY), sx(l.trunkX), sy(l.busY))          // waagerecht zur Sammelschiene
+		// Vom Uplink kurz nach unten (Luecke unter dem Geraet), waagerecht nach links aus der Gruppe heraus,
+		// dort senkrecht bis zur Hoehe der Sammelschiene, dann weiter wie gehabt.
+		gy := uy + pdfGapX*scale/2
+		gx := sx(lay.levelMinX[l.srcLvl] - 2*pdfGapX)
+		pdf.Line(ux, uy, ux, gy)
+		pdf.Line(ux, gy, gx, gy)
+		pdf.Line(gx, gy, gx, sy(l.busY))
+		pdf.Line(gx, sy(l.busY), sx(l.trunkX), sy(l.busY))          // waagerecht zur Sammelschiene
 		pdf.Line(sx(l.trunkX), sy(l.busY), sx(l.trunkX), sy(l.toY)) // senkrecht zur Einheit
 		pdf.Line(sx(l.trunkX), sy(l.toY), sx(l.toX), sy(l.toY))     // kurz hinein
 	}

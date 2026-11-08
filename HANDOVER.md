@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.23.4 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
+**Stand:** v0.23.5 · **Datum:** 2026-11-08 · Scan im echten LAN (FritzBox) und Export von Sascha bestätigt (läuft).
 
 ## Entscheidungen (von Sascha bestätigt)
 - **Leitlinie:** Der NetzScanner **sammelt und exportiert** Daten (lesend). Kein Zurückschreiben/Importieren in Router oder Server (z. B. DHCP-Reservierungen) – das übernehmen deren eigene Werkzeuge.
@@ -28,6 +28,7 @@ Offene Ideen und Reihenfolge stehen in `IDEAS.md` (eine Idee pro Chat).
 - **Danach (Reihenfolge):** (1) I-055 (c) Mesh über `X_AVM-DE_GetMeshListPath` (Format erst an der Box ansehen), (2) I-053 SNMP v3, (3) I-020/I-022 Logins. Leitlinie: Scanner nur lesen/sammeln/exportieren.
 - **0.22.2:** FRITZ!Box-Reservierungen **nicht auslesbar** (Static ≠ feste Zuweisung, von Sascha an der Box widerlegt; fest zugewiesener PC `nobara-pc` fehlte in der Static-Liste). Reiter „Reservierungen“ = nur Windows-DHCP. I-055 (d) damit abgeschlossen (nicht machbar per TR-064). Als Nächstes: Mesh (I-055 c) über `X_AVM-DE_GetMeshListPath`.
 - **0.22.3 (I-055 c, Teil 1):** `--diagnose-mesh <FritzBox-IP>` gibt die Mesh-Liste roh aus. **Sascha: Ausgabe ausführen und schicken** (Namen/MACs vorher nach Wunsch schwärzen). Danach Teil 2: Parser + Uplinks aus dem Mesh in Karte/Overlay (`viewLocked`).
+- **0.23.5:** PDF-Linien wie in der Web-Karte aus Gruppen heraus geführt. **Offen:** PDF-Fußnote „Sternansicht“ je nach Datenquelle (Mesh/SNMP) anpassen.
 - **Nächste Idee (neuer Chat):** I-059 „Mobilgeräte“ als feste Kategorie (Vorschlag Sascha). Hinweis: Der Router-Login (und damit Mesh/Router-Namen) ist nur im RAM – nach jedem Neustart des Programms erneut anmelden, sonst steht die Karte wieder im Stern.
 - **0.23.4:** Mesh funktioniert (Repeater haben Geräte darunter). Fix: Zuordnung in Stufen (MAC → MANAGEMENT-IP → IP), Kartenlinien aus Gruppen heraus. **Offen:** PDF-Karte (`layoutTopology`) nutzt noch die alte Linienführung; Sascha prüft Karte im LAN.
 - **0.23.3:** 32/49 Router-Geräte zugeordnet (0.23.2 wirkt). Offen: Geräteinfo/WAN/WLAN/Mesh „nicht lesbar“ beim dritten Login; Hinweise nennen jetzt den echten Grund. **Sascha: Meldung erneut schicken.** Ungeklärt: .101/.103/.201–.203 („Hyperion“) tragen die FritzBox-MAC; Router kennt .103 als „Launch“ mit anderer MAC.
