@@ -56,6 +56,7 @@ type server struct {
 	cats       map[string]string          // vom Nutzer gesetzte Kategorien: IP -> Kategorie-Schluessel (nur im RAM)
 	routerData *router.Info               // Router-Info und WLANs der letzten Abfrage (nur im RAM, I-055)
 	routerInfo map[string]routerEntry     // Router-Geraeteliste: normalisierte MAC -> Eintrag (nur im RAM, I-024)
+	dhcpInfo   map[string]dhcpEntry       // Windows-DHCP-Server: normalisierte MAC -> Eintrag (nur im RAM, I-056)
 	snmpLinks  map[string]snmpLink        // Ergebnis der SNMP-Abfrage: Geraete-IP -> Anschluss (nur im RAM, I-010)
 	snmpSwitch map[string]scan.SwitchInfo // abgefragte Switches: IP -> Name/Beschreibung (nur im RAM)
 	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
@@ -87,6 +88,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/router/clear", s.handleRouterClear)
 	mux.HandleFunc("GET /api/router/info", s.handleRouterInfo)
 	mux.HandleFunc("POST /api/router/export", s.handleRouterExport)
+	mux.HandleFunc("POST /api/dhcp/windows", s.handleWindowsDHCP)
+	mux.HandleFunc("POST /api/dhcp/clear", s.handleDHCPClear)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
 	mux.HandleFunc("POST /api/topology/snmp/clear", s.handleSNMPClear)
 	mux.HandleFunc("GET /api/categories", s.handleCategories)
@@ -162,6 +165,13 @@ func (s *server) viewLocked() []model.Host {
 			hosts[i].WifiSSID, hosts[i].WifiSignal, hosts[i].WifiSpeed = e.SSID, e.Signal, e.Speed
 			if _, named := s.names[hosts[i].IP]; !named && e.Name != "" && (!hosts[i].Known || hosts[i].NameSource == "hersteller") {
 				hosts[i].Name, hosts[i].Known, hosts[i].NameSource = e.Name, true, "router"
+			}
+		}
+		// Windows-DHCP (I-056): Reservierung/Lease und - falls noch unbenannt - der Hostname des Servers.
+		if e, ok := s.dhcpInfo[scan.NormMAC(hosts[i].MAC)]; ok && scan.NormMAC(hosts[i].MAC) != "" {
+			hosts[i].DHCP = e.Label()
+			if _, named := s.names[hosts[i].IP]; !named && e.Name != "" && (!hosts[i].Known || hosts[i].NameSource == "hersteller") {
+				hosts[i].Name, hosts[i].Known, hosts[i].NameSource = e.Name, true, "dhcp"
 			}
 		}
 		// Topologie per SNMP (I-010 Teil 2): gilt nur, solange hinter der IP dieselbe MAC steckt.

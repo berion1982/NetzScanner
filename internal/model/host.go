@@ -142,6 +142,7 @@ type Host struct {
 	OS             string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
 	Ports          []Port    `json:"ports"`
 	Uplink         string    `json:"uplink,omitempty"`         // Topologie: ID (IP) des vorgelagerten Geraets
+	DHCP           string    `json:"dhcp,omitempty"`           // Angabe des DHCP-Servers: "Reservierung" oder "Lease bis ..." (I-056), nur nach DHCP-Abfrage
 	RouterName     string    `json:"routerName,omitempty"`     // Name laut Router-Geraeteliste (I-024), nur nach Router-Login
 	Connection     string    `json:"connection,omitempty"`     // Verbindungsart laut Router: "WLAN", "LAN (Kabel)" ...
 	WifiSSID       string    `json:"wifiSSID,omitempty"`       // WLAN, an dem das Geraet laut Router haengt (I-055)
