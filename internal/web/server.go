@@ -111,6 +111,10 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("GET /api/netinfo", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetInfo())
 	})
+	// DHCP-Pruefung (I-070): sendet EIN DHCPDISCOVER und zeigt, welche Server antworten. Nur lesend.
+	mux.HandleFunc("POST /api/dhcp-probe", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, scan.ProbeDHCP(r.Context(), 4*time.Second))
+	})
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())
 	})

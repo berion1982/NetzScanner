@@ -468,3 +468,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Bei Nicht-AD-LDAP-Servern wird, falls vorhanden, der erste Namenskontext als „Basis …“ gezeigt. Antworten werden auf 64 KB begrenzt, Texte bereinigt.
 ### Grenzen
 - **Ungeprüft:** Ob ein echter Domänencontroller den anonymen Abruf erlaubt (manche Server oder Richtlinien verweigern ihn) – dann bleibt nur die Port-Anzeige „ldap“. Nur mit Unit-Tests (Beispielantwort, kaputte Daten) geprüft, noch nicht an einem echten DC. LDAPS (636) wird nicht abgefragt.
+
+## [0.34.0] – 2026-11-09
+### Hinzugefügt
+- **Mehrere DHCP-Server erkennen** (I-070): Neuer Knopf „DHCP-Server prüfen“ im Reiter „DHCP & Router“. Der Scanner sendet **ein** DHCPDISCOVER per Broadcast (zufällige, lokal verwaltete MAC) und sammelt ca. 4 Sekunden lang die Angebote (`internal/scan/dhcpprobe.go`, `POST /api/dhcp-probe`). Pro Server werden Kennung, angebotene Adresse, Maske, Gateway, DNS, Domäne und Lease angezeigt; antworten mehrere, erscheint ein Warnhinweis (fremder „Rogue“-Server oder gewollte Redundanz).
+- Es wird nie ein DHCPREQUEST gesendet, also keine Adresse angenommen; es wird nichts im Router/DHCP verändert.
+### Grenzen
+- **Fallback:** Braucht UDP-Port 68. Ohne Rechte oder bei belegtem Port (laufender DHCP-Client) meldet die Prüfung „nicht prüfbar“ mit Grund.
+- Geprüft wird nur das Netz der vom System gewählten Schnittstelle (keine weiteren VLANs). Manche Server halten ihr Angebot kurz vor (Annahme, serverabhängig). **Ungeprüft im echten LAN**; nur Unit-Tests (Paketaufbau, Parser, Auswertung). Server, die Broadcast-Antworten filtern, bleiben unsichtbar.
