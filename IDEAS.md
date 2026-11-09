@@ -101,6 +101,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-046 | Bereichsschreibweise im Ziel-Feld (`192.168.1.10-50`, `192.168.1.10-192.168.1.50`, mehrere Ziele mit Komma); gleiche Grenzen wie bisher (max. /16 groß, öffentliche Adressen gesperrt) | mittel | S | erledigt (0.5.5) |
 | I-047 | **Kommandozeilen-Modus ohne Browser** (Vorschlag Claude, 2026-11-09): z. B. `--scan 192.168.1.0/24 --out kunde.csv` (später auch Markdown/PDF/Projektdatei aus I-035). Praktisch auf dem Handheld, per SSH oder im Skript. Gleiche Grenzen wie die Oberfläche (öffentliche Adressen nur mit `--allow-public`) | mittel | S | offen |
 | I-048 | **Port-Profile** (Vorschlag Claude, 2026-11-09): Auswahl „Schnell“, „Standard“ (heutige `DefaultPorts`), „Erweitert“ (z. B. 1–1024 + Standard) und eigene Liste. `ParsePorts` existiert bereits; **nicht geprüft**, ob die Oberfläche schon eine eigene Portliste anbietet. Hinweis auf längere Scan-Dauer bei großen Listen | niedrig | S | offen |
+| I-069 | **Lizenz** (Wunsch Sascha, 2026-11-09): freie Lizenz ohne Aufwand, aber Firmen sollen den Scanner nicht 1:1 übernehmen und geschlossen verkaufen → **AGPL-3.0-or-later**. Dazu Fremdlizenzen mitliefern (`--licenses`, Datei neben dem Programm) und Quellcode-Link in der Oberfläche (AGPL §13). Offen: IEEE-Bedingungen der OUI-Liste | hoch | S | erledigt (0.27.0) |
 
 ## Bestandsaufnahme ohne Login (Onboarding)
 | ID | Idee | Prio | Aufwand | Status |
