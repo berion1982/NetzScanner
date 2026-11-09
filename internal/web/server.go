@@ -66,11 +66,12 @@ type server struct {
 	customCats []string                   // vom Nutzer angelegte eigene Kategorien (Schluessel "custom:<Name>"), in Anlege-Reihenfolge
 	macs       map[string]string          // MAC je IP zum Zeitpunkt der Eingabe (Schutz vor IP-Wechsel, siehe store.go)
 	finished   time.Time
+	creds      *credStore // Zugangsdaten je Geraet (nur im RAM, I-020); eigener Mutex
 }
 
 // NewHandler baut den HTTP-Handler: Oberflaeche unter "/", Daten unter "/api/...".
 func NewHandler(opt Options) http.Handler {
-	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}, cats: map[string]string{}, macs: map[string]string{}}
+	s := &server{opt: opt, names: map[string]string{}, users: map[string]string{}, locs: map[string]string{}, cats: map[string]string{}, macs: map[string]string{}, creds: newCredStore(credIdleTimeout)}
 	if !opt.Demo { // Demo-Daten sind erfunden: nichts laden/speichern
 		s.loadStore()
 	}
@@ -96,6 +97,9 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/dhcp/clear", s.handleDHCPClear)
 	mux.HandleFunc("GET /api/reservations", s.handleReservations)
 	mux.HandleFunc("POST /api/reservations/export", s.handleReservationsExport)
+	mux.HandleFunc("GET /api/creds", s.handleCredsList)
+	mux.HandleFunc("POST /api/creds", s.handleCredsSet)
+	mux.HandleFunc("POST /api/creds/delete", s.handleCredsDelete)
 	mux.HandleFunc("GET /api/findings", s.handleFindings)
 	mux.HandleFunc("POST /api/findings/export", s.handleFindingsExport)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
@@ -110,6 +114,10 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/export/netzdoku-pdf", s.handleNetworkDocPDF)
 	mux.HandleFunc("GET /api/netinfo", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetInfo())
+	})
+	// DHCP-Pruefung (I-070): sendet EIN DHCPDISCOVER und zeigt, welche Server antworten. Nur lesend.
+	mux.HandleFunc("POST /api/dhcp-probe", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, scan.ProbeDHCP(r.Context(), 4*time.Second))
 	})
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())

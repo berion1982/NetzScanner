@@ -162,6 +162,11 @@ func scanHost(ctx context.Context, ip netip.Addr, ports []int, timeout time.Dura
 			}
 			banner := grabBanner(conn, p, 400*time.Millisecond)
 			conn.Close()
+			if p == 389 { // LDAP: anonyme rootDSE-Abfrage fuer Domaenen-/DC-Infos (I-061)
+				if info := QueryRootDSE(ctx, ip.String(), 1500*time.Millisecond); info != "" {
+					banner = info
+				}
+			}
 			var cert *model.Cert
 			if httpsPorts[p] { // TLS-Port: Zertifikat lesen (I-004)
 				cert = readCert(ctx, ip.String(), p)

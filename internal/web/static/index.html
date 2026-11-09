@@ -101,6 +101,10 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
   <p style="color:var(--mut);margin:6px 0">Liest per WinRM (Port 5985, NTLM, verschlüsselt) mit PowerShell <b>nur lesend</b> alle Leases und festen Reservierungen des Windows-DHCP-Servers und ordnet sie über die MAC den Geräten zu (Name, „feste Reservierung“ bzw. Lease-Ablauf). Voraussetzung: DHCP-Rolle auf dem Server, WinRM aktiv (<code>Test-WSMan localhost</code>), Server wurde mitgescannt. Empfohlen: eigener Benutzer in den Gruppen „DHCP-Benutzer“ und „Remoteverwaltungsbenutzer“ statt Domain-Admin; Schreibweise <code>DOMÄNE\benutzer</code>. <b>Zugangsdaten bleiben nur im Arbeitsspeicher</b>, werden nie gespeichert oder exportiert. Nur von diesem Rechner aus möglich. <i>Noch nicht an einem echten Windows Server geprüft.</i></p>
   <div class="rename"><input id="wdhost" placeholder="Server-IP" aria-label="DHCP-Server-Adresse" autocomplete="off"><input id="wduser" placeholder="DOMÄNE\Benutzer" aria-label="DHCP-Benutzer" autocomplete="off"><input id="wdpass" type="password" placeholder="Passwort" aria-label="DHCP-Passwort" autocomplete="off"><button id="wdgo" class="ok" type="button">Lesen</button><button id="wdclr" type="button">Zurücksetzen</button></div>
   <div class="msg" id="wdmsg" style="white-space:pre-wrap"></div></details>
+ <details class="card" style="margin-bottom:12px" open><summary style="cursor:pointer">Mehrere DHCP-Server erkennen (optional)</summary>
+  <p style="color:var(--mut);margin:6px 0">Sendet <b>eine</b> DHCP-Anfrage (DISCOVER) per Broadcast und zeigt, welche Server antworten. Antworten mehrere, kann ein fremder („Rogue“) Server im Netz sein – oder ein gewollter Zweitserver. Es wird keine Adresse angenommen. Braucht UDP-Port 68 (meist Administrator-/Root-Rechte); sonst steht dort „nicht prüfbar“. Geprüft wird nur das Netz der Schnittstelle, die das System wählt.</p>
+  <button type="button" id="dpgo">DHCP-Server prüfen</button>
+  <div class="msg" id="dpmsg" style="white-space:pre-wrap"></div></details>
 </section>
 <section id="find">
  <h2>Befunde</h2><p style="color:var(--mut)">Auffälligkeiten, die sich aus den <b>vorhandenen Scan-Daten</b> ergeben (offene Ports, Zertifikate, gleiche MAC) – ohne zusätzlichen Netzverkehr. Das sind <b>Hinweise zum Gegenprüfen</b>, keine bewiesenen Schwachstellen: Eine Portnummer verrät nur den üblichen Dienst.</p>
@@ -298,6 +302,31 @@ function saveLocation(ip, location, msgEl) {
 
 // Baut ein Detail-Panel (Name bearbeiten + Infos). Jedes Panel bekommt eigene Elemente,
 // damit die Eingabefelder und Knoepfe in beiden Reitern funktionieren.
+// Zugangsdaten-Bereich eines Geraets (I-020): fragt den Server nach dem Stand (ohne Passwort) und zeigt Eingabe oder "gemerkt".
+function renderCreds(h, box) {
+  fetch("/api/creds").then(r => r.json()).then(c => {
+    const mine = (c.credentials || []).find(x => x.ip === h.ip);
+    const msg = el("div", { class: "msg" });
+    if (!c.allowed) { box.replaceChildren(el("div", { class: "msg", text: "Eingabe nur auf dem Rechner möglich, auf dem NetzScanner läuft (HTTP im Netz ist unverschlüsselt)." })); return; }
+    if (mine) {
+      const del = el("button", { text: "Zugang vergessen" });
+      del.addEventListener("click", () => post("/api/creds/delete", { ip: h.ip }).then(() => renderCreds(h, box)));
+      box.replaceChildren(el("div", { class: "msg", text: "Benutzer „" + mine.user + "“ gemerkt (noch ca. " + Math.ceil(mine.expiresSec / 60) + " Min., dann automatisch vergessen)." }), el("div", { class: "rename" }, [del]));
+      return;
+    }
+    const u = el("input", { maxlength: "128", "aria-label": "Zugangs-Benutzer", autocomplete: "off", placeholder: "Benutzer" });
+    const p = el("input", { type: "password", maxlength: "128", "aria-label": "Zugangs-Passwort", autocomplete: "new-password", placeholder: "Passwort" });
+    const ok = el("button", { class: "ok", text: "Merken (nur RAM)" });
+    const go = () => post("/api/creds", { ip: h.ip, user: u.value, password: p.value }).then(async r => {
+      p.value = ""; // Passwort sofort aus dem Feld entfernen
+      if (!r.ok) { msg.className = "msg err"; msg.textContent = (await r.json()).error; return; }
+      renderCreds(h, box);
+    });
+    ok.addEventListener("click", go);
+    p.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    box.replaceChildren(el("div", { class: "rename" }, [u, p, ok]), msg);
+  });
+}
 function buildDetails(h) {
   const dl = el("dl");
   const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
@@ -376,7 +405,11 @@ function buildDetails(h) {
     if (!confirm("Eigene Kategorie „" + catLabel(h.category) + "“ löschen? Betroffene Geräte werden wieder automatisch eingeordnet.")) return;
     post("/api/categories/delete", { key: h.category }).then(() => loadCustomCats().then(() => loadHosts().then(() => { const x = hostsCache.find(y => y.ip === h.ip); if (x) showDetails(x); })));
   });
+  // Zugangsdaten (I-020): nur im RAM des Programms, nie gespeichert/exportiert, Passwort wird nie angezeigt.
+  const credBox = el("div", {});
+  renderCreds(h, credBox);
   return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg,
+    el("small", { style: "color:var(--mut)", text: "Zugangsdaten (nur Arbeitsspeicher, werden nie gespeichert oder exportiert)" }), credBox,
     el("small", { style: "color:var(--mut)", text: "Kategorie" }), el("div", { class: "rename" }, cDel ? [cSel, cDel] : [cSel]), cMsg,
     el("small", { style: "color:var(--mut)", text: "Standort (optional)" }), lRow, lMsg,
     el("small", { style: "color:var(--mut)", text: "Benutzername (optional, kein Passwort)" }), uRow, uMsg, dl];
@@ -812,6 +845,19 @@ fetch("/api/netinfo").then(r => r.json()).then(n => {
   if (n.search_domains && n.search_domains.length) t.push("Suchdomäne: " + n.search_domains.join(", "));
   document.getElementById("netinfo").textContent = t.join(" · ");
 }).catch(() => {});
+// DHCP-Pruefung (I-070): Knopf sendet die Anfrage, Ergebnis wird nur als Text angezeigt.
+document.getElementById("dpgo").addEventListener("click", () => {
+  const msg = document.getElementById("dpmsg");
+  msg.textContent = "Prüfe … (ca. 4 Sekunden)";
+  fetch("/api/dhcp-probe", { method: "POST" }).then(r => r.json()).then(d => {
+    const lines = [(d.multi ? "⚠ " : "") + d.note];
+    (d.servers || []).forEach(s => lines.push("• Server " + s.server_id +
+      (s.offered_ip ? " bietet " + s.offered_ip : "") + (s.mask ? " / " + s.mask : "") +
+      (s.router ? " · Gateway " + s.router : "") + (s.dns && s.dns.length ? " · DNS " + s.dns.join(", ") : "") +
+      (s.domain ? " · Domäne " + s.domain : "") + (s.lease_secs ? " · Lease " + s.lease_secs + " s" : "")));
+    msg.textContent = lines.join("\n");
+  }).catch(() => { msg.textContent = "Fehler bei der Prüfung."; });
+});
 fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
 poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
 fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });
