@@ -357,11 +357,11 @@ func pageTitle(pdf *fpdf.Fpdf, t func(string) string, title, sub string) {
 func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host, meta Meta) {
 	pdf.AddPage()
 	pageTitle(pdf, t, "Netzwerk-Topologie",
-		"Ziel: "+meta.Target+"  |  "+strconv.Itoa(len(hosts))+" Geraete  |  Stand: "+meta.Generated.Format("02.01.2006 15:04"))
+		"Ziel: "+meta.Target+"  |  "+strconv.Itoa(len(hosts))+" Geräte  |  Stand: "+meta.Generated.Format("02.01.2006 15:04"))
 	if len(hosts) == 0 {
 		pdf.SetFont("Helvetica", "", 10)
 		pdf.Ln(6)
-		pdf.CellFormat(0, 6, t("Keine Geraete in der Liste."), "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, 6, t("Keine Geräte in der Liste."), "", 1, "L", false, 0, "")
 		return
 	}
 
@@ -550,7 +550,7 @@ func drawDeviceList(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host) {
 	const lineH = 4.2
 	header := func() {
 		pdf.AddPage()
-		pageTitle(pdf, t, "Geraeteliste", strconv.Itoa(len(hosts))+" Geraete")
+		pageTitle(pdf, t, "Geräteliste", strconv.Itoa(len(hosts))+" Geräte")
 		pdf.Ln(2)
 		pdf.SetFont("Helvetica", "B", 8)
 		pdf.SetFillColor(225, 225, 225)

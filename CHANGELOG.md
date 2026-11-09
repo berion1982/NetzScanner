@@ -400,3 +400,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.25.3] – 2026-11-09
 ### Geändert
 - **Kennungs-Namen besser abwerten** (I-066): `looksLikeIdentifier` erkennt jetzt auch Namen mit führendem Vorzeichen, mit `_` als Trenner und Hex-/Ziffernfolgen beliebiger Länge (ab 8 Zeichen, mindestens eine Ziffer). Reine Wörter (z. B. „decade“) und kurze Namen bleiben erhalten. Gilt für alle Namensquellen (DNS, mDNS, SSDP …).
+
+## [0.25.4] – 2026-11-09
+### Behoben
+- **Router-Info: Status „Connecting“** (I-068): Die FRITZ!Box-Abfrage liest jetzt beide WAN-Dienste (IP und PPP) und nimmt den mit Status „Connected“. Vorher wurde nur der erste antwortende Dienst gelesen; meldete dieser „Connecting“, obwohl die Verbindung über den anderen lief, stand das im Export. Gibt es keinen verbundenen Dienst, bleibt der echte Status des ersten stehen. Test für drei Fälle ergänzt.
+- **PDF:** „Geräte“/„Geräteliste“ mit Umlaut in Kopfzeilen (die Standardschrift kann ä).
+### Hinweis
+- Die Ursache an der echten Box ist **ungeprüft** („Ich weiß es nicht“); die Korrektur folgt der plausibelsten Erklärung. Die einzeln auf eine weitere Seite überlaufende PDF-Zeile konnte ich nicht nachvollziehen: Die Seitenumbruch-Prüfung der Geräteliste rechnet Zeilenhöhe gegen den Seitenrand korrekt; bitte ein PDF mit betroffener Zeile schicken.
