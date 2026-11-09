@@ -383,3 +383,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Export der Befunde als CSV (Excel Deutsch oder Standard) und Markdown, mit CSV-Injection-Schutz. Neue API: `GET /api/findings`, `POST /api/findings/export`. Neues Paket `internal/findings` mit Tests; Hilfe-Seite ergänzt.
 ### Hinweis
 - Die Regeln gelten allgemein nach Port/Zertifikat, nicht nach Gerät oder Hersteller. Befunde sind **Hinweise zum Gegenprüfen**, keine bewiesenen Schwachstellen. Aufnahme ins PDF folgt mit I-036.
+
+## [0.25.1] – 2026-11-09
+### Geändert
+- **Gleiche MAC in allen Exporten** (I-065): Das ⚠ „MAC mehrfach“ steht jetzt auch in PDF-Geräteliste, CSV, Markdown und HTML (neue Spalte „Hinweis“ mit den anderen IPs).
+- Ein Eintrag, der die MAC eines erkannten Routers/Switches teilt (`Host.MirrorOf`, z. B. Proxy-ARP-Scheineintrag), erbt dessen Hersteller/System nicht mehr und zählt **nicht** als eigenes „Netzwerkgerät“; die Kategorie wird neu vermutet (Nutzerwahl bleibt). Es wird weiterhin **nichts ausgeblendet**.
+### Hinweis
+- Allgemeine Regel nach Rolle und MAC, keine Geräte- oder Adresstabelle. CSV hat eine zusätzliche letzte Spalte.

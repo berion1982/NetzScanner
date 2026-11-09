@@ -127,6 +127,7 @@ func MarkSharedMAC(hosts []model.Host) {
 	}
 	for i := range hosts {
 		hosts[i].SameMAC = nil
+		hosts[i].MirrorOf = ""
 		k := NormMAC(hosts[i].MAC)
 		if k == "" || len(ips[k]) < 2 {
 			continue
@@ -136,5 +137,21 @@ func MarkSharedMAC(hosts []model.Host) {
 				hosts[i].SameMAC = append(hosts[i].SameMAC, ip)
 			}
 		}
+		hosts[i].MirrorOf = mirrorOf(hosts, i, k)
 	}
+}
+
+// mirrorOf liefert die IP des Routers/Switches, dessen MAC das Geraet i (ohne eigene Netzwerk-Rolle)
+// ebenfalls hat. Solche Eintraege sind meist Scheineintraege (Proxy-ARP des Routers) und sollen nicht
+// als eigenes Netzwerkgeraet zaehlen. Ohne passenden Router/Switch: leer. Allgemeine Regel nach Rolle.
+func mirrorOf(hosts []model.Host, i int, mac string) string {
+	if hosts[i].Role == "router" || hosts[i].Role == "switch" {
+		return ""
+	}
+	for j := range hosts {
+		if j != i && (hosts[j].Role == "router" || hosts[j].Role == "switch") && NormMAC(hosts[j].MAC) == mac {
+			return hosts[j].IP
+		}
+	}
+	return ""
 }

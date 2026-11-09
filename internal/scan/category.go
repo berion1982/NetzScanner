@@ -52,8 +52,10 @@ func Categorize(h model.Host) string {
 	osName := strings.ToLower(h.OS)
 
 	// 1) Netzwerkgeraet: per Gateway-Erkennung gesetzte Rolle, Hersteller oder System.
-	if h.Role == "router" || h.Role == "switch" || containsAny(vendor, networkVendors) ||
-		strings.Contains(osName, "routeros") || strings.Contains(osName, "fritz!os") {
+	// Scheineintraege (gleiche MAC wie ein Router/Switch, I-065) erben Hersteller/System des Routers
+	// und zaehlen deshalb nicht als eigenes Netzwerkgeraet; sie fallen auf die uebrigen Regeln durch.
+	if h.Role == "router" || h.Role == "switch" || (h.MirrorOf == "" && (containsAny(vendor, networkVendors) ||
+		strings.Contains(osName, "routeros") || strings.Contains(osName, "fritz!os"))) {
 		return model.CatNetwork
 	}
 	// 1b) Home Assistant (Port 8123) ist ein Server, auch wenn der Chip-Hersteller (z. B. Raspberry Pi) sonst nach IoT aussieht.
