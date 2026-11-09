@@ -16,6 +16,12 @@ LDFLAGS="-s -w -X ${PKG}.Version=${VERSION} -X ${PKG}.BuildDate=${DATE} -X ${PKG
 TARGETS=(linux/amd64 linux/arm64 linux/arm windows/amd64 windows/arm64 darwin/amd64 darwin/arm64)
 
 mkdir -p dist
+
+# Lizenzdateien neben die Programme legen: Die AGPL (LICENSE) und die Lizenzen
+# der Fremdbibliotheken muessen bei jeder Weitergabe der Binaries dabei sein.
+cp LICENSE dist/LICENSE
+cp internal/licenses/THIRD_PARTY_LICENSES.txt dist/THIRD_PARTY_LICENSES.txt
+
 if [[ "${1:-}" == "native" ]]; then
   CGO_ENABLED=0 go build -ldflags "$LDFLAGS" -o dist/netzscanner ./cmd/netzscanner
   exit 0

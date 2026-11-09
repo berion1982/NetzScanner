@@ -38,5 +38,10 @@ Die Ausgabe zeigt, welche Quellen (DNS, Zertifikat, Webseite) etwas liefern – 
 ## Dokumente
 [CHANGELOG](CHANGELOG.md) · [HANDOVER](HANDOVER.md) · [CLAUDE.md](CLAUDE.md)
 
+## Lizenz
+NetzScanner ist freie Software unter der **GNU Affero General Public License v3 oder später** (`AGPL-3.0-or-later`), siehe [LICENSE](LICENSE).
+Kurz (rechtlich gilt der Lizenztext): kostenlos nutzen, weitergeben und verändern ist erlaubt. Wer das Programm verändert weitergibt **oder über ein Netzwerk anbietet**, muss den Quellcode unter derselben Lizenz offenlegen. Keine Garantie.
+Die eingebauten Fremdbibliotheken behalten ihre Lizenzen (MIT, BSD, Apache-2.0, MPL-2.0): `./dist/netzscanner --licenses` bzw. `THIRD_PARTY_LICENSES.txt` neben dem Programm. Nach Änderungen an `go.mod`: `scripts/third-party-licenses.sh` ausführen.
+
 ## Hinweis
 Nur in Netzen scannen, für die du die Erlaubnis hast.

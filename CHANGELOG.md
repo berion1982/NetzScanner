@@ -417,12 +417,23 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 
 ## [0.27.0] – 2026-11-09
 ### Hinzugefügt
+- **Lizenz: GNU AGPL v3 oder später** (I-069, Entscheidung Sascha): Datei `LICENSE` mit dem vollständigen Lizenztext (SPDX `AGPL-3.0-or-later`).
+- **Fremdlizenzen:** `scripts/third-party-licenses.sh` erzeugt `internal/licenses/THIRD_PARTY_LICENSES.txt` mit den Lizenztexten aller einkompilierten Bibliotheken und der Go-Standardbibliothek (MIT, BSD, Apache-2.0, MPL-2.0). Die Datei ist ins Programm eingebettet; `scripts/build.sh` legt sie zusammen mit `LICENSE` nach `dist/`.
+- **`--licenses`:** gibt Lizenzhinweis und alle Fremdlizenzen aus.
+- **Oberfläche:** Hilfe-Abschnitt „Lizenz“ und Link „Quellcode · AGPL“ neben der Versionsanzeige (AGPL Abschnitt 13: Nutzer im Netz bekommen den Quellcode angeboten). README mit Lizenz-Abschnitt.
+- Test prüft, dass jede direkte Abhängigkeit aus `go.mod` in der Fremdlizenz-Datei steht.
+### Hinweis
+- Die Nutzungsbedingungen der IEEE für die eingebettete OUI-Liste sind **ungeprüft** („Ich weiß es nicht“).
+- Keine Rechtsberatung; der deutsche Kurzhinweis ist eine Zusammenfassung, rechtlich gilt der englische Text in `LICENSE`.
+
+## [0.28.0] – 2026-11-09
+### Hinzugefügt
 - **SNMP v3** (I-053) für die Switch-Abfrage: Auswahl „SNMP v2c / v3“ im Topologie-Reiter. v3 mit Benutzer und wahlweise Authentifizierung (SHA, SHA224/256/384/512, MD5) und Verschlüsselung (AES, AES192, AES256, DES); Stufen noAuthNoPriv, authNoPriv, authPriv. Verschlüsselung setzt Authentifizierung voraus, Passphrasen mindestens 8 Zeichen (Prüfung vor dem Senden).
 - Zugangsdaten (Community, Benutzer, Passphrasen) nur im Anfragekörper, nie gespeichert, protokolliert oder zurückgegeben; die Felder werden nach dem Senden geleert.
 ### Hinweis
 - Nur mit Unit-Tests geprüft (Validierung, Aufbau des gosnmp-Clients); **an einem echten Switch mit v3 ungetestet** („Ich weiß es nicht“, ob alle Hersteller-Kombinationen funktionieren).
 
-## [0.28.0] – 2026-11-09
+## [0.29.0] – 2026-11-09
 ### Hinzugefügt
 - **Scan speichern und laden** (I-035): Knöpfe „Scan speichern“ und „Scan laden“ in der Übersicht. Die Projektdatei (JSON, Download/Upload im Browser) enthält Geräteliste, Ziel, Zeitpunkt, Programmversion und die Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien). **Nicht** enthalten: Zugangsdaten, Router-/Mesh-/DHCP-/SNMP-Daten (nur im RAM; nach dem Laden bei Bedarf neu abfragen).
 - Beim Laden wird die Datei wie fremde Eingabe geprüft (Format/Version, max. 16 MiB und 5000 Geräte, gültige IPs ohne Doppelte, Steuerzeichen entfernt, Texte gekürzt, unbekannte Kategorien → Client, Web-Links aus IP/Ports neu berechnet). Eingaben aus der Datei werden zu den vorhandenen hinzugefügt. Gespeichert werden kann nur, wenn kein Scan läuft.
