@@ -20,9 +20,9 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 
 ## Nächster Schritt
 Reihenfolge nach dem Test von 0.23.7 (Befunde stehen als Ideen in `IDEAS.md`, Prio laut Vorschlag):
-1. **I-060** Gleiche MAC in PDF/Exporten kennzeichnen, nicht als eigene Netzwerkgeräte zählen.
-2. **I-062** Mesh-Zuordnung prüfen (Gruppe hing im PDF unter einem Smartphone).
-3. **I-061** Kennungs-Namen besser abwerten · **I-063** Status „Connecting“ + PDF-Kleinigkeiten.
+1. **I-065** Gleiche MAC in PDF/Exporten kennzeichnen, nicht als eigene Netzwerkgeräte zählen.
+2. **I-067** Mesh-Zuordnung prüfen (Gruppe hing im PDF unter einem Smartphone).
+3. **I-066** Kennungs-Namen besser abwerten · **I-068** Status „Connecting“ + PDF-Kleinigkeiten.
 4. **I-059** Kategorie „Mobilgeräte“ · **I-053** SNMP v3 · **I-020/I-022** Logins.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
@@ -56,7 +56,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 | 0.19.0–0.20.0 ✅ | Windows-DHCP per WinRM, Reiter „Reservierungen“ (I-056/I-057) |
 | 0.21.0–0.22.x ✅ | `--diagnose-router`, Reservierungen der Box als nicht machbar geklärt |
 | 0.23.0–0.23.7 ✅ | Mesh-Topologie (I-055 c), Router-Login-Meldungen, Linien in Karte und PDF, ⚠ „MAC mehrfach“ |
-| Plan | I-060 → I-062 → I-061/I-063 → I-059 → I-053 → I-020/I-022 |
+| Plan | I-065 → I-067 → I-066/I-068 → I-059 → I-053 → I-020/I-022 |
 | später (Plan) | SNMP sysName, ICMP mit Rechten, SMB/TTL, JSON/XLSX-Export, Scan-Vergleich, Eingaben-Datei verschlüsseln |
 
 „Plan“ = Vorschlag; Sascha entscheidet die Reihenfolge, Details in `IDEAS.md`.
