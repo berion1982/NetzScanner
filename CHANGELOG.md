@@ -439,3 +439,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Beim Laden wird die Datei wie fremde Eingabe geprüft (Format/Version, max. 16 MiB und 5000 Geräte, gültige IPs ohne Doppelte, Steuerzeichen entfernt, Texte gekürzt, unbekannte Kategorien → Client, Web-Links aus IP/Ports neu berechnet). Eingaben aus der Datei werden zu den vorhandenen hinzugefügt. Gespeichert werden kann nur, wenn kein Scan läuft.
 ### Hinweis
 - Grundlage für I-034 (Scan-Vergleich) und I-036 (Netzdokumentation). Nur mit Unit-Tests geprüft, Bedienung im Browser noch nicht von Sascha getestet.
+
+## [0.30.0] – 2026-11-09
+### Hinzugefügt
+- **Scan-Vergleich** (I-034): Knopf „Scan vergleichen“ – eine gespeicherte Scan-Datei (I-035) wird mit dem aktuellen Scan verglichen. Ergebnis: **neu**, **nicht mehr gefunden**, **geändert** (IP, Name, Hersteller, System, Kategorie, Ports neu/weg) und Anzahl unverändert. API `POST /api/project/compare`.
+- Zuordnung allgemein: gleiche (eindeutige) MAC = dasselbe Gerät, auch bei neuer IP; sonst gleiche IP, außer die MACs unterscheiden sich (dann anderes Gerät). Doppelte MACs (Scheineinträge) werden nicht zur Zuordnung benutzt.
+- Nur lesend: weder aktueller Scan noch Datei werden verändert; die Datei wird wie beim Laden geprüft und bereinigt.
+### Grenzen
+- Nur im Browser-Ergebnis, kein Export des Vergleichs. Nur mit Unit-Tests/Demo-Daten geprüft, nicht an zwei echten Scans im LAN.

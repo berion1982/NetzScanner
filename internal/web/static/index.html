@@ -80,12 +80,13 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
   <button class="btn" id="go">Scan starten</button>
   <button type="button" id="prjsave" title="Scan-Ergebnis samt Eingaben als Datei sichern (ohne Zugangsdaten und Router-Daten)">Scan speichern</button>
   <button type="button" id="prjload" title="Gespeicherten Scan aus einer Datei laden">Scan laden</button><input type="file" id="prjfile" accept=".json,application/json" hidden>
+  <button type="button" id="prjcmp" title="Aktuellen Scan mit einer gespeicherten Scan-Datei vergleichen (neu / weg / geändert). Verändert nichts.">Scan vergleichen</button><input type="file" id="cmpfile" accept=".json,application/json" hidden>
   <div class="prog" id="prog">Bereit.</div>
  </div>
  <div class="tiles" id="tiles"></div>
  <div class="row"><div class="card tbl"><div class="selbar"><span id="selcount">0 ausgewählt</span><button id="selnone" disabled>Auswahl aufheben</button><span style="flex:1"></span>
   <select id="fmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="html">Lesbare Tabelle (HTML)</option><option value="md">Lesbare Tabelle (Markdown)</option><option value="bookmarks">Lesezeichen (Firefox/Chrome, Leiste)</option><option value="bookmarks-folder">Lesezeichen (Ordner „NetzScanner“)</option></select>
-  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th title="Geräte mit Weboberfläche haben hier Knöpfe (Port); Klick öffnet sie in neuem Tab">Web</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th title="Vermutung aus Hersteller, System und Ports – im Detail-Panel änderbar">Kategorie</th><th>Standort</th><th>Offene Ports</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
+  <button class="btn" id="exp" disabled>Exportieren</button><span class="msg" id="expmsg"></span></div><div id="cmpres"></div><table><thead><tr><th><input type="checkbox" id="selall" title="Alle auswählen"></th><th></th><th>IP</th><th>Name</th><th title="Geräte mit Weboberfläche haben hier Knöpfe (Port); Klick öffnet sie in neuem Tab">Web</th><th>MAC</th><th title="Chip-Hersteller laut MAC-Adresse – nicht zwingend der Gerätehersteller (z. B. ein WLAN-Chip in einem Fernseher)">Hersteller (Chip)</th><th title="Vermutung aus Hersteller, System und Ports – im Detail-Panel änderbar">Kategorie</th><th>Standort</th><th>Offene Ports</th></tr></thead><tbody id="tb"></tbody></table><div class="empty" id="empty">Noch keine Daten – Ziel eingeben und „Scan starten“.</div></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Zeile anklicken.</p></aside></div>
 </section>
 <section id="dhcp">
@@ -530,7 +531,25 @@ document.getElementById("pdfbtn").addEventListener("click", () => {
 });
 function updateSelection() {
   document.getElementById("selcount").textContent = selected.size + " von " + hostsCache.length + " ausgewählt";
-  document.getElementById("selnone").disabled = selected.size === 0;
+  // Scan-Vergleich (I-034): gespeicherte Datei waehlen, Server vergleicht mit dem aktuellen Scan.
+document.getElementById("prjcmp").addEventListener("click", () => document.getElementById("cmpfile").click());
+document.getElementById("cmpfile").addEventListener("change", async e => {
+  const f = e.target.files[0], msg = document.getElementById("expmsg"), box = document.getElementById("cmpres");
+  e.target.value = "";
+  if (!f) return;
+  msg.className = "msg"; msg.textContent = "Vergleiche …"; box.replaceChildren();
+  fetch("/api/project/compare", { method: "POST", headers: { "Content-Type": "application/json" }, body: await f.text() })
+    .then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
+      if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
+      msg.textContent = "";
+      const dev = d => d.ip + " · " + (d.name || "(ohne Name)") + (d.mac ? " · " + d.mac : "");
+      const sect = (title, items) => items.length ? [el("h3", { text: title + " (" + items.length + ")" }), el("ul", {}, items.map(t => el("li", { text: t })))] : [];
+      box.append(el("div", { class: "msg", text: "Vergleich mit Datei vom " + new Date(b.oldSavedAt).toLocaleString("de-DE") + " (" + b.oldTarget + "): vorher " + b.oldCount + " Geräte, jetzt " + b.newCount + ", unverändert " + b.same + "." }),
+        ...sect("Neu", b.added.map(dev)), ...sect("Nicht mehr gefunden", b.removed.map(dev)),
+        ...sect("Geändert", b.changed.map(c => c.ip + " · " + (c.name || "(ohne Name)") + ": " + c.changes.join("; "))));
+    }).catch(() => { msg.className = "msg err"; msg.textContent = "Vergleich fehlgeschlagen."; });
+});
+document.getElementById("selnone").disabled = selected.size === 0;
   document.getElementById("exp").disabled = selected.size === 0;
   const all = document.getElementById("selall");
   all.checked = hostsCache.length > 0 && selected.size === hostsCache.length;
