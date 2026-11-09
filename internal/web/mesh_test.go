@@ -76,3 +76,30 @@ func TestMeshStaleIPDoesNotStealNode(t *testing.T) {
 		t.Error("iPhone hat keinen Knoten und darf keinen Uplink bekommen")
 	}
 }
+
+// TestMeshPhoneDoesNotClaimUplinkNode (I-067): Ein Smartphone, dessen IP nur als Nachbar-Eintrag beim
+// Repeater steht, darf den Repeater-Knoten nicht übernehmen - sonst hängt dessen Gruppe unter dem Handy.
+func TestMeshPhoneDoesNotClaimUplinkNode(t *testing.T) {
+	doc := `{"nodes":[
+{"uid":"n-1","device_name":"box","device_mac_address":"AA:00:00:00:00:01","ip_addresses":[{"value":"192.168.178.1/24","attributes":["MANAGEMENT"]}]},
+{"uid":"n-7","device_name":"rep","device_mac_address":"BB:00:00:00:00:07","ip_addresses":[{"value":"192.168.178.50/24","attributes":["NEIGHBOUR_LIST"]}],
+ "node_interfaces":[{"mac_address":"BB:00:00:00:00:08","node_links":[{"uid":"nl-1","type":"WLAN","state":"CONNECTED","node_1_uid":"n-1","node_2_uid":"n-7"}]}]},
+{"uid":"n-8","device_name":"plug","device_mac_address":"CC:00:00:00:00:08","node_interfaces":[{"mac_address":"CC:00:00:00:00:08","node_links":[{"uid":"nl-2","type":"WLAN","state":"CONNECTED","node_1_uid":"n-7","node_2_uid":"n-8"}]}]}]}`
+	m, err := router.ParseMesh([]byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hosts := []model.Host{
+		{IP: "192.168.178.1", MAC: "AA:00:00:00:00:01"},
+		{IP: "192.168.178.50", MAC: "EA:00:00:00:00:50", Category: model.CatClient},  // Handy mit Nachbar-Eintrag
+		{IP: "192.168.178.72", MAC: "86:00:00:00:00:72", Category: model.CatNetwork}, // Repeater (unbekannte IP im Dokument)
+		{IP: "192.168.178.122", MAC: "CC:00:00:00:00:08"},
+	}
+	got := buildMeshLinks(m, hosts)
+	if l, ok := got["192.168.178.122"]; ok && l.Uplink == "192.168.178.50" {
+		t.Errorf("Stecker darf nicht unter dem Handy hängen: %+v", l)
+	}
+	if l, ok := got["192.168.178.50"]; ok {
+		t.Errorf("Handy darf keinen Repeater-Knoten übernehmen: %+v", l)
+	}
+}
