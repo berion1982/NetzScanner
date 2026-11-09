@@ -96,6 +96,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/dhcp/clear", s.handleDHCPClear)
 	mux.HandleFunc("GET /api/reservations", s.handleReservations)
 	mux.HandleFunc("POST /api/reservations/export", s.handleReservationsExport)
+	mux.HandleFunc("GET /api/findings", s.handleFindings)
+	mux.HandleFunc("POST /api/findings/export", s.handleFindingsExport)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)
 	mux.HandleFunc("POST /api/topology/snmp/clear", s.handleSNMPClear)
 	mux.HandleFunc("GET /api/categories", s.handleCategories)

@@ -376,3 +376,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Reiner Loopback-Betrieb (Standard) bleibt ohne Token wie bisher.
 ### Hinweis
 - Die Verbindung bleibt unverschlüsselt (HTTP): Wer im selben Netz mitliest, sieht das Token. Das Token schützt vor zufälligem Zugriff, ersetzt aber kein TLS (nicht umgesetzt).
+
+## [0.25.0] – 2026-11-09
+### Hinzugefügt
+- **Befundliste** (I-064): Neuer Reiter „Befunde“ mit Auffälligkeiten aus den vorhandenen Scan-Daten, **ohne zusätzlichen Netzverkehr**: Telnet, FTP, RDP, VNC, SMB/NetBIOS, WinRM (HTTP), MQTT (unverschlüsselt), rpcbind, Datenbank-/Cache-Ports (MySQL, PostgreSQL, SQL Server, Oracle, MongoDB, Redis, Elasticsearch), abgelaufene bzw. in unter 30 Tagen ablaufende Zertifikate, Weboberfläche nur per HTTP und „MAC mehrfach“. Schweregrade Hoch/Mittel/Niedrig/Info, sortiert nach Schwere.
+- Export der Befunde als CSV (Excel Deutsch oder Standard) und Markdown, mit CSV-Injection-Schutz. Neue API: `GET /api/findings`, `POST /api/findings/export`. Neues Paket `internal/findings` mit Tests; Hilfe-Seite ergänzt.
+### Hinweis
+- Die Regeln gelten allgemein nach Port/Zertifikat, nicht nach Gerät oder Hersteller. Befunde sind **Hinweise zum Gegenprüfen**, keine bewiesenen Schwachstellen. Aufnahme ins PDF folgt mit I-036.

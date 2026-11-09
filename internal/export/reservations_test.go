@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/berion1982/netzscanner/internal/findings"
 )
 
 func TestReservationsExport(t *testing.T) {
@@ -29,5 +31,27 @@ func TestReservationsExport(t *testing.T) {
 	_ = WriteReservationsMarkdown(&md, rows, Meta{Generated: time.Now(), Version: "x"})
 	if !strings.Contains(md.String(), "Anzahl: 1") || strings.Contains(md.String(), "Büro |") && !strings.Contains(md.String(), `\|`) {
 		t.Errorf("Markdown: %q", md.String())
+	}
+}
+
+func TestFindingsExport(t *testing.T) {
+	list := []findings.Finding{{Severity: findings.High, Rule: "telnet", IP: "10.0.0.5", Name: "=cmd|x", Port: 23, Title: "Telnet erreichbar", Detail: "a | b"}}
+	var buf bytes.Buffer
+	if err := WriteFindingsCSV(&buf, list, true); err != nil {
+		t.Fatal(err)
+	}
+	c := buf.String()
+	if !strings.HasPrefix(c, "\xEF\xBB\xBF") || !strings.Contains(c, "Schweregrad;IP;Gerät;Port") || !strings.Contains(c, "Hoch;10.0.0.5") {
+		t.Errorf("CSV: %q", c)
+	}
+	if strings.Contains(c, ";=cmd") || strings.Contains(c, ";\"=cmd") {
+		t.Errorf("Formel nicht entschärft: %q", c)
+	}
+	buf.Reset()
+	if err := WriteFindingsMarkdown(&buf, list, Meta{Generated: time.Now(), Version: "v"}); err != nil {
+		t.Fatal(err)
+	}
+	if md := buf.String(); !strings.Contains(md, "a \\| b") || !strings.Contains(md, "Hinweise zum Gegenprüfen") {
+		t.Errorf("Markdown: %q", md)
 	}
 }
