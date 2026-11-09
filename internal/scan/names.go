@@ -35,27 +35,40 @@ var dnsResolver = &net.Resolver{PreferGo: true}
 // trimDot entfernt den Punkt am Ende eines DNS-Namens ("fritz.box." -> "fritz.box").
 func trimDot(s string) string { return strings.TrimSuffix(s, ".") }
 
-// looksLikeIdentifier erkennt Namen, die nur eine MAC-/EUI-64-Kennung sind
-// (I-009), z.B. "001788FFFE476CE2" (Hue Bridge) oder "00:17:88:47:6c:e2".
-// Gemeint ist das erste Namensteil (vor dem ersten Punkt): nach Entfernen von
-// ":" und "-" genau 12 (MAC-48) oder 16 (EUI-64) Hex-Zeichen. Solche Namen
-// sagen nichts ueber das Geraet und zaehlen daher NICHT als "bekannt".
+// minIdentifierLen ist die Mindestlaenge (Zeichen ohne Trenner), ab der ein
+// reiner Hex-/Ziffernname mit mindestens einer Ziffer als Kennung gilt (I-066).
+const minIdentifierLen = 8
+
+// looksLikeIdentifier erkennt Namen, die nur eine Kennung statt eines Namens
+// sind (I-009, verallgemeinert in I-066), z.B. "001788FFFE476CE2",
+// "00:17:88:47:6c:e2", "-1234567890" oder "a1b2c3d4e5f".
+// Gemeint ist das erste Namensteil (vor dem ersten Punkt). Davon werden ein
+// fuehrendes Vorzeichen ("+"/"-") sowie die Trenner ":", "-" und "_" entfernt.
+// Als Kennung gilt der Rest, wenn er nur aus Hex-Zeichen besteht und
+//   - genau 12 (MAC-48) oder 16 (EUI-64) Zeichen lang ist, oder
+//   - mindestens minIdentifierLen Zeichen lang ist und mindestens eine Ziffer
+//     enthaelt (beliebige Laenge, z.B. ungerade; reine Buchstabenwoerter wie
+//     "decade" oder "defaced" bleiben dadurch Namen).
+// Solche Namen sagen nichts ueber das Geraet und zaehlen daher NICHT als "bekannt".
 func looksLikeIdentifier(name string) bool {
 	label := name
 	if i := strings.IndexByte(label, '.'); i >= 0 {
 		label = label[:i]
 	}
-	label = strings.NewReplacer(":", "", "-", "").Replace(label)
-	if len(label) != 12 && len(label) != 16 {
-		return false
-	}
+	label = strings.TrimLeft(label, "+-")
+	label = strings.NewReplacer(":", "", "-", "", "_", "").Replace(label)
+	hasDigit := false
 	for _, c := range label {
-		isHex := (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
-		if !isHex {
-			return false
+		switch {
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		case (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'):
+		default:
+			return false // ein Zeichen ausserhalb von Hex -> echter Name
 		}
 	}
-	return true
+	n := len(label)
+	return n == 12 || n == 16 || (n >= minIdentifierLen && hasDigit)
 }
 
 // cleanHostName macht aus einem Antwortnamen einen Anzeigenamen. Namen mit

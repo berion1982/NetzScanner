@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.25.2 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.25.3 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -19,8 +19,8 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
-1. **I-066** Kennungs-Namen besser abwerten · **I-068** Status „Connecting“ + PDF-Kleinigkeiten.
+Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
+1. **I-068** Status „Connecting“ + PDF-Kleinigkeiten.
 2. **I-059** Kategorie „Mobilgeräte“ · **I-053** SNMP v3 · **I-020/I-022** Logins.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
@@ -60,7 +60,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 | 0.21.0–0.22.x ✅ | `--diagnose-router`, Reservierungen der Box als nicht machbar geklärt |
 | 0.23.0–0.23.7 ✅ | Mesh-Topologie (I-055 c), Router-Login-Meldungen, Linien in Karte und PDF, ⚠ „MAC mehrfach“ |
 | 0.24.0–0.25.2 ✅ | Zugangstoken (I-025), Befundliste (I-064), MAC-Hinweis in Exporten (I-065), Mesh-Zuordnung abgesichert (I-067) |
-| Plan | I-066/I-068 → I-059 → I-053 → I-020/I-022 |
+| Plan | I-068 → I-059 → I-053 → I-020/I-022 |
 | später (Plan) | SNMP sysName, ICMP mit Rechten, SMB/TTL, JSON/XLSX-Export, Scan-Vergleich, Eingaben-Datei verschlüsseln |
 
 „Plan“ = Vorschlag; Sascha entscheidet die Reihenfolge, Details in `IDEAS.md`.

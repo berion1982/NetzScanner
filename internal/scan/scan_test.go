@@ -165,6 +165,10 @@ func TestCleanHostName(t *testing.T) {
 		// I-009: MAC-/EUI-64-artige Kennungen sind keine Namen.
 		"001788FFFE476CE2": "", "00:17:88:47:6c:e2": "", "001788FFFE476CE2.fritz.box": "", "A1B2C3D4E5F6": "",
 		"hue-bridge": "hue-bridge", "cafe": "cafe", "001788FFFE476CEZ": "001788FFFE476CEZ",
+		// I-066: Vorzeichen, "_", ungerade Laengen und Ziffernfolgen sind ebenfalls Kennungen.
+		"-1234567890": "", "-123456-789": "", "a1b2c3d4e5f": "", "0123456789abc.lan": "", "ab_12_cd_34_ef": "",
+		// ... aber Woerter, kurze Zahlen und gemischte Namen bleiben erhalten.
+		"decade": "decade", "defacedbad": "defacedbad", "123456": "123456", "pc-2024": "pc-2024", "server01": "server01",
 	} {
 		if got := cleanHostName(in); got != want {
 			t.Errorf("cleanHostName(%q) = %q, erwartet %q", in, got, want)

@@ -396,3 +396,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Mesh-Zuordnung abgesichert** (I-067): Die lose Zuordnung über beliebige IPs im Mesh-Dokument (z. B. alte Nachbar-Einträge) darf einen Knoten, der anderen Geräten als Uplink dient (Box, Repeater, Switch), nur noch an ein **Netzwerkgerät** vergeben. Damit hängt eine Gruppe nicht mehr unter einem Smartphone, das nur als Nachbar-Eintrag auftaucht. Netzwerkgeräte werden in jeder Stufe zuerst zugeordnet.
 ### Hinweis
 - Allgemeine Regel nach Kategorie und Verbindungsstruktur, keine Geräte- oder Adresstabelle. Ursache am echten Netz **ungeprüft** („Ich weiß es nicht“): Bitte `--diagnose-mesh <IP>` und PDF erneut prüfen.
+
+## [0.25.3] – 2026-11-09
+### Geändert
+- **Kennungs-Namen besser abwerten** (I-066): `looksLikeIdentifier` erkennt jetzt auch Namen mit führendem Vorzeichen, mit `_` als Trenner und Hex-/Ziffernfolgen beliebiger Länge (ab 8 Zeichen, mindestens eine Ziffer). Reine Wörter (z. B. „decade“) und kurze Namen bleiben erhalten. Gilt für alle Namensquellen (DNS, mDNS, SSDP …).
