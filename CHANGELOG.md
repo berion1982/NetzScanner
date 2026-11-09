@@ -407,3 +407,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **PDF:** „Geräte“/„Geräteliste“ mit Umlaut in Kopfzeilen (die Standardschrift kann ä).
 ### Hinweis
 - Die Ursache an der echten Box ist **ungeprüft** („Ich weiß es nicht“); die Korrektur folgt der plausibelsten Erklärung. Die einzeln auf eine weitere Seite überlaufende PDF-Zeile konnte ich nicht nachvollziehen: Die Seitenumbruch-Prüfung der Geräteliste rechnet Zeilenhöhe gegen den Seitenrand korrekt; bitte ein PDF mit betroffener Zeile schicken.
+
+## [0.26.0] – 2026-11-09
+### Hinzugefügt
+- **Kategorie „Mobilgeräte“** (I-059): Smartphones und Tablets haben eine eigene Kategorie (Farbe lila in Karte, Legende, Auswahlliste und PDF; erscheint in allen Exporten über den Kategorienamen).
+- Erkennung aus allgemeinen Regeln, ohne Geräte-Tabellen: OS-Vermutung iOS/iPadOS (Port 62078) oder Android; zusätzlich eine **schwache** Vermutung „WLAN laut Router + zufällige (lokal administrierte) MAC + kein Hersteller + keine offenen Ports“. Die Nutzerwahl überschreibt wie bei den anderen Kategorien.
+### Hinweis
+- Wie zuverlässig die schwache Regel ist, ist **ungeprüft** („Ich weiß es nicht“): Laptops mit zufälliger MAC können ebenfalls getroffen werden, Android ohne offene Ports wird ohne Router-Login nicht erkannt.

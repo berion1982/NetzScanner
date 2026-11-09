@@ -31,6 +31,11 @@ func TestCategorize(t *testing.T) {
 		{"Linux mit SSH", model.Host{OS: "Ubuntu 22.04 (SSH-Banner)", Ports: ports(22)}, model.CatServer},
 		{"Windows-Server (IIS)", model.Host{OS: "Windows (IIS 10.0)", Ports: ports(80)}, model.CatServer},
 		{"Windows-PC", model.Host{OS: "Windows (RDP/RPC/WinRM offen, Vermutung)", Ports: ports(135, 445)}, model.CatClient},
+		{"iPhone per OS", model.Host{OS: "iOS/iPadOS (Apple, Vermutung)", Ports: ports(62078)}, model.CatMobile},
+		{"Android per OS", model.Host{OS: "Android (Vermutung)"}, model.CatMobile},
+		{"WLAN + Privacy-MAC ohne Ports", model.Host{MAC: "DA:11:22:33:44:55", Connection: "WLAN"}, model.CatMobile},
+		{"Privacy-MAC per Kabel", model.Host{MAC: "DA:11:22:33:44:55", Connection: "LAN (Kabel)"}, model.CatClient},
+		{"WLAN mit Hersteller-MAC", model.Host{MAC: "D8:11:22:33:44:55", Connection: "WLAN"}, model.CatClient},
 		{"Unbekannt ohne Ports", model.Host{}, model.CatClient},
 	}
 	for _, tc := range tests {

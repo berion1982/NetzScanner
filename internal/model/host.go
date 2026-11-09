@@ -38,12 +38,13 @@ type WebLink struct {
 const (
 	CatNetwork = "network" // Router, Switches, Access Points ...
 	CatServer  = "server"  // Server, NAS, Dienste-Rechner
-	CatClient  = "client"  // PCs, Laptops, Smartphones, Tablets
+	CatClient  = "client"  // PCs, Laptops und alles, was nicht eindeutig anders passt
+	CatMobile  = "mobile"  // Smartphones und Tablets (I-059), nur wo erkennbar
 	CatIoT     = "iot"     // Smart-Home, Drucker, Kameras, Medienplayer ...
 )
 
 // Categories listet alle Kategorien in der Reihenfolge der Anzeige (Karte, Legende, Liste).
-var Categories = []string{CatNetwork, CatServer, CatClient, CatIoT}
+var Categories = []string{CatNetwork, CatServer, CatClient, CatMobile, CatIoT}
 
 // CustomPrefix kennzeichnet eigene Kategorien (I-017): Der Schluessel ist "custom:" + frei gewaehlter Name.
 // So braucht jede Stelle (Karte, Exporte, PDF) keine Nachschlagetabelle: der Name steckt im Schluessel.
@@ -93,6 +94,8 @@ func CategoryLabel(c string) string {
 		return "Server"
 	case CatClient:
 		return "Clients"
+	case CatMobile:
+		return "Mobilgeräte"
 	case CatIoT:
 		return "IoT"
 	}

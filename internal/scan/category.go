@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/berion1982/netzscanner/internal/model"
@@ -66,6 +67,10 @@ func Categorize(h model.Host) string {
 	if containsAny(vendor, iotVendors) || hasAnyPort(h, iotPorts) {
 		return model.CatIoT
 	}
+	// 2b) Mobilgeraet (I-059): iOS/Android laut OS-Vermutung, sonst nur die schwache WLAN-Vermutung (s. isMobileGuess).
+	if isMobileOS(osName) {
+		return model.CatMobile
+	}
 	// 3) Server: NAS-Hersteller, Server-Dienste, Windows/IIS-Server oder Linux/Unix mit SSH + Weboberflaeche.
 	if containsAny(vendor, serverVendors) || hasAnyPort(h, serverPorts) ||
 		strings.Contains(osName, "server") || strings.Contains(osName, "iis") ||
@@ -73,8 +78,36 @@ func Categorize(h model.Host) string {
 		(hasAnyPort(h, []int{22}) && hasAnyPort(h, []int{80, 443, 8080, 8443})) {
 		return model.CatServer
 	}
-	// 4) Alles andere: Client (PC, Laptop, Smartphone ...).
+	// 3b) Schwache Vermutung: WLAN-Geraet mit Privacy-MAC und ohne offene Ports (typisch fuer Smartphones/Tablets).
+	if isMobileGuess(h) {
+		return model.CatMobile
+	}
+	// 4) Alles andere: Client (PC, Laptop ...).
 	return model.CatClient
+}
+
+// isMobileOS erkennt iOS/iPadOS/Android in der OS-Vermutung (Kleinbuchstaben).
+func isMobileOS(osName string) bool {
+	return strings.Contains(osName, "ios/ipados") || strings.Contains(osName, "android")
+}
+
+// isMobileGuess ist eine SCHWACHE Vermutung (I-059): Das Geraet haengt laut Router im WLAN, nutzt eine
+// zufaellige/lokale MAC (Privacy-MAC), hat keinen Hersteller und keinen offenen Port. Auch Laptops koennen
+// so aussehen (zufaellige MACs sind nicht auf Handys beschraenkt) - deshalb ist die Nutzerwahl immer staerker.
+func isMobileGuess(h model.Host) bool {
+	return strings.EqualFold(strings.TrimSpace(h.Connection), "WLAN") &&
+		h.Vendor == "" && len(h.Ports) == 0 && isLocalMAC(h.MAC)
+}
+
+// isLocalMAC prueft das "lokal administriert"-Bit (0x02 im ersten Byte) einer MAC im Format aa:bb:... / aa-bb-...
+// Solche MACs sind zufaellig vergeben (Privacy-MAC) und haben keinen Hersteller.
+func isLocalMAC(mac string) bool {
+	m := NormMAC(mac)
+	if len(m) < 2 {
+		return false
+	}
+	b, err := strconv.ParseUint(m[:2], 16, 8)
+	return err == nil && b&0x02 != 0
 }
 
 // isUnixLike erkennt Linux/BSD-Systeme in der OS-Vermutung (Kleinbuchstaben).

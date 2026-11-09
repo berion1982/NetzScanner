@@ -229,6 +229,8 @@ func categoryStroke(c string) [3]int {
 		return [3]int{70, 130, 210}
 	case model.CatServer:
 		return [3]int{50, 140, 70}
+	case model.CatMobile:
+		return [3]int{140, 90, 190}
 	case model.CatIoT:
 		return [3]int{200, 130, 20}
 	case model.CatClient:
@@ -482,6 +484,8 @@ func categoryFill(c string) [3]int {
 		return [3]int{214, 232, 255} // hellblau
 	case model.CatServer:
 		return [3]int{222, 245, 226} // hellgruen
+	case model.CatMobile:
+		return [3]int{236, 226, 248} // helllila
 	case model.CatIoT:
 		return [3]int{255, 236, 204} // hellorange
 	}
