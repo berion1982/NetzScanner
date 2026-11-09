@@ -107,6 +107,7 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("GET /api/inputs", s.handleInputsInfo)
 	mux.HandleFunc("POST /api/export", s.handleExport)
 	mux.HandleFunc("POST /api/export/topology-pdf", s.handleTopologyPDF)
+	mux.HandleFunc("POST /api/export/netzdoku-pdf", s.handleNetworkDocPDF)
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())
 	})

@@ -447,3 +447,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Nur lesend: weder aktueller Scan noch Datei werden verändert; die Datei wird wie beim Laden geprüft und bereinigt.
 ### Grenzen
 - Nur im Browser-Ergebnis, kein Export des Vergleichs. Nur mit Unit-Tests/Demo-Daten geprüft, nicht an zwei echten Scans im LAN.
+
+## [0.31.0] – 2026-11-09
+### Hinzugefügt
+- **Netzdokumentation als ein PDF** (I-036): Knopf „Netzdokumentation (PDF)“ im Reiter Topologie. Inhalt: Deckblatt (Kunde, Netz/Standort, Bearbeiter frei eintragbar, Ziel, Datum, Programmversion) mit Zusammenfassung in Zahlen, Befundtabelle (I-064), Topologie-Karte und Geräteliste (wie bisher). Die Deckblatt-Angaben werden nicht gespeichert; Steuerzeichen werden entfernt, Texte auf 120 Zeichen gekürzt.
+- Nutzt nur vorhandene Scan-Daten (kein zusätzlicher Netzverkehr), keine Zugangsdaten in der Datei. Der bisherige Knopf „Topologie als PDF“ bleibt unverändert.
+### Grenzen
+- Netz-Grunddaten (I-060) fehlen noch, sie kommen in die PDF, sobald es sie gibt. Nur mit Unit-Test geprüft, Aussehen im PDF-Betrachter noch nicht von Sascha gesehen.

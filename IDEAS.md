@@ -82,7 +82,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-033 | Weitere Formate: JSON, XLSX | niedrig | M | offen |
 | I-034 | Scan-Vergleich (was ist neu/weg seit dem letzten Scan) | niedrig | L | erledigt (0.30.0) |
 | I-035 | **Scan-Ergebnisse speichern und wieder laden** (Vorschlag Claude, 2026-11-09): Heute sichert `store.go` nur die Eingaben (Name, Benutzer, Standort, Kategorie); der Scan selbst ist nach einem Neustart weg. Vorschlag: Scan als Projektdatei (JSON) je Kunde/Netz speichern und laden, mit Datum und Version; keine Zugangsdaten, keine Router-Logins. Grundlage für I-034 (Vergleich) und I-036 | hoch | M | erledigt (0.29.0) |
-| I-036 | **Netzdokumentation als ein PDF** (Vorschlag Claude, 2026-11-09): Deckblatt (Kunde/Netz frei eintragbar, Datum, Version), Netz-Grunddaten (I-060), Befunde (I-064), Topologie-Karte und Geräteliste in einer Datei. Baut auf dem vorhandenen Topologie-PDF (`pdf.go`) auf | niedrig | M | offen |
+| I-036 | **Netzdokumentation als ein PDF** (Vorschlag Claude, 2026-11-09): Deckblatt (Kunde/Netz frei eintragbar, Datum, Version), Netz-Grunddaten (I-060), Befunde (I-064), Topologie-Karte und Geräteliste in einer Datei. Baut auf dem vorhandenen Topologie-PDF (`pdf.go`) auf | niedrig | M | **erledigt in 0.31.0** (Netz-Grunddaten folgen mit I-060) |
 
 **Hinweise zu I-030 bis I-032:**
 - CSV: Zellen, die mit `=`, `+`, `-`, `@` beginnen, entschärfen (CSV-Injection in Excel); Gerätenamen kommen aus dem Netz. Für deutsche Excel-Version Trennzeichen `;` und UTF-8 mit BOM anbieten.
