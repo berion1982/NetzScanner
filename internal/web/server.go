@@ -37,6 +37,7 @@ type Options struct {
 	Demo        bool   // Demo-Daten anzeigen, solange noch kein Scan lief
 	AllowPublic bool   // Scans oeffentlicher Adressen erlauben
 	DataFile    string // Datei fuer die zwischengespeicherten Eingaben (I-016); "" = nicht speichern
+	Token       string // Zugangstoken (I-025); "" = kein Zugriffsschutz (nur sinnvoll bei reinem Loopback)
 }
 
 // server haelt den Zustand des (einen) laufenden bzw. letzten Scans.
@@ -115,7 +116,8 @@ func NewHandler(opt Options) http.Handler {
 			"version": version.Version, "buildDate": version.BuildDate, "commit": version.Commit,
 		})
 	})
-	return guardPost(mux)
+	// Aussen das Token (I-025), darunter der CSRF-Schutz fuer POST.
+	return requireToken(opt.Token, guardPost(mux))
 }
 
 // guardPost schuetzt die schreibenden Aufrufe: Eine fremde Webseite im Browser

@@ -160,6 +160,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <h2>Startoptionen und Fehlersuche</h2>
  <table class="ht"><tbody>
  <tr><td><code>--listen ADRESSE:PORT</code></td><td>Adresse des Webservers (Standard <code>127.0.0.1:8484</code>; für andere Rechner z. B. <code>0.0.0.0:8484</code>)</td></tr>
+ <tr><td><code>--token TOKEN</code> · <code>--no-token</code></td><td>Zugangstoken (mind. 8 Zeichen, oder Umgebung <code>NETZSCANNER_TOKEN</code>). Bei <code>--listen</code> außerhalb von Loopback erzeugt der Scanner automatisch eines und zeigt es einmal in der Konsole an; Anmeldung im Browser über <code>/?token=…</code>. <code>--no-token</code> schaltet den Schutz ab (nicht empfohlen). Die Verbindung bleibt unverschlüsselt (HTTP)</td></tr>
  <tr><td><code>--demo</code></td><td>Demo-Daten zum Ansehen der Oberfläche</td></tr>
  <tr><td><code>--allow-public</code></td><td>öffentliche IP-Adressen scannen erlauben (nur mit Erlaubnis!)</td></tr>
  <tr><td><code>--diagnose IP</code></td><td>ein Gerät Schritt für Schritt prüfen (Ports, Namensquellen) und Ergebnis ausgeben – hilft, wenn ein Name oder Port fehlt</td></tr>

@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -29,6 +30,8 @@ func main() {
 	diagnose := flag.String("diagnose", "", "ein Geraet (IP) Schritt fuer Schritt pruefen und Ergebnis ausgeben (Fehlersuche)")
 	dataFile := flag.String("data", web.DefaultStorePath(), "Datei fuer zwischengespeicherte Eingaben (Namen, Benutzernamen, Standorte, Kategorien)")
 	noSave := flag.Bool("no-save", false, "Eingaben nicht auf die Platte speichern (nur im Arbeitsspeicher)")
+	token := flag.String("token", "", "Zugangstoken fuer die Oberflaeche (mind. 8 Zeichen; auch per Umgebung NETZSCANNER_TOKEN). Ohne Angabe wird bei --listen ausserhalb von Loopback automatisch eines erzeugt")
+	noToken := flag.Bool("no-token", false, "Zugangstoken auch bei --listen ausserhalb von Loopback abschalten (NICHT empfohlen: jeder im Netz sieht alle Daten)")
 	flag.Parse()
 	if *noSave || *demo { // Demo-Daten sind erfunden: nie speichern
 
@@ -57,8 +60,13 @@ func main() {
 	if *dataFile != "" && !*demo {
 		fmt.Println("Eingaben werden gespeichert in:", *dataFile, "(abschaltbar mit --no-save)")
 	}
+	tok := resolveToken(*token, *noToken, *listen)
 	fmt.Printf("Oberflaeche: http://%s  (Strg+C beendet)\n", *listen)
-	log.Fatal(http.ListenAndServe(*listen, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile})))
+	if tok != "" {
+		// Einmalige Anzeige des Tokens (I-025): wird nirgends sonst ausgegeben oder gespeichert.
+		fmt.Printf("Zugangstoken: %s\nBrowser-Link:  http://<Adresse-dieses-Rechners>:%s/?token=%s\n", tok, listenPort(*listen), tok)
+	}
+	log.Fatal(http.ListenAndServe(*listen, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok})))
 }
 
 // runMeshDump holt Zugangsdaten (Umgebung oder Abfrage am Terminal) und gibt die Mesh-Liste roh aus.
@@ -79,4 +87,43 @@ func runMeshDump(host string) {
 		fmt.Fprintln(os.Stderr, "Fehler:", err)
 		os.Exit(1)
 	}
+}
+
+// resolveToken bestimmt das Zugangstoken (I-025):
+//  1. --token oder Umgebung NETZSCANNER_TOKEN (mind. web.MinTokenLen Zeichen),
+//  2. sonst bei --listen ausserhalb von Loopback ein Zufallstoken,
+//  3. sonst (nur lokal) keines. --no-token schaltet es bei offenem Listen ab.
+//
+// Ein zu kurzes Token oder ein Fehler beim Zufall beendet das Programm.
+func resolveToken(flagTok string, disable bool, listen string) string {
+	tok := flagTok
+	if tok == "" {
+		tok = os.Getenv("NETZSCANNER_TOKEN")
+	}
+	if tok != "" {
+		if len(tok) < web.MinTokenLen {
+			log.Fatalf("Zugangstoken zu kurz (mindestens %d Zeichen)", web.MinTokenLen)
+		}
+		return tok
+	}
+	if web.IsLoopbackListen(listen) {
+		return ""
+	}
+	if disable {
+		fmt.Println("WARNUNG: --no-token – die Oberflaeche ist ohne Anmeldung im Netz erreichbar!")
+		return ""
+	}
+	t, err := web.NewToken()
+	if err != nil {
+		log.Fatalf("Token konnte nicht erzeugt werden: %v", err)
+	}
+	return t
+}
+
+// listenPort liefert den Port der Listen-Adresse fuer die Link-Anzeige.
+func listenPort(listen string) string {
+	if _, port, err := net.SplitHostPort(listen); err == nil {
+		return port
+	}
+	return "8484"
 }
