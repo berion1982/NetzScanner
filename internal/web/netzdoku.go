@@ -11,6 +11,7 @@ import (
 
 	"github.com/berion1982/netzscanner/internal/export"
 	"github.com/berion1982/netzscanner/internal/findings"
+	"github.com/berion1982/netzscanner/internal/scan"
 	"github.com/berion1982/netzscanner/internal/version"
 )
 
@@ -28,7 +29,7 @@ func (s *server) handleNetworkDocPDF(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errBody("keine Geraete in der Liste"))
 		return
 	}
-	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String()}
+	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String(), NetLines: scan.LocalNetInfo().Lines()}
 	info := export.DocInfo{Customer: req.Customer, Network: req.Network, Author: req.Author}
 	var buf bytes.Buffer
 	if err := export.WriteNetworkDocPDF(&buf, view, findings.Analyze(view), info, meta); err != nil {

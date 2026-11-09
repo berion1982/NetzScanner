@@ -75,7 +75,8 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 <section id="ov" class="on">
  <div class="card scanbar">
   <div class="tgt"><label>Ziel <input class="t" id="target" placeholder="192.168.1.0/24" aria-describedby="thint"></label>
-   <small class="hint" id="thint">Teilbereich: <code>192.168.1.10-50</code> · Netz: <code>192.168.1.0/28</code> · einzeln: <code>192.168.1.5</code> · mehrere mit Komma trennen</small></div>
+   <small class="hint" id="thint">Teilbereich: <code>192.168.1.10-50</code> · Netz: <code>192.168.1.0/28</code> · einzeln: <code>192.168.1.5</code> · mehrere mit Komma trennen</small>
+   <small class="hint" id="netinfo" title="Netz-Grunddaten dieses Rechners (nur gelesen, kein Netzverkehr)"></small></div>
   <label>Ports <input class="p" id="ports" placeholder="leer = Standardliste"></label>
   <button class="btn" id="go">Scan starten</button>
   <button type="button" id="prjsave" title="Scan-Ergebnis samt Eingaben als Datei sichern (ohne Zugangsdaten und Router-Daten)">Scan speichern</button>
@@ -802,6 +803,15 @@ goBtn.addEventListener("click", () => {
 
 // Start: eigene Kategorien + Daten laden, Netzvorschlag eintragen, laufenden Scan ggf. weiter anzeigen.
 loadCustomCats().catch(() => {}).then(loadHosts);
+// Netz-Grunddaten des Scan-Rechners (I-060): IP/Maske, Gateway, DNS, Suchdomäne – nur als Text, leere Angaben entfallen.
+fetch("/api/netinfo").then(r => r.json()).then(n => {
+  const t = [];
+  if (n.ip) t.push("Dieser Rechner: " + n.ip + (n.mask ? " / " + n.mask : ""));
+  if (n.gateway) t.push("Gateway: " + n.gateway);
+  if (n.dns && n.dns.length) t.push("DNS: " + n.dns.join(", "));
+  if (n.search_domains && n.search_domains.length) t.push("Suchdomäne: " + n.search_domains.join(", "));
+  document.getElementById("netinfo").textContent = t.join(" · ");
+}).catch(() => {});
 fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
 poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
 fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });
