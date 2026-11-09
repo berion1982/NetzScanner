@@ -60,7 +60,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 ## Zugangsdaten und Login-Test
 | ID | Idee | Prio | Aufwand | Status |
 |---|---|---|---|---|
-| I-020 | In der Oberfläche Zugangsdaten (Benutzer/Passwort) pro ausgewähltem Gerät hinterlegen – **nur temporär im RAM**, nie auf Platte, nie in Logs/Exporten; Löschen per Knopf, beim Beenden und nach Inaktivität | hoch | M | offen |
+| I-020 | In der Oberfläche Zugangsdaten (Benutzer/Passwort) pro ausgewähltem Gerät hinterlegen – **nur temporär im RAM**, nie auf Platte, nie in Logs/Exporten; Löschen per Knopf, beim Beenden und nach Inaktivität | hoch | M | **erledigt in 0.35.0** |
 | I-021 | Gerätenamen in der Oberfläche anpassen (Anzeigename, wirkt auf Export/Lesezeichen) | hoch | S | erledigt (0.3.1) |
 | I-022 | Login-Test je Gerät: SSH, SNMPv3, Web (HTTP-Anmeldung), später LDAP/WinRM/SMB (Domain-Admins); Ergebnis „ok/fehlgeschlagen“ in der Liste | hoch | L | offen |
 | I-023 | Router-/Server-Infos nach erfolgreichem Login auslesen (Modell, Firmware, Schnittstellen, Domäne) | mittel | L | offen |

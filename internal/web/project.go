@@ -109,6 +109,7 @@ func (s *server) handleProjectLoad(w http.ResponseWriter, r *http.Request) {
 	s.routerData, s.routerInfo, s.meshData = nil, nil, nil
 	s.dhcpRows, s.dhcpInfo = nil, nil
 	s.snmpLinks, s.snmpSwitch = nil, nil
+	s.creds.remove("") // Zugangsdaten gehoeren zu den alten Geraeten (I-020)
 	// Eingaben aus der Datei (geprueft) zu den vorhandenen hinzufuegen.
 	n := 0
 	for ip, e := range f.Inputs {

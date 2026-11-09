@@ -476,3 +476,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Grenzen
 - **Fallback:** Braucht UDP-Port 68. Ohne Rechte oder bei belegtem Port (laufender DHCP-Client) meldet die Prüfung „nicht prüfbar“ mit Grund.
 - Geprüft wird nur das Netz der vom System gewählten Schnittstelle (keine weiteren VLANs). Manche Server halten ihr Angebot kurz vor (Annahme, serverabhängig). **Ungeprüft im echten LAN**; nur Unit-Tests (Paketaufbau, Parser, Auswertung). Server, die Broadcast-Antworten filtern, bleiben unsichtbar.
+
+## [0.35.0] – 2026-11-09
+### Hinzugefügt
+- **Zugangsdaten je Gerät** (I-020): Im Detail-Panel eines Geräts können Benutzer und Passwort hinterlegt werden (`internal/web/creds.go`, `GET/POST /api/creds`, `POST /api/creds/delete`). Sie dienen später den Login-Tests (I-022); in dieser Version wird noch **nichts** damit angemeldet.
+- **Sicherheit:** Nur im Arbeitsspeicher (nie in Eingaben-Datei, Projektdatei, Exporten oder Logs). Eingabe nur vom eigenen Rechner (Loopback). Die API gibt nie ein Passwort zurück, nur „gemerkt“, Benutzer und Restzeit. Das Passwortfeld wird nach dem Absenden geleert.
+- **Vergessen:** automatisch nach 15 Minuten ohne Nutzung, per Knopf „Zugang vergessen“, bei „Eingaben löschen“ und beim Laden eines Projekts; beim Beenden verschwindet der RAM ohnehin. Das Passwort wird beim Löschen mit Nullen überschrieben (Best Effort).
+### Grenzen
+- Bei `--listen` außerhalb von Loopback ist die Eingabe gesperrt (HTTP unverschlüsselt). Go kann Kopien im Speicher nicht vollständig ausschließen. Browser-Passwortmanager können das Feld anbieten (`autocomplete="new-password"` gesetzt). Ungeprüft im Browser; nur Unit-Tests für den Speicher.

@@ -302,6 +302,31 @@ function saveLocation(ip, location, msgEl) {
 
 // Baut ein Detail-Panel (Name bearbeiten + Infos). Jedes Panel bekommt eigene Elemente,
 // damit die Eingabefelder und Knoepfe in beiden Reitern funktionieren.
+// Zugangsdaten-Bereich eines Geraets (I-020): fragt den Server nach dem Stand (ohne Passwort) und zeigt Eingabe oder "gemerkt".
+function renderCreds(h, box) {
+  fetch("/api/creds").then(r => r.json()).then(c => {
+    const mine = (c.credentials || []).find(x => x.ip === h.ip);
+    const msg = el("div", { class: "msg" });
+    if (!c.allowed) { box.replaceChildren(el("div", { class: "msg", text: "Eingabe nur auf dem Rechner möglich, auf dem NetzScanner läuft (HTTP im Netz ist unverschlüsselt)." })); return; }
+    if (mine) {
+      const del = el("button", { text: "Zugang vergessen" });
+      del.addEventListener("click", () => post("/api/creds/delete", { ip: h.ip }).then(() => renderCreds(h, box)));
+      box.replaceChildren(el("div", { class: "msg", text: "Benutzer „" + mine.user + "“ gemerkt (noch ca. " + Math.ceil(mine.expiresSec / 60) + " Min., dann automatisch vergessen)." }), el("div", { class: "rename" }, [del]));
+      return;
+    }
+    const u = el("input", { maxlength: "128", "aria-label": "Zugangs-Benutzer", autocomplete: "off", placeholder: "Benutzer" });
+    const p = el("input", { type: "password", maxlength: "128", "aria-label": "Zugangs-Passwort", autocomplete: "new-password", placeholder: "Passwort" });
+    const ok = el("button", { class: "ok", text: "Merken (nur RAM)" });
+    const go = () => post("/api/creds", { ip: h.ip, user: u.value, password: p.value }).then(async r => {
+      p.value = ""; // Passwort sofort aus dem Feld entfernen
+      if (!r.ok) { msg.className = "msg err"; msg.textContent = (await r.json()).error; return; }
+      renderCreds(h, box);
+    });
+    ok.addEventListener("click", go);
+    p.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    box.replaceChildren(el("div", { class: "rename" }, [u, p, ok]), msg);
+  });
+}
 function buildDetails(h) {
   const dl = el("dl");
   const add = (k, v) => { dl.append(el("dt", { text: k }), el("dd", { text: v || "–" })); };
@@ -380,7 +405,11 @@ function buildDetails(h) {
     if (!confirm("Eigene Kategorie „" + catLabel(h.category) + "“ löschen? Betroffene Geräte werden wieder automatisch eingeordnet.")) return;
     post("/api/categories/delete", { key: h.category }).then(() => loadCustomCats().then(() => loadHosts().then(() => { const x = hostsCache.find(y => y.ip === h.ip); if (x) showDetails(x); })));
   });
+  // Zugangsdaten (I-020): nur im RAM des Programms, nie gespeichert/exportiert, Passwort wird nie angezeigt.
+  const credBox = el("div", {});
+  renderCreds(h, credBox);
   return [el("h3", { text: h.name }), el("small", { style: "color:var(--mut)", text: "Anzeigename" }), row, msg,
+    el("small", { style: "color:var(--mut)", text: "Zugangsdaten (nur Arbeitsspeicher, werden nie gespeichert oder exportiert)" }), credBox,
     el("small", { style: "color:var(--mut)", text: "Kategorie" }), el("div", { class: "rename" }, cDel ? [cSel, cDel] : [cSel]), cMsg,
     el("small", { style: "color:var(--mut)", text: "Standort (optional)" }), lRow, lMsg,
     el("small", { style: "color:var(--mut)", text: "Benutzername (optional, kein Passwort)" }), uRow, uMsg, dl];

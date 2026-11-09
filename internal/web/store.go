@@ -189,6 +189,7 @@ func (s *server) clearStoreLocked() {
 	s.names, s.users = map[string]string{}, map[string]string{}
 	s.locs, s.cats, s.macs = map[string]string{}, map[string]string{}, map[string]string{}
 	s.customCats = nil
+	s.creds.remove("") // auch alle Zugangsdaten im RAM vergessen (I-020)
 	if s.opt.DataFile != "" {
 		if err := os.Remove(s.opt.DataFile); err != nil && !os.IsNotExist(err) {
 			log.Printf("Eingaben-Datei konnte nicht entfernt werden: %v", err)
