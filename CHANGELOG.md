@@ -454,3 +454,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Nutzt nur vorhandene Scan-Daten (kein zusätzlicher Netzverkehr), keine Zugangsdaten in der Datei. Der bisherige Knopf „Topologie als PDF“ bleibt unverändert.
 ### Grenzen
 - Netz-Grunddaten (I-060) fehlen noch, sie kommen in die PDF, sobald es sie gibt. Nur mit Unit-Test geprüft, Aussehen im PDF-Betrachter noch nicht von Sascha gesehen.
+
+## [0.32.0] – 2026-11-09
+### Hinzugefügt
+- **Netz-Grunddaten des Scan-Rechners** (I-060): eigene IP/Netzmaske, Standard-Gateway, DNS-Server und Suchdomäne. Anzeige unter dem Ziel-Feld im Reiter Übersicht (`GET /api/netinfo`), im Deckblatt der Netzdokumentation-PDF sowie im Kopf von Markdown- und HTML-Export.
+- Nur lesend (Schnittstellen, `/etc/resolv.conf` bzw. `/run/systemd/resolve/resolv.conf`, unter Windows PowerShell), kein Netzverkehr, keine Rechte nötig. Nicht ermittelbare Angaben bleiben leer; Loopback-Stubs (z. B. 127.0.0.53) gelten nicht als DNS-Server.
+### Grenzen
+- Die Prüfung auf mehrere DHCP-Server ist als I-070 ausgelagert (offen). Unter Windows und macOS nur nach Dokumentation umgesetzt, nicht getestet; Linux nur mit Unit-Tests.

@@ -75,6 +75,8 @@ func drawCoverPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host, li
 		{"Erstellt am", meta.Generated.Format("02.01.2006 15:04")},
 		{"Programm", meta.Version},
 	}
+	// Netz-Grunddaten des Scan-Rechners (I-060) direkt nach den Angaben.
+	rows = append(rows, meta.NetLines...)
 	pdf.Ln(6)
 	for _, r := range rows {
 		if r[1] == "" {

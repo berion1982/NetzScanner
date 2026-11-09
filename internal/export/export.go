@@ -19,9 +19,10 @@ import (
 
 // Meta beschreibt, woher eine lesbare Tabelle stammt (steht im Kopf der Datei).
 type Meta struct {
-	Target    string    // gescanntes Ziel, z.B. "192.168.178.0/24"
-	Generated time.Time // Erzeugungszeitpunkt
-	Version   string    // Programmversion, z.B. "NetzScanner 0.4.0 (...)"
+	Target    string      // gescanntes Ziel, z.B. "192.168.178.0/24"
+	Generated time.Time   // Erzeugungszeitpunkt
+	Version   string      // Programmversion, z.B. "NetzScanner 0.4.0 (...)"
+	NetLines  [][2]string // Netz-Grunddaten des Scan-Rechners (I-060) als "Bezeichnung, Wert"; optional
 }
 
 // csvHeader sind die Spalten der CSV, in der vom Nutzer festgelegten Reihenfolge.
@@ -94,6 +95,12 @@ func WriteMarkdown(w io.Writer, hosts []model.Host, m Meta) error {
 	fmt.Fprintf(&b, "# NetzScanner – Geräteliste\n\n")
 	fmt.Fprintf(&b, "- Ziel: %s\n- Erstellt: %s\n- Programm: %s\n- Geräte: %d\n\n",
 		mdEscape(m.Target), m.Generated.Format("02.01.2006 15:04"), mdEscape(m.Version), len(hosts))
+	for _, l := range m.NetLines {
+		fmt.Fprintf(&b, "- %s: %s\n", mdEscape(l[0]), mdEscape(l[1]))
+	}
+	if len(m.NetLines) > 0 {
+		b.WriteString("\n")
+	}
 	b.WriteString("| Name | IP | MAC | Hersteller (Chip) | Standort | Benutzername | Offene Ports | Kategorie | Betriebssystem (Vermutung) | Hinweis |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, h := range hosts {
 		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", mdEscape(h.Name), mdEscape(h.IP), mdEscape(h.MAC),
@@ -119,7 +126,7 @@ th{background:#f6f8fa}.meta{color:#57606a;margin-bottom:16px}a{color:#0969da}
 @media(prefers-color-scheme:dark){body{background:#0d1117;color:#e6edf3}th{background:#161b22}th,td{border-color:#30363d}.meta{color:#9da7b3}a{color:#58a6ff}}
 </style></head><body>
 <h1>NetzScanner – Geräteliste</h1>
-<div class="meta">Ziel: {{.Meta.Target}} · Erstellt: {{.Generated}} · {{.Meta.Version}} · {{len .Hosts}} Geräte</div>
+<div class="meta">Ziel: {{.Meta.Target}} · Erstellt: {{.Generated}} · {{.Meta.Version}} · {{len .Hosts}} Geräte{{range .Meta.NetLines}}<br>{{index . 0}}: {{index . 1}}{{end}}</div>
 <table><thead><tr><th>Name</th><th>IP</th><th>MAC</th><th>Hersteller (Chip)</th><th>Standort</th><th>Benutzername</th><th>Offene Ports</th><th>Kategorie</th><th>Betriebssystem (Vermutung)</th><th>Hinweis</th><th>Web</th></tr></thead><tbody>
 {{range .Hosts}}<tr><td>{{.Name}}</td><td>{{.IP}}</td><td>{{.MAC}}</td><td>{{.Vendor}}</td><td>{{.Location}}</td><td>{{.Username}}</td><td>{{range $i, $p := .Ports}}{{if $i}}, {{end}}{{$p.Number}}{{if $p.Service}} ({{$p.Service}}){{end}}{{end}}</td><td>{{categoryLabel .Category}}</td><td>{{.OS}}</td><td>{{.SameMACNote}}</td><td>{{range .WebLinks}}<a href="{{.URL}}" rel="noopener noreferrer">{{.Label}}</a> {{end}}</td></tr>
 {{end}}</tbody></table>

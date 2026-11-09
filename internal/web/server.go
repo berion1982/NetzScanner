@@ -108,6 +108,9 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("POST /api/export", s.handleExport)
 	mux.HandleFunc("POST /api/export/topology-pdf", s.handleTopologyPDF)
 	mux.HandleFunc("POST /api/export/netzdoku-pdf", s.handleNetworkDocPDF)
+	mux.HandleFunc("GET /api/netinfo", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, scan.LocalNetInfo())
+	})
 	mux.HandleFunc("GET /api/networks", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, scan.LocalNetworks())
 	})
@@ -620,7 +623,7 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String()}
+	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String(), NetLines: scan.LocalNetInfo().Lines()}
 	var buf bytes.Buffer
 	var ctype, ext string
 	var err error
@@ -666,7 +669,7 @@ func (s *server) handleTopologyPDF(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, errBody("keine Geraete in der Liste"))
 		return
 	}
-	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String()}
+	meta := export.Meta{Target: target, Generated: time.Now(), Version: version.String(), NetLines: scan.LocalNetInfo().Lines()}
 	var buf bytes.Buffer
 	if err := export.WritePDF(&buf, view, meta); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errBody("PDF-Export fehlgeschlagen"))
