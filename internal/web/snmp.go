@@ -3,7 +3,7 @@ package web
 // Web-Endpunkte fuer die SNMP-Topologie (I-010 Teil 2). Die Logik steckt in internal/scan/snmp.go.
 //
 // Sicherheit:
-//   - Die SNMP-Community ist ein Zugangsdatum: Sie kommt nur im Anfragekoerper an, wird nur an
+//   - Community und SNMP-v3-Zugangsdaten (Benutzer, Passphrasen) sind Zugangsdaten: Sie kommen nur im Anfragekoerper an, werden nur an
 //     das Zielgeraet geschickt und weder gespeichert, noch protokolliert, noch zurueckgegeben.
 //   - Abgefragt werden nur Geraete, die in der aktuellen Geraeteliste stehen (also gescannte
 //     Adressen im eigenen Netz) - der Server laesst sich nicht auf beliebige Ziele richten.
@@ -52,22 +52,37 @@ type snmpSwitchResult struct {
 func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Community string   `json:"community"`
+		User      string   `json:"user"`      // SNMP v3: Benutzername (leer = v2c)
+		AuthProto string   `json:"authProto"` // SNMP v3: z. B. "SHA"
+		AuthPass  string   `json:"authPass"`
+		PrivProto string   `json:"privProto"` // SNMP v3: z. B. "AES"
+		PrivPass  string   `json:"privPass"`
 		Targets   []string `json:"targets"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
 		return
 	}
-	comm := strings.TrimSpace(req.Community)
-	if comm == "" || utf8.RuneCountInString(comm) > maxCommunityRunes {
-		writeJSON(w, http.StatusBadRequest, errBody("Community fehlt oder ist zu lang"))
-		return
+	creds := scan.SNMPCreds{
+		Community: strings.TrimSpace(req.Community), User: strings.TrimSpace(req.User),
+		AuthProto: req.AuthProto, AuthPass: req.AuthPass, PrivProto: req.PrivProto, PrivPass: req.PrivPass,
 	}
-	for _, c := range comm {
-		if c > unicode.MaxASCII || unicode.IsControl(c) {
-			writeJSON(w, http.StatusBadRequest, errBody("Community enthält unzulässige Zeichen"))
+	// Alle Geheimnisse: Laenge und nur druckbares ASCII (verhindert Steuerzeichen und Missbrauch).
+	for _, v := range []string{creds.Community, creds.User, creds.AuthPass, creds.PrivPass} {
+		if utf8.RuneCountInString(v) > maxCommunityRunes {
+			writeJSON(w, http.StatusBadRequest, errBody("Eingabe zu lang"))
 			return
 		}
+		for _, c := range v {
+			if c > unicode.MaxASCII || unicode.IsControl(c) {
+				writeJSON(w, http.StatusBadRequest, errBody("Zugangsdaten enthalten unzulässige Zeichen"))
+				return
+			}
+		}
+	}
+	if err := creds.Validate(); err != nil {
+		writeJSON(w, http.StatusBadRequest, errBody(err.Error()))
+		return
 	}
 	if len(req.Targets) == 0 || len(req.Targets) > scan.MaxSNMPTargets {
 		writeJSON(w, http.StatusBadRequest, errBody("1 bis 10 Switch-Adressen angeben"))
@@ -107,7 +122,7 @@ func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 	var data []scan.SwitchData
 	info := map[string]scan.SwitchInfo{}
 	for _, ip := range targets {
-		d, err := scan.QuerySwitch(ctx, ip, comm)
+		d, err := scan.QuerySwitch(ctx, ip, creds)
 		sr := snmpSwitchResult{IP: ip, Name: d.SysName, Vendor: d.Vendor, Entries: len(d.FDB), LLDP: len(d.LLDP)}
 		if err != nil {
 			sr.Error = err.Error()

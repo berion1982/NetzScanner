@@ -113,6 +113,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("GET /api/scan", s.handleStatus)
 	mux.HandleFunc("POST /api/scan", s.handleStart)
 	mux.HandleFunc("POST /api/scan/cancel", s.handleCancel)
+	mux.HandleFunc("GET /api/project/save", s.handleProjectSave)
+	mux.HandleFunc("POST /api/project/load", s.handleProjectLoad)
 	mux.HandleFunc("GET /api/version", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{
 			"version": version.Version, "buildDate": version.BuildDate, "commit": version.Commit,

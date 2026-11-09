@@ -425,3 +425,17 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Hinweis
 - Die Nutzungsbedingungen der IEEE für die eingebettete OUI-Liste sind **ungeprüft** („Ich weiß es nicht“).
 - Keine Rechtsberatung; der deutsche Kurzhinweis ist eine Zusammenfassung, rechtlich gilt der englische Text in `LICENSE`.
+
+## [0.28.0] – 2026-11-09
+### Hinzugefügt
+- **SNMP v3** (I-053) für die Switch-Abfrage: Auswahl „SNMP v2c / v3“ im Topologie-Reiter. v3 mit Benutzer und wahlweise Authentifizierung (SHA, SHA224/256/384/512, MD5) und Verschlüsselung (AES, AES192, AES256, DES); Stufen noAuthNoPriv, authNoPriv, authPriv. Verschlüsselung setzt Authentifizierung voraus, Passphrasen mindestens 8 Zeichen (Prüfung vor dem Senden).
+- Zugangsdaten (Community, Benutzer, Passphrasen) nur im Anfragekörper, nie gespeichert, protokolliert oder zurückgegeben; die Felder werden nach dem Senden geleert.
+### Hinweis
+- Nur mit Unit-Tests geprüft (Validierung, Aufbau des gosnmp-Clients); **an einem echten Switch mit v3 ungetestet** („Ich weiß es nicht“, ob alle Hersteller-Kombinationen funktionieren).
+
+## [0.29.0] – 2026-11-09
+### Hinzugefügt
+- **Scan speichern und laden** (I-035): Knöpfe „Scan speichern“ und „Scan laden“ in der Übersicht. Die Projektdatei (JSON, Download/Upload im Browser) enthält Geräteliste, Ziel, Zeitpunkt, Programmversion und die Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien). **Nicht** enthalten: Zugangsdaten, Router-/Mesh-/DHCP-/SNMP-Daten (nur im RAM; nach dem Laden bei Bedarf neu abfragen).
+- Beim Laden wird die Datei wie fremde Eingabe geprüft (Format/Version, max. 16 MiB und 5000 Geräte, gültige IPs ohne Doppelte, Steuerzeichen entfernt, Texte gekürzt, unbekannte Kategorien → Client, Web-Links aus IP/Ports neu berechnet). Eingaben aus der Datei werden zu den vorhandenen hinzugefügt. Gespeichert werden kann nur, wenn kein Scan läuft.
+### Hinweis
+- Grundlage für I-034 (Scan-Vergleich) und I-036 (Netzdokumentation). Nur mit Unit-Tests geprüft, Bedienung im Browser noch nicht von Sascha getestet.

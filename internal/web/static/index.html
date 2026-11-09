@@ -77,6 +77,8 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
    <small class="hint" id="thint">Teilbereich: <code>192.168.1.10-50</code> · Netz: <code>192.168.1.0/28</code> · einzeln: <code>192.168.1.5</code> · mehrere mit Komma trennen</small></div>
   <label>Ports <input class="p" id="ports" placeholder="leer = Standardliste"></label>
   <button class="btn" id="go">Scan starten</button>
+  <button type="button" id="prjsave" title="Scan-Ergebnis samt Eingaben als Datei sichern (ohne Zugangsdaten und Router-Daten)">Scan speichern</button>
+  <button type="button" id="prjload" title="Gespeicherten Scan aus einer Datei laden">Scan laden</button><input type="file" id="prjfile" accept=".json,application/json" hidden>
   <div class="prog" id="prog">Bereit.</div>
  </div>
  <div class="tiles" id="tiles"></div>
@@ -115,8 +117,11 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 </section>
 <section id="topo">
  <details class="row" style="margin-bottom:8px;display:block"><summary style="cursor:pointer">Echte Verbindungen per SNMP lesen (optional)</summary>
-  <p style="color:var(--mut);margin:6px 0">Switches (verwaltbar, mit SNMP) nennen, an welchem Port welches Gerät hängt. Trage die <b>IP-Adressen der Switches</b> (aus der Geräteliste, mit Komma) und eine <b>Nur-Lesen-Community</b> ein. Die Community wird nicht gespeichert und nicht protokolliert; SNMP v2c ist im Netz unverschlüsselt.</p>
-  <div class="rename"><input id="snmptargets" placeholder="Switch-IPs, z. B. 192.168.178.2, 192.168.178.3" aria-label="Switch-Adressen" autocomplete="off"><input id="snmpcomm" type="password" placeholder="Community" aria-label="SNMP-Community" autocomplete="off"><button id="snmpbtn" class="ok" type="button">Lesen</button><button id="snmpclr" type="button">Zurücksetzen</button></div>
+  <p style="color:var(--mut);margin:6px 0">Switches (verwaltbar, mit SNMP) nennen, an welchem Port welches Gerät hängt. Trage die <b>IP-Adressen der Switches</b> (aus der Geräteliste, mit Komma) ein und wähle die Version: <b>v2c</b> mit Nur-Lesen-Community (im Netz unverschlüsselt) oder <b>v3</b> mit Benutzer und – empfohlen – Authentifizierung und Verschlüsselung. Community und Passphrasen werden nicht gespeichert und nicht protokolliert.</p>
+  <div class="rename"><input id="snmptargets" placeholder="Switch-IPs, z. B. 192.168.178.2, 192.168.178.3" aria-label="Switch-Adressen" autocomplete="off"><select id="snmpver" aria-label="SNMP-Version"><option value="2c">SNMP v2c</option><option value="3">SNMP v3</option></select></div>
+  <div class="rename" id="snmpv2"><input id="snmpcomm" type="password" placeholder="Community" aria-label="SNMP-Community" autocomplete="off"></div>
+  <div class="rename" id="snmpv3" style="display:none"><input id="snmpuser" placeholder="Benutzer" aria-label="SNMP-v3-Benutzer" autocomplete="off"><select id="snmpauth" aria-label="Authentifizierung"><option value="">keine Authentifizierung</option><option>SHA</option><option>SHA256</option><option>SHA384</option><option>SHA512</option><option>SHA224</option><option>MD5</option></select><input id="snmpauthpw" type="password" placeholder="Auth-Passphrase (min. 8)" aria-label="Authentifizierungs-Passphrase" autocomplete="off"><select id="snmppriv" aria-label="Verschlüsselung"><option value="">keine Verschlüsselung</option><option>AES</option><option>AES192</option><option>AES256</option><option>DES</option></select><input id="snmpprivpw" type="password" placeholder="Verschl.-Passphrase (min. 8)" aria-label="Verschlüsselungs-Passphrase" autocomplete="off"></div>
+  <div class="rename"><button id="snmpbtn" class="ok" type="button">Lesen</button><button id="snmpclr" type="button">Zurücksetzen</button></div>
   <div class="msg" id="snmpmsg" style="white-space:pre-wrap"></div></details>
  <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><span id="pdfmsg" class="msg"></span></div>
  <div class="legend" id="legend" aria-label="Kategorien ein-/ausblenden"></div>
@@ -485,12 +490,23 @@ document.getElementById("wdgo").addEventListener("click", () => {
 document.getElementById("wdclr").addEventListener("click", () => {
   post("/api/dhcp/clear", {}).then(() => { document.getElementById("wdmsg").textContent = "DHCP-Angaben entfernt."; loadReservations(); loadHosts(); });
 });
+// Umschalten zwischen v2c (Community) und v3 (Benutzer/Passphrasen).
+document.getElementById("snmpver").addEventListener("change", e => {
+  const v3 = e.target.value === "3";
+  document.getElementById("snmpv2").style.display = v3 ? "none" : "";
+  document.getElementById("snmpv3").style.display = v3 ? "" : "none";
+});
 document.getElementById("snmpbtn").addEventListener("click", () => {
   const msg = document.getElementById("snmpmsg"), comm = document.getElementById("snmpcomm");
   const targets = document.getElementById("snmptargets").value.split(/[,\s]+/).filter(Boolean);
+  const v3 = document.getElementById("snmpver").value === "3";
+  const pw = ["snmpauthpw", "snmpprivpw"].map(id => document.getElementById(id));
+  // Zugangsdaten nur fuer die gewaehlte Version senden; Felder werden nach dem Senden geleert.
+  const body = v3 ? { user: document.getElementById("snmpuser").value, authProto: document.getElementById("snmpauth").value, authPass: pw[0].value,
+                      privProto: document.getElementById("snmppriv").value, privPass: pw[1].value, targets } : { community: comm.value, targets };
   msg.className = "msg"; msg.textContent = "Lese …";
-  post("/api/topology/snmp", { community: comm.value, targets }).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
-    comm.value = "";
+  post("/api/topology/snmp", body).then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
+    comm.value = ""; pw[0].value = ""; pw[1].value = "";
     if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
     msg.textContent = b.switches.map(x => x.ip + (x.name ? " (" + x.name + ")" : "") + (x.vendor ? " [" + x.vendor + "]" : "") + ": " + (x.error ? "Fehler – " + x.error : x.entries + " MAC-Einträge, " + (x.lldp || 0) + " LLDP-Nachbarn")).join("\n") +
       "\n" + b.linked + " Gerät(e) einem Switch-Port zugeordnet.";
@@ -691,6 +707,32 @@ document.getElementById("exp").addEventListener("click", () => {
     document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
     msg.textContent = selected.size + " Geräte exportiert.";
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Export fehlgeschlagen."; });
+});
+// Scan als Projektdatei speichern (I-035): Download ueber Blob wie bei den Exporten.
+document.getElementById("prjsave").addEventListener("click", () => {
+  const msg = document.getElementById("expmsg");
+  msg.className = "msg"; msg.textContent = "…";
+  fetch("/api/project/save").then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscan.json" });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    msg.textContent = "Scan gespeichert (ohne Zugangsdaten und Router-Daten).";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "Speichern fehlgeschlagen."; });
+});
+// Gespeicherten Scan laden: Datei waehlen, Inhalt an den Server schicken (der prueft alles).
+document.getElementById("prjload").addEventListener("click", () => document.getElementById("prjfile").click());
+document.getElementById("prjfile").addEventListener("change", async e => {
+  const f = e.target.files[0], msg = document.getElementById("expmsg");
+  e.target.value = "";
+  if (!f) return;
+  msg.className = "msg"; msg.textContent = "Lade …";
+  fetch("/api/project/load", { method: "POST", headers: { "Content-Type": "application/json" }, body: await f.text() })
+    .then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
+      if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
+      msg.textContent = b.hosts + " Geräte geladen (" + b.target + "). Router-/DHCP-/SNMP-Daten bei Bedarf neu abfragen.";
+      loadHosts(); poll();
+    }).catch(() => { msg.className = "msg err"; msg.textContent = "Laden fehlgeschlagen."; });
 });
 document.getElementById("selnone").addEventListener("click", () => { selected.clear(); updateSelection(); });
 
