@@ -368,3 +368,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Hinweis bei gleicher MAC:** Haben mehrere Geräte dieselbe MAC-Adresse, markiert der Scanner sie mit ⚠ (Tabelle, Detail-Panel „MAC mehrfach“) und nennt die anderen IPs; der Hinweis lautet, im Router gegenzuprüfen. Hintergrund: Ein Router beantwortet ARP manchmal auch für fremde Adressen (Proxy-ARP, z. B. VPN-Clients), oder ein Gerät hat mehrere Adressen – das lässt sich aus dem Scan nicht unterscheiden. Es wird **nichts ausgeblendet** (`MarkSharedMAC` in `internal/scan/gateway.go`, Feld `Host.SameMAC`, wird bei jeder Ansicht berechnet). Allgemeine Regel ohne Geräte-/Adresstabelle. Hilfe ergänzt.
 ### Hinweis
 - Eine zuvor erwogene automatische Ausblendung solcher Einträge wurde verworfen (Entscheidung Sascha: lieber Hinweis).
+
+## [0.24.0] – 2026-11-09
+### Hinzugefügt
+- **Zugriffsschutz mit Zugangstoken** (I-025): Bei `--listen` außerhalb von Loopback (z. B. `0.0.0.0:8484`) erzeugt der Scanner beim Start ein Zufallstoken (128 Bit) und zeigt es **einmalig** in der Konsole an. Ohne Token liefert der Server weder Oberfläche noch API (401, Eingabeseite). Anmeldung im Browser über `/?token=…` (Cookie `HttpOnly`/`SameSite=Strict`, das Token verschwindet danach aus der Adresse); für Skripte `Authorization: Bearer <Token>`.
+- Neue Optionen: `--token` (eigenes Token, mind. 8 Zeichen; alternativ Umgebung `NETZSCANNER_TOKEN`, das ist in der Prozessliste unsichtbar), `--no-token` (Schutz bei offenem `--listen` bewusst abschalten, mit Warnung).
+- Reiner Loopback-Betrieb (Standard) bleibt ohne Token wie bisher.
+### Hinweis
+- Die Verbindung bleibt unverschlüsselt (HTTP): Wer im selben Netz mitliest, sieht das Token. Das Token schützt vor zufälligem Zugriff, ersetzt aber kein TLS (nicht umgesetzt).

@@ -21,7 +21,8 @@ scripts/build.sh native   # nur aktuelle Plattform
 ./dist/netzscanner --version
 ./dist/netzscanner --demo     # mit Demo-Daten ansehen
 ./dist/netzscanner            # startet die Oberfläche auf http://127.0.0.1:8484
-./dist/netzscanner --listen 0.0.0.0:8484   # von anderen Rechnern erreichbar (z. B. Raspberry)
+./dist/netzscanner --listen 0.0.0.0:8484   # von anderen Rechnern erreichbar (z. B. Raspberry); zeigt ein Zugangstoken an
+./dist/netzscanner --listen 0.0.0.0:8484 --token MeinGeheimesToken   # eigenes Token (oder Umgebung NETZSCANNER_TOKEN)
 ```
 Voraussetzung: Go ≥ 1.24.
 
