@@ -390,3 +390,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Ein Eintrag, der die MAC eines erkannten Routers/Switches teilt (`Host.MirrorOf`, z. B. Proxy-ARP-Scheineintrag), erbt dessen Hersteller/System nicht mehr und zählt **nicht** als eigenes „Netzwerkgerät“; die Kategorie wird neu vermutet (Nutzerwahl bleibt). Es wird weiterhin **nichts ausgeblendet**.
 ### Hinweis
 - Allgemeine Regel nach Rolle und MAC, keine Geräte- oder Adresstabelle. CSV hat eine zusätzliche letzte Spalte.
+
+## [0.25.2] – 2026-11-09
+### Geändert
+- **Mesh-Zuordnung abgesichert** (I-067): Die lose Zuordnung über beliebige IPs im Mesh-Dokument (z. B. alte Nachbar-Einträge) darf einen Knoten, der anderen Geräten als Uplink dient (Box, Repeater, Switch), nur noch an ein **Netzwerkgerät** vergeben. Damit hängt eine Gruppe nicht mehr unter einem Smartphone, das nur als Nachbar-Eintrag auftaucht. Netzwerkgeräte werden in jeder Stufe zuerst zugeordnet.
+### Hinweis
+- Allgemeine Regel nach Kategorie und Verbindungsstruktur, keine Geräte- oder Adresstabelle. Ursache am echten Netz **ungeprüft** („Ich weiß es nicht“): Bitte `--diagnose-mesh <IP>` und PDF erneut prüfen.

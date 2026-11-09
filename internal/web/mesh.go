@@ -50,16 +50,37 @@ func buildMeshLinks(m router.Mesh, hosts []model.Host) map[string]meshLink {
 			hostOfUID[uid], uidOfIP[h.IP] = h, uid
 		}
 	}
+	// Knoten, die anderen Geräten als Uplink dienen (Box, Repeater, Switch): Sie sind Infrastruktur und dürfen
+	// nicht über eine lose Nachbar-IP einem beliebigen Gerät (z. B. Smartphone) zugeschlagen werden (I-067).
+	isUplinkNode := map[string]bool{}
+	for _, l := range m.Links {
+		isUplinkNode[l.Parent] = true
+	}
+	// Netzwerkgeräte zuerst: Bei Gleichstand bekommt ein Router/Repeater den Knoten vor einem Endgerät.
+	ordered := make([]model.Host, 0, len(hosts))
 	for _, h := range hosts {
+		if h.Category == model.CatNetwork {
+			ordered = append(ordered, h)
+		}
+	}
+	for _, h := range hosts {
+		if h.Category != model.CatNetwork {
+			ordered = append(ordered, h)
+		}
+	}
+	for _, h := range ordered {
 		if k := scan.NormMAC(h.MAC); k != "" {
 			claim(h, byMAC[k])
 		}
 	}
-	for _, h := range hosts {
+	for _, h := range ordered {
 		claim(h, byMgmt[h.IP])
 	}
-	for _, h := range hosts {
-		claim(h, byIP[h.IP])
+	for _, h := range ordered {
+		// Stufe 3 (beliebige IP): ein Nicht-Netzwerkgerät darf keinen Uplink-Knoten übernehmen.
+		if uid := byIP[h.IP]; h.Category == model.CatNetwork || !isUplinkNode[uid] {
+			claim(h, uid)
+		}
 	}
 	uidOf := func(h model.Host) string { return uidOfIP[h.IP] }
 	parent := map[string]router.MeshLink{} // Kind-UID -> erste Verbindung nach oben
