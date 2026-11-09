@@ -68,7 +68,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
 <nav><b>▣ NetzScanner</b>
-<button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
+<button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="find">Befunde</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
 <small id="ver">…</small></nav>
 <main>
 <section id="ov" class="on">
@@ -96,6 +96,14 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
   <p style="color:var(--mut);margin:6px 0">Liest per WinRM (Port 5985, NTLM, verschlüsselt) mit PowerShell <b>nur lesend</b> alle Leases und festen Reservierungen des Windows-DHCP-Servers und ordnet sie über die MAC den Geräten zu (Name, „feste Reservierung“ bzw. Lease-Ablauf). Voraussetzung: DHCP-Rolle auf dem Server, WinRM aktiv (<code>Test-WSMan localhost</code>), Server wurde mitgescannt. Empfohlen: eigener Benutzer in den Gruppen „DHCP-Benutzer“ und „Remoteverwaltungsbenutzer“ statt Domain-Admin; Schreibweise <code>DOMÄNE\benutzer</code>. <b>Zugangsdaten bleiben nur im Arbeitsspeicher</b>, werden nie gespeichert oder exportiert. Nur von diesem Rechner aus möglich. <i>Noch nicht an einem echten Windows Server geprüft.</i></p>
   <div class="rename"><input id="wdhost" placeholder="Server-IP" aria-label="DHCP-Server-Adresse" autocomplete="off"><input id="wduser" placeholder="DOMÄNE\Benutzer" aria-label="DHCP-Benutzer" autocomplete="off"><input id="wdpass" type="password" placeholder="Passwort" aria-label="DHCP-Passwort" autocomplete="off"><button id="wdgo" class="ok" type="button">Lesen</button><button id="wdclr" type="button">Zurücksetzen</button></div>
   <div class="msg" id="wdmsg" style="white-space:pre-wrap"></div></details>
+</section>
+<section id="find">
+ <h2>Befunde</h2><p style="color:var(--mut)">Auffälligkeiten, die sich aus den <b>vorhandenen Scan-Daten</b> ergeben (offene Ports, Zertifikate, gleiche MAC) – ohne zusätzlichen Netzverkehr. Das sind <b>Hinweise zum Gegenprüfen</b>, keine bewiesenen Schwachstellen: Eine Portnummer verrät nur den üblichen Dienst.</p>
+ <div class="card tbl"><div class="selbar"><span id="fdcount">0 Befunde</span><span style="flex:1"></span>
+  <select id="fdfmt" aria-label="Exportformat"><option value="csv-excel">CSV (Excel Deutsch: Semikolon)</option><option value="csv">CSV (Standard: Komma)</option><option value="md">Lesbare Tabelle (Markdown)</option></select>
+  <button class="btn" id="fdexp" disabled>Exportieren</button><span class="msg" id="fdmsg"></span></div>
+  <table><thead><tr><th>Schwere</th><th>IP</th><th>Gerät</th><th>Port</th><th>Befund</th><th>Hinweis</th></tr></thead><tbody id="fdtb"></tbody></table>
+  <div class="empty" id="fdempty">Keine Befunde – zuerst einen Scan durchführen.</div></div>
 </section>
 <section id="resv">
  <h2>Feste DHCP-Reservierungen</h2><p style="color:var(--mut)">Liste der festen IP-Reservierungen aus dem zuletzt gelesenen Windows-DHCP-Server. <b>Die FRITZ!Box gibt ihre festen Zuweisungen per TR-064 nicht heraus</b> (geprüft an einer echten Box: „Static“ im Router-Login sind Router, VPN-Gegenstellen u. Ä., nicht die festen Zuweisungen) – sie stehen nur in deren Oberfläche. Quelle im Reiter „DHCP &amp; Router“. Nur im Arbeitsspeicher. Die CSV-Datei hat die Spalten Netz, IP, MAC, Name (DHCP) und lässt sich als Sicherung oder Vorlage verwenden.</p>
@@ -150,6 +158,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  </tbody></table>
  <p>Kennungs-artige Namen (z. B. eine MAC-Adresse als Name) werden verworfen. Bleibt nichts übrig, steht „(unbekannt)“; du kannst das Gerät dann selbst umbenennen.</p>
  <h2>Hersteller (MAC-Präfix)</h2><p>Die Spalte „Hersteller (Chip)“ in Tabelle, Details und lesbarem Export nennt den Hersteller des <b>Netzwerkchips</b> – bei einem Fernseher kann hier z. B. der WLAN-Chip-Hersteller stehen, nicht Samsung oder LG. Der Hersteller wird aus den ersten drei Byte der MAC-Adresse (OUI) bestimmt. Die eingebaute Liste ist derzeit nur klein; Geräte mit unbekanntem Präfix haben deshalb keinen Hersteller. MACs gibt es nur im eigenen Subnetz (ARP-Tabelle); manche Geräte nutzen zufällige (private) MACs, dann passt der Hersteller nicht.</p>
+ <h2>Befunde</h2><p>Der Reiter „Befunde“ fasst Auffälligkeiten aus den vorhandenen Scan-Daten zusammen, <b>ohne zusätzlichen Netzverkehr</b>: Telnet/FTP/VNC/RDP/SMB erreichbar, Datenbank- und Cache-Ports (MySQL, PostgreSQL, SQL Server, Oracle, MongoDB, Redis, Elasticsearch), abgelaufene oder bald ablaufende Zertifikate, Weboberfläche nur per HTTP und „MAC mehrfach“. Die Regeln gelten allgemein nach Port bzw. Zertifikat, nicht nach Gerät oder Hersteller. Schweregrade (Hoch/Mittel/Niedrig/Info) sind eine grobe Einschätzung. Es sind <b>Hinweise zum Gegenprüfen</b>, keine bewiesenen Schwachstellen. Export als CSV oder Markdown.</p>
  <h2>Ports und Risiken</h2><p>Geprüft wird eine Standardliste häufiger Dienste (oder deine eigene Portliste). Der Dienstname ist nur eine Vermutung anhand der Portnummer, kein Beweis. Als <b>Risiko-Ports</b> (rot) zählen derzeit <code>21</code> (FTP), <code>23</code> (Telnet), <code>445</code> (SMB) und <code>3389</code> (RDP) – unverschlüsselte oder oft angegriffene Dienste, die man sich genauer ansehen sollte. „Risiko“ heißt nicht „unsicher“, sondern „prüfen“. Bei HTTPS-Ports zeigt das Detail-Panel Zertifikat-Inhaber, Aussteller und Ablauf („ABGELAUFEN“ / „läuft bald ab“); das Zertifikat wird nur gelesen, nicht geprüft.</p>
  <h2>Rechte und Fallback</h2><p>Der Scan läuft ohne Administrator-Rechte: Geräte werden per TCP-Verbindung gefunden, die MAC kommt aus der ARP-Tabelle des Betriebssystems. Echte ICMP-Pings (Raw-Sockets) bräuchten Rechte und sind noch nicht eingebaut. Geräte ohne offene Ports und ohne ARP-Eintrag (z. B. Firewall-geschützte) bleiben unsichtbar.</p>
  <h2>Windows-DHCP-Server</h2><p>Im Reiter „DHCP &amp; Router“ liest der NetzScanner per WinRM (Port 5985, NTLM verschlüsselt) <b>nur lesend</b> die Leases und festen Reservierungen eines Windows-DHCP-Servers und ordnet sie über die MAC zu. Namen vom Server füllen nur „(unbekannt)“ und Hersteller-Vorschläge. Zugangsdaten bleiben im Arbeitsspeicher. <b>Ungeprüft an einem echten Server.</b></p>
@@ -419,6 +428,26 @@ document.getElementById("rtgo").addEventListener("click", () => {
 document.getElementById("rtclr").addEventListener("click", () => {
   post("/api/router/clear", {}).then(() => { document.getElementById("rtmsg").textContent = "Router-Angaben entfernt."; renderRouterInfo(null); loadHosts(); });
 });
+// Reiter "Befunde" (I-064): Namen kommen aus dem Netz -> nur per textContent.
+const SEV = { high: "Hoch", medium: "Mittel", low: "Niedrig", info: "Info" };
+function loadFindings() {
+  fetch("/api/findings").then(r => r.json()).then(list => {
+    document.getElementById("fdtb").replaceChildren(...list.map(f => el("tr", {}, [SEV[f.severity] || f.severity, f.ip, f.name, f.port || "", f.title, f.detail].map(t => el("td", { text: String(t || "") })))));
+    document.getElementById("fdcount").textContent = list.length + (list.length === 1 ? " Befund" : " Befunde");
+    document.getElementById("fdempty").style.display = list.length ? "none" : "";
+    document.getElementById("fdexp").disabled = !list.length;
+  }).catch(() => {});
+}
+document.getElementById("fdexp").addEventListener("click", () => {
+  const msg = document.getElementById("fdmsg");
+  post("/api/findings/export", { format: document.getElementById("fdfmt").value }).then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-befunde" });
+    document.body.appendChild(a); a.click(); a.remove(); msg.className = "msg"; msg.textContent = "Gespeichert.";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "Export fehlgeschlagen."; });
+});
+document.querySelector('nav button[data-t="find"]').addEventListener("click", loadFindings);
 // Reiter "Reservierungen" (I-057): Texte kommen vom DHCP-Server -> nur per textContent.
 function loadReservations() {
   fetch("/api/reservations").then(r => r.json()).then(list => {
