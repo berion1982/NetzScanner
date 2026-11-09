@@ -33,7 +33,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - Reiter „Befunde“ (0.25.0): Sinnvolle Schweregrade/Texte? Zu viele oder fehlende Regeln melden.
 - Zugangstoken (0.24.0): Login im echten Browser über `--listen 0.0.0.0:8484` und `/?token=…` testen (bisher nur Unit-Test und curl).
 - Mesh-Zuordnung (0.25.2): Hängt im PDF keine Gruppe mehr unter einem Smartphone? Sonst `--diagnose-mesh <IP>`-Ausgabe schicken.
-- WAN-Status (0.25.4): Zeigt der Router-Info-Export jetzt „Connected"? Sonst `--diagnose-router <IP>` schicken. PDF-Zeile, die auf eine weitere Seite überläuft, ist nicht reproduziert (PDF schicken).
+- WAN-Status (0.25.4): Zeigt der Router-Info-Export jetzt „Connected“? Sonst `--diagnose-router <IP>` schicken. PDF-Zeile, die auf eine weitere Seite überläuft, ist nicht reproduziert (PDF schicken).
 - Die Annahmen im Mesh-Parser (`node_1` = Vorgänger, Raten in kbit/s) sind nur an einer Box gesehen.
 
 ## Bekannte Grenzen
