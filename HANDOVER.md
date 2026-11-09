@@ -19,7 +19,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge nach dem Test von 0.23.7 (Befunde stehen als Ideen in `IDEAS.md`, Prio laut Vorschlag):
+Reihenfolge (I-025 erledigt in 0.24.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-064 → I-035 → I-034 → I-060/I-061):
 1. **I-065** Gleiche MAC in PDF/Exporten kennzeichnen, nicht als eigene Netzwerkgeräte zählen.
 2. **I-067** Mesh-Zuordnung prüfen (Gruppe hing im PDF unter einem Smartphone).
 3. **I-066** Kennungs-Namen besser abwerten · **I-068** Status „Connecting“ + PDF-Kleinigkeiten.
@@ -32,9 +32,11 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - SNMP-Topologie und LLDP an einem verwalteten Switch (SNMP v2c, LLDP am Gerät an): stimmen Ports/Uplinks?
 - Hersteller-Erkennung per `sysObjectID` (`vendor.go`): Tabelle ungeprüft.
 - Kategorie-Vermutung und OS-Vermutung bei weiteren Geräten; fehlende oder falsche Geräte melden.
+- Zugangstoken (0.24.0): Login im echten Browser über `--listen 0.0.0.0:8484` und `/?token=…` testen (bisher nur Unit-Test und curl).
 - Die Annahmen im Mesh-Parser (`node_1` = Vorgänger, Raten in kbit/s) sind nur an einer Box gesehen.
 
 ## Bekannte Grenzen
+- Zugangstoken (I-025) schützt nur vor zufälligem Zugriff: Verbindung bleibt HTTP, das Token ist im selben Netz mitlesbar. TLS ist offen.
 - FRITZ!Box-Reservierungen sind per TR-064 **nicht auslesbar** (`AddressSource` Static ≠ feste Zuweisung). Reiter „Reservierungen“ = nur Windows-DHCP.
 - Router-Login erst **nach Scan-Ende** (vorher fehlen die MACs); Router-/Mesh-Daten nur im RAM → nach Neustart neu anmelden. Nach mehreren Logins kann eine kurze Sperre greifen (ungeprüft).
 - Zufällige/lokale MACs haben keinen Hersteller. Geräte mit gleicher MAC werden nur markiert (⚠), nie ausgeblendet.

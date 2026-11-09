@@ -6,6 +6,7 @@ Zuerst `HANDOVER.md` lesen – dort steht der aktuelle Stand und der nächste Sc
 ## Ideenliste
 - Neue Ideen zuerst in `IDEAS.md` eintragen (ID, Prio, Aufwand, Status). Pro Chat genau **eine** Idee umsetzen.
 - Nach der Umsetzung Status + Version in `IDEAS.md` setzen. Verworfenes nie löschen, sondern mit Grund markieren.
+- **Nach jeder fertiggestellten Idee `HANDOVER.md` aktualisieren** (vor dem letzten Commit/PR): „Stand“ (Version, Datum), „Was existiert“, „Nächster Schritt“ (erledigte Idee entfernen, Reihenfolge anpassen), „Noch im LAN zu prüfen“ und „Bekannte Grenzen“, falls betroffen. Kurz halten; Altes nach `docs/HANDOVER-Verlauf.md`, nichts löschen.
 
 ## Token sparen (wichtig)
 - Nicht das ganze Repo lesen. Erst `HANDOVER.md`, dann gezielt mit Grep/Glob nur die betroffenen Dateien.
