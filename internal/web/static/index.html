@@ -77,6 +77,8 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
    <small class="hint" id="thint">Teilbereich: <code>192.168.1.10-50</code> · Netz: <code>192.168.1.0/28</code> · einzeln: <code>192.168.1.5</code> · mehrere mit Komma trennen</small></div>
   <label>Ports <input class="p" id="ports" placeholder="leer = Standardliste"></label>
   <button class="btn" id="go">Scan starten</button>
+  <button type="button" id="prjsave" title="Scan-Ergebnis samt Eingaben als Datei sichern (ohne Zugangsdaten und Router-Daten)">Scan speichern</button>
+  <button type="button" id="prjload" title="Gespeicherten Scan aus einer Datei laden">Scan laden</button><input type="file" id="prjfile" accept=".json,application/json" hidden>
   <div class="prog" id="prog">Bereit.</div>
  </div>
  <div class="tiles" id="tiles"></div>
@@ -703,6 +705,32 @@ document.getElementById("exp").addEventListener("click", () => {
     document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
     msg.textContent = selected.size + " Geräte exportiert.";
   }).catch(() => { msg.className = "msg err"; msg.textContent = "Export fehlgeschlagen."; });
+});
+// Scan als Projektdatei speichern (I-035): Download ueber Blob wie bei den Exporten.
+document.getElementById("prjsave").addEventListener("click", () => {
+  const msg = document.getElementById("expmsg");
+  msg.className = "msg"; msg.textContent = "…";
+  fetch("/api/project/save").then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscan.json" });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    msg.textContent = "Scan gespeichert (ohne Zugangsdaten und Router-Daten).";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "Speichern fehlgeschlagen."; });
+});
+// Gespeicherten Scan laden: Datei waehlen, Inhalt an den Server schicken (der prueft alles).
+document.getElementById("prjload").addEventListener("click", () => document.getElementById("prjfile").click());
+document.getElementById("prjfile").addEventListener("change", async e => {
+  const f = e.target.files[0], msg = document.getElementById("expmsg");
+  e.target.value = "";
+  if (!f) return;
+  msg.className = "msg"; msg.textContent = "Lade …";
+  fetch("/api/project/load", { method: "POST", headers: { "Content-Type": "application/json" }, body: await f.text() })
+    .then(r => r.json().then(b => ({ ok: r.ok, b }))).then(({ ok, b }) => {
+      if (!ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
+      msg.textContent = b.hosts + " Geräte geladen (" + b.target + "). Router-/DHCP-/SNMP-Daten bei Bedarf neu abfragen.";
+      loadHosts(); poll();
+    }).catch(() => { msg.className = "msg err"; msg.textContent = "Laden fehlgeschlagen."; });
 });
 document.getElementById("selnone").addEventListener("click", () => { selected.clear(); updateSelection(); });
 

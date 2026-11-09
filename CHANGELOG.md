@@ -421,3 +421,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Zugangsdaten (Community, Benutzer, Passphrasen) nur im Anfragekörper, nie gespeichert, protokolliert oder zurückgegeben; die Felder werden nach dem Senden geleert.
 ### Hinweis
 - Nur mit Unit-Tests geprüft (Validierung, Aufbau des gosnmp-Clients); **an einem echten Switch mit v3 ungetestet** („Ich weiß es nicht“, ob alle Hersteller-Kombinationen funktionieren).
+
+## [0.28.0] – 2026-11-09
+### Hinzugefügt
+- **Scan speichern und laden** (I-035): Knöpfe „Scan speichern“ und „Scan laden“ in der Übersicht. Die Projektdatei (JSON, Download/Upload im Browser) enthält Geräteliste, Ziel, Zeitpunkt, Programmversion und die Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien). **Nicht** enthalten: Zugangsdaten, Router-/Mesh-/DHCP-/SNMP-Daten (nur im RAM; nach dem Laden bei Bedarf neu abfragen).
+- Beim Laden wird die Datei wie fremde Eingabe geprüft (Format/Version, max. 16 MiB und 5000 Geräte, gültige IPs ohne Doppelte, Steuerzeichen entfernt, Texte gekürzt, unbekannte Kategorien → Client, Web-Links aus IP/Ports neu berechnet). Eingaben aus der Datei werden zu den vorhandenen hinzugefügt. Gespeichert werden kann nur, wenn kein Scan läuft.
+### Hinweis
+- Grundlage für I-034 (Scan-Vergleich) und I-036 (Netzdokumentation). Nur mit Unit-Tests geprüft, Bedienung im Browser noch nicht von Sascha getestet.
