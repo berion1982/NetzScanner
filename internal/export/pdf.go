@@ -324,23 +324,31 @@ func wrapText(pdf *fpdf.Fpdf, s string, w float64) []string {
 
 // WritePDF schreibt die Topologie-Karte und die Geraeteliste aller uebergebenen Geraete als PDF.
 func WritePDF(w io.Writer, hosts []model.Host, meta Meta) error {
+	pdf := newPDF(meta)
+	drawTopologyPage(pdf, pdfTranslator(pdf), hosts, meta)
+	drawDeviceList(pdf, pdfTranslator(pdf), hosts)
+	return pdf.Output(w)
+}
+
+// newPDF legt ein A4-Querformat-Dokument mit Rand und Fusszeile (Version + Seitenzahl) an.
+func newPDF(meta Meta) *fpdf.Fpdf {
 	pdf := fpdf.New("L", "mm", "A4", "")
 	pdf.SetMargins(pdfMargin, pdfMargin, pdfMargin)
 	pdf.SetAutoPageBreak(false, pdfMargin)
-	tr := pdf.UnicodeTranslatorFromDescriptor("") // UTF-8 -> Windows-1252
-	t := func(s string) string { return pdfText(tr, s) }
-
-	// Fusszeile mit Programmversion und Seitenzahl.
+	t := pdfTranslator(pdf)
 	pdf.SetFooterFunc(func() {
 		pdf.SetY(-8)
 		pdf.SetFont("Helvetica", "", 7)
 		pdf.SetTextColor(110, 110, 110)
 		pdf.CellFormat(0, 4, t(meta.Version)+"  -  Seite "+strconv.Itoa(pdf.PageNo()), "", 0, "C", false, 0, "")
 	})
+	return pdf
+}
 
-	drawTopologyPage(pdf, t, hosts, meta)
-	drawDeviceList(pdf, t, hosts)
-	return pdf.Output(w)
+// pdfTranslator liefert die Textumwandlung UTF-8 -> Windows-1252 samt Ersatzzeichen (siehe pdfText).
+func pdfTranslator(pdf *fpdf.Fpdf) func(string) string {
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
+	return func(s string) string { return pdfText(tr, s) }
 }
 
 // pageTitle zeichnet Titel und Untertitel oben auf einer Seite.

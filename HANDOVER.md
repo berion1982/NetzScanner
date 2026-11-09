@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.30.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.31.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -15,13 +15,13 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Web** (`internal/web`): Server, Scan-API mit Live-Ergebnissen, Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien) mit Zwischenspeicher `eingaben.json` (`store.go`), SNMP-Topologie, Router (`router.go`), Mesh (`mesh.go`), Windows-DHCP (`dhcp.go`), Reservierungen (`reservations.go`), Projektdatei speichern/laden (`project.go`, I-035), Scan-Vergleich (`compare.go`, I-034), Befundliste (`findings.go`, Paket `internal/findings`, I-064), Export-API, Oberfläche `static/index.html`.
 - **Router** (`internal/router`): FRITZ!Box per TR-064 (Geräteliste, Info, WLAN, Mesh). Nur Loopback, ein Anmeldeversuch pro Klick, Zugangsdaten und Ergebnis nur im RAM.
 - **DHCP** (`internal/dhcp`): Windows-DHCP per WinRM (nur mit Testdaten geprüft).
-- **Export** (`internal/export`): CSV, HTML, Markdown, Topologie-PDF (`pdf.go`), Router-Info, Reservierungen – ohne Passwörter, mit CSV-Injection-Schutz.
+- **Export** (`internal/export`): CSV, HTML, Markdown, Topologie-PDF (`pdf.go`), Netzdokumentation-PDF (`netzdoku.go`, I-036: Deckblatt, Befunde, Karte, Liste), Router-Info, Reservierungen – ohne Passwörter, mit CSV-Injection-Schutz.
 - **Lizenz** (I-069, 0.27.0): AGPL-3.0-or-later (`LICENSE`). Fremdlizenzen in `internal/licenses/THIRD_PARTY_LICENSES.txt` (eingebettet, `--licenses`), erzeugt mit `scripts/third-party-licenses.sh` – **nach jeder Änderung an `go.mod` neu erzeugen** (Test schlägt sonst fehl). `build.sh` legt `LICENSE` + Fremdlizenzen nach `dist/`. Quellcode-Link in der Oberfläche (AGPL §13).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3, I-068 in 0.25.4, I-059 in 0.26.0, I-069 (Lizenz) in 0.27.0, I-053 in 0.28.0, I-035 in 0.29.0, I-034 in 0.30.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-036 → I-060/I-061):
-1. **I-036** Netzdokumentation als ein PDF → I-060/I-061 (Vorschlag); **I-020/I-022** Logins nach Wahl von Sascha.
+Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3, I-068 in 0.25.4, I-059 in 0.26.0, I-069 (Lizenz) in 0.27.0, I-053 in 0.28.0, I-035 in 0.29.0, I-034 in 0.30.0, I-036 in 0.31.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-060/I-061):
+1. **I-060/I-061** (Vorschlag; I-060 danach ins Deckblatt/PDF aufnehmen); **I-020/I-022** Logins nach Wahl von Sascha.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
@@ -40,6 +40,8 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - WAN-Status (0.25.4): Zeigt der Router-Info-Export jetzt „Connected“? Sonst `--diagnose-router <IP>` schicken. PDF-Zeile, die auf eine weitere Seite überläuft, ist nicht reproduziert (PDF schicken).
 - Kategorie „Mobilgeräte“ (0.26.0): Landen Handys/Tablets richtig (iOS per Port 62078, WLAN + Privacy-MAC + keine Ports)? Treffen sie fälschlich Laptops? Bitte Fehlzuordnungen melden.
 - Die Annahmen im Mesh-Parser (`node_1` = Vorgänger, Raten in kbit/s) sind nur an einer Box gesehen.
+
+- Netzdokumentation-PDF (0.31.0): Knopf im Reiter Topologie mit echten Daten – Deckblatt, Befundtabelle, Seitenumbrüche, Umlaute okay?
 
 ## Bekannte Grenzen
 - Zugangstoken (I-025) schützt nur vor zufälligem Zugriff: Verbindung bleibt HTTP, das Token ist im selben Netz mitlesbar. TLS ist offen.

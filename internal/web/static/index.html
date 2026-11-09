@@ -125,7 +125,10 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
   <div class="rename" id="snmpv3" style="display:none"><input id="snmpuser" placeholder="Benutzer" aria-label="SNMP-v3-Benutzer" autocomplete="off"><select id="snmpauth" aria-label="Authentifizierung"><option value="">keine Authentifizierung</option><option>SHA</option><option>SHA256</option><option>SHA384</option><option>SHA512</option><option>SHA224</option><option>MD5</option></select><input id="snmpauthpw" type="password" placeholder="Auth-Passphrase (min. 8)" aria-label="Authentifizierungs-Passphrase" autocomplete="off"><select id="snmppriv" aria-label="Verschlüsselung"><option value="">keine Verschlüsselung</option><option>AES</option><option>AES192</option><option>AES256</option><option>DES</option></select><input id="snmpprivpw" type="password" placeholder="Verschl.-Passphrase (min. 8)" aria-label="Verschlüsselungs-Passphrase" autocomplete="off"></div>
   <div class="rename"><button id="snmpbtn" class="ok" type="button">Lesen</button><button id="snmpclr" type="button">Zurücksetzen</button></div>
   <div class="msg" id="snmpmsg" style="white-space:pre-wrap"></div></details>
- <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><span id="pdfmsg" class="msg"></span></div>
+ <div class="row" style="margin-bottom:8px"><button id="pdfbtn" type="button">Topologie als PDF</button><button id="docbtn" type="button">Netzdokumentation (PDF)</button><span id="pdfmsg" class="msg"></span></div>
+ <details style="margin-bottom:8px"><summary>Angaben für das Deckblatt der Netzdokumentation</summary>
+  <div class="rename"><input id="doccust" maxlength="120" placeholder="Kunde / Auftraggeber" aria-label="Kunde" autocomplete="off"><input id="docnet" maxlength="120" placeholder="Netz / Standort" aria-label="Netz oder Standort" autocomplete="off"><input id="docauth" maxlength="120" placeholder="Bearbeiter" aria-label="Bearbeiter" autocomplete="off"></div>
+  <p style="color:var(--mut);margin:4px 0">Alles optional; wird nicht gespeichert. Die PDF enthält Deckblatt, Befunde, Karte und Geräteliste.</p></details>
  <div class="legend" id="legend" aria-label="Kategorien ein-/ausblenden"></div>
  <div class="row"><div class="card tbl"><svg id="map" viewBox="0 0 780 340"></svg></div>
  <aside class="card detail"><h3>Details</h3><p style="color:var(--mut)">Knoten anklicken.</p></aside></div>
@@ -527,6 +530,17 @@ document.getElementById("pdfbtn").addEventListener("click", () => {
     const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-topologie.pdf" });
     document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
     msg.textContent = "PDF gespeichert.";
+  }).catch(() => { msg.className = "msg err"; msg.textContent = "PDF-Export fehlgeschlagen."; });
+});
+document.getElementById("docbtn").addEventListener("click", () => {
+  const msg = document.getElementById("pdfmsg");
+  msg.className = "msg"; msg.textContent = "…";
+  post("/api/export/netzdoku-pdf", { customer: document.getElementById("doccust").value, network: document.getElementById("docnet").value, author: document.getElementById("docauth").value }).then(async r => {
+    if (!r.ok) { const b = await r.json(); msg.className = "msg err"; msg.textContent = b.error; return; }
+    const m = /filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "");
+    const a = el("a", { href: URL.createObjectURL(await r.blob()), download: m ? m[1] : "netzscanner-netzdokumentation.pdf" });
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    msg.textContent = "Netzdokumentation gespeichert.";
   }).catch(() => { msg.className = "msg err"; msg.textContent = "PDF-Export fehlgeschlagen."; });
 });
 function updateSelection() {
