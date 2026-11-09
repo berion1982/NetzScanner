@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.26.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.27.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -10,16 +10,17 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - Keine Einzelgeräte-Tabellen, keine Änderungen nur für ein einzelnes Netz (siehe `CLAUDE.md`).
 
 ## Was existiert
-- **Start:** `./dist/netzscanner` → http://127.0.0.1:8484. Optionen: `--demo`, `--listen`, `--token`/`--no-token` (I-025), `--allow-public`, `--diagnose <IP>`, `--diagnose-router <IP>`, `--diagnose-mesh <IP>`, `--data <Datei>`, `--no-save`, `--version`. Bauen: `scripts/build.sh` (7 Plattformen).
+- **Start:** `./dist/netzscanner` → http://127.0.0.1:8484. Optionen: `--demo`, `--listen`, `--token`/`--no-token` (I-025), `--allow-public`, `--diagnose <IP>`, `--diagnose-router <IP>`, `--diagnose-mesh <IP>`, `--data <Datei>`, `--no-save`, `--version`, `--licenses`. Bauen: `scripts/build.sh` (7 Plattformen).
 - **Scan** (`internal/scan`): Ziel-Parser (Bereiche/Listen), TCP-Portscan, ARP/MAC, Banner, OUI (IEEE-Liste), OS-Vermutung (`osguess.go`), Namenssuche (`names.go`: DNS, mDNS, NetBIOS, LLMNR, SSDP, TLS, Seitentitel), Kategorien (`category.go`), Gateway/Uplink (`gateway.go`), SNMP (`snmp.go`, `lldp.go`, `vendor.go`), `MarkSharedMAC` (⚠ gleiche MAC, `MirrorOf` = Spiegel eines Routers/Switches, zählt nicht als Netzwerkgerät; Hinweis steht in PDF und allen Exporten).
 - **Web** (`internal/web`): Server, Scan-API mit Live-Ergebnissen, Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien) mit Zwischenspeicher `eingaben.json` (`store.go`), SNMP-Topologie, Router (`router.go`), Mesh (`mesh.go`), Windows-DHCP (`dhcp.go`), Reservierungen (`reservations.go`), Befundliste (`findings.go`, Paket `internal/findings`, I-064), Export-API, Oberfläche `static/index.html`.
 - **Router** (`internal/router`): FRITZ!Box per TR-064 (Geräteliste, Info, WLAN, Mesh). Nur Loopback, ein Anmeldeversuch pro Klick, Zugangsdaten und Ergebnis nur im RAM.
 - **DHCP** (`internal/dhcp`): Windows-DHCP per WinRM (nur mit Testdaten geprüft).
 - **Export** (`internal/export`): CSV, HTML, Markdown, Topologie-PDF (`pdf.go`), Router-Info, Reservierungen – ohne Passwörter, mit CSV-Injection-Schutz.
+- **Lizenz** (I-069, 0.27.0): AGPL-3.0-or-later (`LICENSE`). Fremdlizenzen in `internal/licenses/THIRD_PARTY_LICENSES.txt` (eingebettet, `--licenses`), erzeugt mit `scripts/third-party-licenses.sh` – **nach jeder Änderung an `go.mod` neu erzeugen** (Test schlägt sonst fehl). `build.sh` legt `LICENSE` + Fremdlizenzen nach `dist/`. Quellcode-Link in der Oberfläche (AGPL §13).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3, I-068 in 0.25.4, I-059 in 0.26.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
+Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3, I-068 in 0.25.4, I-059 in 0.26.0, I-069 (Lizenz) in 0.27.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
 1. **I-053** SNMP v3 · **I-020/I-022** Logins.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
@@ -44,6 +45,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - Zufällige/lokale MACs haben keinen Hersteller. Geräte mit gleicher MAC werden nur markiert (⚠), nie ausgeblendet.
 - Offen: SNMP v3 (I-053), VLAN-Communities (I-054), andere Router, Kerberos/HTTPS für WinRM, Rest von I-013 (SMB/TTL), Verschlüsselung der Eingaben-Datei.
 - I-058 (Import/Zurückschreiben) wurde verworfen (Leitlinie: nur lesen).
+- Lizenz: Nutzungsbedingungen der IEEE für die eingebettete OUI-Liste (`internal/scan/data/oui.txt`) ungeprüft; ggf. Liste statt einbetten beim ersten Start laden.
 
 ## Roadmap
 | Version | Inhalt |

@@ -414,3 +414,14 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Erkennung aus allgemeinen Regeln, ohne Geräte-Tabellen: OS-Vermutung iOS/iPadOS (Port 62078) oder Android; zusätzlich eine **schwache** Vermutung „WLAN laut Router + zufällige (lokal administrierte) MAC + kein Hersteller + keine offenen Ports“. Die Nutzerwahl überschreibt wie bei den anderen Kategorien.
 ### Hinweis
 - Wie zuverlässig die schwache Regel ist, ist **ungeprüft** („Ich weiß es nicht“): Laptops mit zufälliger MAC können ebenfalls getroffen werden, Android ohne offene Ports wird ohne Router-Login nicht erkannt.
+
+## [0.27.0] – 2026-11-09
+### Hinzugefügt
+- **Lizenz: GNU AGPL v3 oder später** (I-069, Entscheidung Sascha): Datei `LICENSE` mit dem vollständigen Lizenztext (SPDX `AGPL-3.0-or-later`).
+- **Fremdlizenzen:** `scripts/third-party-licenses.sh` erzeugt `internal/licenses/THIRD_PARTY_LICENSES.txt` mit den Lizenztexten aller einkompilierten Bibliotheken und der Go-Standardbibliothek (MIT, BSD, Apache-2.0, MPL-2.0). Die Datei ist ins Programm eingebettet; `scripts/build.sh` legt sie zusammen mit `LICENSE` nach `dist/`.
+- **`--licenses`:** gibt Lizenzhinweis und alle Fremdlizenzen aus.
+- **Oberfläche:** Hilfe-Abschnitt „Lizenz“ und Link „Quellcode · AGPL“ neben der Versionsanzeige (AGPL Abschnitt 13: Nutzer im Netz bekommen den Quellcode angeboten). README mit Lizenz-Abschnitt.
+- Test prüft, dass jede direkte Abhängigkeit aus `go.mod` in der Fremdlizenz-Datei steht.
+### Hinweis
+- Die Nutzungsbedingungen der IEEE für die eingebettete OUI-Liste sind **ungeprüft** („Ich weiß es nicht“).
+- Keine Rechtsberatung; der deutsche Kurzhinweis ist eine Zusammenfassung, rechtlich gilt der englische Text in `LICENSE`.

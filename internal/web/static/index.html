@@ -69,7 +69,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 </style></head><body>
 <nav><b>▣ NetzScanner</b>
 <button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="find">Befunde</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
-<small id="ver">…</small></nav>
+<small id="ver">…</small> <small><a href="https://github.com/berion1982/NetzScanner" target="_blank" rel="noopener" title="Quellcode (Lizenz: AGPL v3)">Quellcode · AGPL</a></small></nav>
 <main>
 <section id="ov" class="on">
  <div class="card scanbar">
@@ -175,8 +175,10 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <tr><td><code>--diagnose IP</code></td><td>ein Gerät Schritt für Schritt prüfen (Ports, Namensquellen) und Ergebnis ausgeben – hilft, wenn ein Name oder Port fehlt</td></tr>
 <tr><td><code>--data DATEI</code> · <code>--no-save</code></td><td>Pfad der Datei für zwischengespeicherte Eingaben ändern · Speichern abschalten (dann nur Arbeitsspeicher)</td></tr>
  <tr><td><code>--version</code></td><td>Version und Builddatum; die Version steht auch unten in der Oberfläche und in den Exporten</td></tr>
+ <tr><td><code>--licenses</code></td><td>Lizenz des NetzScanners (AGPL v3) und die Lizenztexte aller eingebauten Fremdbibliotheken ausgeben</td></tr>
  </tbody></table>
  <h2>Hinweis</h2><p>Ziel eingeben (siehe oben), optional Ports (<code>22,80,8000-8100</code>) und „Scan starten“. Geräte werden per TCP-Verbindung gefunden, MAC-Adressen nur im eigenen Subnetz (aus der ARP-Tabelle). Geräte, die weder offene Ports noch ARP-Antwort liefern, bleiben unsichtbar. Standardmäßig sind nur private Netze erlaubt. Nur in Netzen scannen, für die du die Erlaubnis hast. Server startet nur lokal; für andere Rechner <code>--listen 0.0.0.0:8484</code>.</p>
+ <h2>Lizenz</h2><p>Der NetzScanner ist freie Software unter der <b>GNU Affero General Public License v3 oder später</b> (AGPL-3.0-or-later). Du darfst ihn kostenlos nutzen, weitergeben und verändern. Wer ihn verändert weitergibt oder über ein Netzwerk anbietet, muss den Quellcode unter derselben Lizenz offenlegen. Es gibt keine Garantie. Quellcode: <a href="https://github.com/berion1982/NetzScanner" target="_blank" rel="noopener">github.com/berion1982/NetzScanner</a>. Der volle Lizenztext liegt in <code>LICENSE</code>, die Lizenzen der eingebauten Fremdbibliotheken in <code>THIRD_PARTY_LICENSES.txt</code> (beide neben dem Programm) und per <code>--licenses</code>.</p>
 </section>
 </main>
 <script>

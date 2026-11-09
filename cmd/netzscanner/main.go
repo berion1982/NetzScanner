@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/berion1982/netzscanner/internal/licenses"
 	"github.com/berion1982/netzscanner/internal/router"
 	"github.com/berion1982/netzscanner/internal/scan"
 	"github.com/berion1982/netzscanner/internal/version"
@@ -20,6 +21,8 @@ import (
 
 func main() {
 	showVersion := flag.Bool("version", false, "Version und Builddatum anzeigen")
+	// Lizenzhinweis (AGPL-3.0-or-later) und Lizenztexte der Fremdbibliotheken ausgeben
+	showLicenses := flag.Bool("licenses", false, "Lizenz des NetzScanners (AGPL v3) und der Fremdbibliotheken anzeigen")
 	// Standard: nur lokal erreichbar (Sicherheit). Fuer Raspberry/headless
 	// bewusst oeffnen mit --listen 0.0.0.0:8484
 	listen := flag.String("listen", "127.0.0.1:8484", "Adresse:Port des Webservers")
@@ -40,6 +43,11 @@ func main() {
 
 	if *showVersion {
 		fmt.Println(version.String())
+		return
+	}
+	if *showLicenses {
+		// Nur ausgeben und beenden; startet keinen Server und scannt nichts.
+		fmt.Println(licenses.Full())
 		return
 	}
 
