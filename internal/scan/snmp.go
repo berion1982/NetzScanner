@@ -8,8 +8,10 @@ package scan
 // haengt - und damit auch, wie die Switches untereinander verbunden sind.
 //
 // Ehrlich zur Genauigkeit (Vermutung, keine Garantie):
-//   - SNMP v2c, "read-only"-Community. Die Community ist ein Zugangsdatum: Sie wird NIE
-//     protokolliert, NIE gespeichert und NIE ausgegeben. v2c ist im Netz unverschluesselt.
+//   - SNMP v2c ("read-only"-Community) oder SNMP v3 (Benutzer, optional Authentifizierung und
+//     Verschluesselung, I-053). Community und v3-Passphrasen sind Zugangsdaten: Sie werden NIE
+//     protokolliert, NIE gespeichert und NIE ausgegeben. v2c ist im Netz unverschluesselt;
+//     v3 mit Verschluesselung ("authPriv") schuetzt Zugangsdaten und Antworten.
 //   - Hinter einem nicht abgefragten Switch/Access-Point sieht man nur den Port davor; alle
 //     Geraete dahinter erscheinen am selben Port. Die Karte zeigt sie dann am naechsten
 //     abgefragten Switch.
@@ -98,14 +100,95 @@ func NormMAC(s string) string {
 	return b.String()
 }
 
-// QuerySwitch liest per SNMP v2c Name, Beschreibung und MAC-Adresstabelle eines Switches.
-// Fehlermeldungen enthalten bewusst weder Community noch Rohdaten.
-func QuerySwitch(ctx context.Context, ip, community string) (SwitchData, error) {
-	data := SwitchData{IP: ip}
+// SNMPCreds sind die Zugangsdaten fuer eine SNMP-Abfrage. Wird User gesetzt, gilt SNMP v3,
+// sonst v2c mit Community. Alle Felder sind geheim und duerfen nie geloggt werden.
+type SNMPCreds struct {
+	Community string // v2c: Nur-Lesen-Community
+	User      string // v3: Benutzername (USM)
+	AuthProto string // v3: "" (keine Authentifizierung), "MD5", "SHA", "SHA224", "SHA256", "SHA384", "SHA512"
+	AuthPass  string // v3: Passphrase zur Authentifizierung
+	PrivProto string // v3: "" (keine Verschluesselung), "DES", "AES", "AES192", "AES256"
+	PrivPass  string // v3: Passphrase zur Verschluesselung
+}
+
+// IsV3 sagt, ob SNMP v3 verwendet wird.
+func (c SNMPCreds) IsV3() bool { return c.User != "" }
+
+// Protokoll-Tabellen (Name aus der Oberflaeche -> gosnmp-Konstante).
+var (
+	snmpAuthProtos = map[string]gosnmp.SnmpV3AuthProtocol{
+		"MD5": gosnmp.MD5, "SHA": gosnmp.SHA, "SHA224": gosnmp.SHA224,
+		"SHA256": gosnmp.SHA256, "SHA384": gosnmp.SHA384, "SHA512": gosnmp.SHA512,
+	}
+	snmpPrivProtos = map[string]gosnmp.SnmpV3PrivProtocol{
+		"DES": gosnmp.DES, "AES": gosnmp.AES, "AES192": gosnmp.AES192, "AES256": gosnmp.AES256,
+	}
+)
+
+// Validate prueft die Zugangsdaten auf Vollstaendigkeit (ohne die Werte zu nennen).
+// Regeln: v3 braucht einen Benutzer; Verschluesselung setzt Authentifizierung voraus (SNMP-Norm);
+// ein Protokoll braucht eine Passphrase von mindestens 8 Zeichen (RFC 3414).
+func (c SNMPCreds) Validate() error {
+	if !c.IsV3() {
+		if c.Community == "" {
+			return fmt.Errorf("Community fehlt")
+		}
+		return nil
+	}
+	if c.AuthProto != "" {
+		if _, ok := snmpAuthProtos[c.AuthProto]; !ok {
+			return fmt.Errorf("unbekanntes Authentifizierungs-Protokoll")
+		}
+		if len(c.AuthPass) < 8 {
+			return fmt.Errorf("Authentifizierungs-Passphrase: mindestens 8 Zeichen")
+		}
+	}
+	if c.PrivProto != "" {
+		if _, ok := snmpPrivProtos[c.PrivProto]; !ok {
+			return fmt.Errorf("unbekanntes Verschlüsselungs-Protokoll")
+		}
+		if c.AuthProto == "" {
+			return fmt.Errorf("Verschlüsselung setzt Authentifizierung voraus")
+		}
+		if len(c.PrivPass) < 8 {
+			return fmt.Errorf("Verschlüsselungs-Passphrase: mindestens 8 Zeichen")
+		}
+	}
+	return nil
+}
+
+// newSNMP baut den gosnmp-Client fuer v2c oder v3 (reine Logik, kein Netzwerk).
+func newSNMP(ctx context.Context, ip string, c SNMPCreds) *gosnmp.GoSNMP {
 	g := &gosnmp.GoSNMP{
-		Target: ip, Port: 161, Community: community, Version: gosnmp.Version2c,
+		Target: ip, Port: 161, Version: gosnmp.Version2c, Community: c.Community,
 		Timeout: snmpTimeout, Retries: snmpRetries, MaxRepetitions: snmpRepetitions, Context: ctx,
 	}
+	if !c.IsV3() {
+		return g
+	}
+	g.Version, g.Community = gosnmp.Version3, ""
+	g.SecurityModel = gosnmp.UserSecurityModel
+	usm := &gosnmp.UsmSecurityParameters{UserName: c.User}
+	g.MsgFlags = gosnmp.NoAuthNoPriv
+	if c.AuthProto != "" {
+		usm.AuthenticationProtocol = snmpAuthProtos[c.AuthProto]
+		usm.AuthenticationPassphrase = c.AuthPass
+		g.MsgFlags = gosnmp.AuthNoPriv
+	}
+	if c.PrivProto != "" {
+		usm.PrivacyProtocol = snmpPrivProtos[c.PrivProto]
+		usm.PrivacyPassphrase = c.PrivPass
+		g.MsgFlags = gosnmp.AuthPriv
+	}
+	g.SecurityParameters = usm
+	return g
+}
+
+// QuerySwitch liest per SNMP (v2c oder v3) Name, Beschreibung und MAC-Adresstabelle eines Switches.
+// Fehlermeldungen enthalten bewusst keine Zugangsdaten und keine Rohdaten.
+func QuerySwitch(ctx context.Context, ip string, creds SNMPCreds) (SwitchData, error) {
+	data := SwitchData{IP: ip}
+	g := newSNMP(ctx, ip, creds)
 	if err := g.Connect(); err != nil {
 		return data, fmt.Errorf("Verbindung nicht möglich")
 	}
@@ -114,7 +197,7 @@ func QuerySwitch(ctx context.Context, ip, community string) (SwitchData, error) 
 	// 1) Name und Beschreibung - dient auch als Test, ob Community/SNMP passen.
 	res, err := g.Get([]string{oidSysName, oidSysDescr, oidSysObjectID})
 	if err != nil || len(res.Variables) < 3 {
-		return data, fmt.Errorf("keine Antwort (Community falsch oder SNMP am Gerät aus?)")
+		return data, fmt.Errorf("keine Antwort (Zugangsdaten falsch oder SNMP am Gerät aus?)")
 	}
 	data.SysName = sanitize(pduString(res.Variables[0]))
 	data.SysDescr = sanitize(pduString(res.Variables[1]))

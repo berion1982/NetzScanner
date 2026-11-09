@@ -414,3 +414,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Erkennung aus allgemeinen Regeln, ohne Geräte-Tabellen: OS-Vermutung iOS/iPadOS (Port 62078) oder Android; zusätzlich eine **schwache** Vermutung „WLAN laut Router + zufällige (lokal administrierte) MAC + kein Hersteller + keine offenen Ports“. Die Nutzerwahl überschreibt wie bei den anderen Kategorien.
 ### Hinweis
 - Wie zuverlässig die schwache Regel ist, ist **ungeprüft** („Ich weiß es nicht“): Laptops mit zufälliger MAC können ebenfalls getroffen werden, Android ohne offene Ports wird ohne Router-Login nicht erkannt.
+
+## [0.27.0] – 2026-11-09
+### Hinzugefügt
+- **SNMP v3** (I-053) für die Switch-Abfrage: Auswahl „SNMP v2c / v3“ im Topologie-Reiter. v3 mit Benutzer und wahlweise Authentifizierung (SHA, SHA224/256/384/512, MD5) und Verschlüsselung (AES, AES192, AES256, DES); Stufen noAuthNoPriv, authNoPriv, authPriv. Verschlüsselung setzt Authentifizierung voraus, Passphrasen mindestens 8 Zeichen (Prüfung vor dem Senden).
+- Zugangsdaten (Community, Benutzer, Passphrasen) nur im Anfragekörper, nie gespeichert, protokolliert oder zurückgegeben; die Felder werden nach dem Senden geleert.
+### Hinweis
+- Nur mit Unit-Tests geprüft (Validierung, Aufbau des gosnmp-Clients); **an einem echten Switch mit v3 ungetestet** („Ich weiß es nicht“, ob alle Hersteller-Kombinationen funktionieren).

@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.26.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.27.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -19,14 +19,15 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3, I-068 in 0.25.4, I-059 in 0.26.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
-1. **I-053** SNMP v3 · **I-020/I-022** Logins.
+Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1, I-067 in 0.25.2, I-066 in 0.25.3, I-068 in 0.25.4, I-059 in 0.26.0, I-053 in 0.27.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
+1. **I-035** Scan speichern/laden → I-034 Vergleich → I-060/I-061 (Vorschlag); **I-020/I-022** Logins nach Wahl von Sascha.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
 - Windows-DHCP (WinRM) und Reiter „Reservierungen“ – nur mit Testdaten geprüft, braucht einen Windows Server (DHCP-Rolle, WinRM, Benutzer in „DHCP-Benutzer“ + „Remoteverwaltungsbenutzer“). Bei Fehlern die Meldung schicken.
 - SNMP-Topologie und LLDP an einem verwalteten Switch (SNMP v2c, LLDP am Gerät an): stimmen Ports/Uplinks?
+- SNMP v3 (0.27.0): Switch-Abfrage mit v3 (authPriv) gegen einen echten verwalteten Switch testen; bei Fehlern Meldung und Protokoll-Kombination nennen.
 - Hersteller-Erkennung per `sysObjectID` (`vendor.go`): Tabelle ungeprüft.
 - Kategorie-Vermutung und OS-Vermutung bei weiteren Geräten; fehlende oder falsche Geräte melden.
 - MAC-Hinweis (0.25.1): Erscheint die Spalte „Hinweis“ in PDF/CSV, und zählen Scheineinträge des Routers nicht mehr als Netzwerkgeräte?
@@ -42,7 +43,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - FRITZ!Box-Reservierungen sind per TR-064 **nicht auslesbar** (`AddressSource` Static ≠ feste Zuweisung). Reiter „Reservierungen“ = nur Windows-DHCP.
 - Router-Login erst **nach Scan-Ende** (vorher fehlen die MACs); Router-/Mesh-Daten nur im RAM → nach Neustart neu anmelden. Nach mehreren Logins kann eine kurze Sperre greifen (ungeprüft).
 - Zufällige/lokale MACs haben keinen Hersteller. Geräte mit gleicher MAC werden nur markiert (⚠), nie ausgeblendet.
-- Offen: SNMP v3 (I-053), VLAN-Communities (I-054), andere Router, Kerberos/HTTPS für WinRM, Rest von I-013 (SMB/TTL), Verschlüsselung der Eingaben-Datei.
+- Offen: VLAN-Communities (I-054), andere Router, Kerberos/HTTPS für WinRM, Rest von I-013 (SMB/TTL), Verschlüsselung der Eingaben-Datei.
 - I-058 (Import/Zurückschreiben) wurde verworfen (Leitlinie: nur lesen).
 
 ## Roadmap
@@ -60,8 +61,8 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 | 0.19.0–0.20.0 ✅ | Windows-DHCP per WinRM, Reiter „Reservierungen“ (I-056/I-057) |
 | 0.21.0–0.22.x ✅ | `--diagnose-router`, Reservierungen der Box als nicht machbar geklärt |
 | 0.23.0–0.23.7 ✅ | Mesh-Topologie (I-055 c), Router-Login-Meldungen, Linien in Karte und PDF, ⚠ „MAC mehrfach“ |
-| 0.24.0–0.26.0 ✅ | Zugangstoken (I-025), Befundliste (I-064), MAC-Hinweis in Exporten (I-065), Mesh-Zuordnung abgesichert (I-067), Kennungs-Namen (I-066), WAN-Status (I-068), Kategorie Mobilgeräte (I-059) |
-| Plan | I-053 → I-020/I-022 |
+| 0.24.0–0.27.0 ✅ | Zugangstoken (I-025), Befundliste (I-064), MAC-Hinweis in Exporten (I-065), Mesh-Zuordnung abgesichert (I-067), Kennungs-Namen (I-066), WAN-Status (I-068), Kategorie Mobilgeräte (I-059), SNMP v3 (I-053) |
+| Plan | I-035 → I-034 → I-060/I-061 → I-020/I-022 |
 | später (Plan) | SNMP sysName, ICMP mit Rechten, SMB/TTL, JSON/XLSX-Export, Scan-Vergleich, Eingaben-Datei verschlüsseln |
 
 „Plan“ = Vorschlag; Sascha entscheidet die Reihenfolge, Details in `IDEAS.md`.

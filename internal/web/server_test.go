@@ -409,6 +409,11 @@ func TestSNMPValidation(t *testing.T) {
 		`{"community":"geheim","targets":["8.8.8.8"]}`:           400, // nicht in der Geraeteliste
 		`{"community":"gehäim","targets":["192.168.1.1"]}`:       400, // Nicht-ASCII
 		`{"community":"geheim","targets":["1.1.1.1","2.2.2.2"]}`: 400,
+		// SNMP v3 (I-053): Passphrase zu kurz / Verschluesselung ohne Authentifizierung / unbekanntes Protokoll
+		`{"user":"geheim","authProto":"SHA","authPass":"kurz","targets":["192.168.1.1"]}`:                                          400,
+		`{"user":"geheim","privProto":"AES","privPass":"geheimgeheim","targets":["192.168.1.1"]}`:                                  400,
+		`{"user":"geheim","authProto":"XYZ","authPass":"geheimgeheim","targets":["192.168.1.1"]}`:                                  400,
+		`{"user":"geheim","authProto":"SHA","authPass":"geheimgeheim","privProto":"AES","privPass":"x","targets":["192.168.1.1"]}`: 400,
 	}
 	for body, want := range cases {
 		rec := postJSON(h, "/api/topology/snmp", body)
