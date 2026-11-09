@@ -216,6 +216,12 @@ func (s *server) viewLocked() []model.Host {
 		}
 	}
 	scan.MarkSharedMAC(hosts) // gleiche MAC bei mehreren IPs: nur Hinweis, nichts ausblenden
+	for i := range hosts {
+		// Scheineintraege des Routers (I-065): Kategorie ohne Router-Hersteller neu vermuten; Nutzerwahl bleibt.
+		if hosts[i].MirrorOf != "" && !hosts[i].CategoryManual {
+			hosts[i].Category = scan.Categorize(hosts[i])
+		}
+	}
 	return hosts
 }
 

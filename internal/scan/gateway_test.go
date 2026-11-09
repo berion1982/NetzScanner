@@ -31,3 +31,26 @@ func TestMarkSharedMAC(t *testing.T) {
 		}
 	}
 }
+
+// TestMirrorOfRouterMAC: Ein Eintrag mit der MAC eines Routers/Switches wird als Spiegel markiert und
+// zaehlt trotz Router-Hersteller nicht als Netzwerkgeraet; der Router selbst bleibt Netzwerkgeraet.
+func TestMirrorOfRouterMAC(t *testing.T) {
+	hosts := []model.Host{
+		{IP: "10.0.0.1", MAC: "02:00:00:00:00:01", Vendor: "AVM", Role: "router"},
+		{IP: "10.0.0.5", MAC: "02:00:00:00:00:01", Vendor: "AVM"},
+		{IP: "10.0.0.6", MAC: "02:00:00:00:00:02", Vendor: "AVM"},
+	}
+	MarkSharedMAC(hosts)
+	if hosts[0].MirrorOf != "" || hosts[2].MirrorOf != "" {
+		t.Errorf("Router/eigene MAC duerfen kein MirrorOf haben: %q %q", hosts[0].MirrorOf, hosts[2].MirrorOf)
+	}
+	if hosts[1].MirrorOf != "10.0.0.1" {
+		t.Fatalf("MirrorOf = %q, erwartet 10.0.0.1", hosts[1].MirrorOf)
+	}
+	if got := Categorize(hosts[1]); got == model.CatNetwork {
+		t.Errorf("Spiegeleintrag darf kein Netzwerkgeraet sein, ist %q", got)
+	}
+	if got := Categorize(hosts[0]); got != model.CatNetwork {
+		t.Errorf("Router muss Netzwerkgeraet bleiben, ist %q", got)
+	}
+}

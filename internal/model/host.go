@@ -149,6 +149,7 @@ type Host struct {
 	WifiSignal     int       `json:"wifiSignal,omitempty"`     // Signalstaerke in Prozent laut Router (0 = unbekannt)
 	WifiSpeed      int       `json:"wifiSpeed,omitempty"`      // WLAN-Verbindungsgeschwindigkeit in Mbit/s laut Router
 	SameMAC        []string  `json:"sameMac,omitempty"`        // andere IPs mit derselben MAC (Hinweis: im Router gegenpruefen, siehe scan.MarkSharedMAC)
+	MirrorOf       string    `json:"mirrorOf,omitempty"`       // IP des Routers/Switches, dessen MAC dieses Geraet (vermutlich als Scheineintrag) teilt (I-065)
 	MeshLink       string    `json:"meshLink,omitempty"`       // Mesh der FRITZ!Box: Art/Geschwindigkeit/Signal der Verbindung zum Uplink (I-055 c)
 	UplinkPort     string    `json:"uplinkPort,omitempty"`     // Topologie per SNMP: Port am Uplink-Switch (z. B. "Gi1/0/5")
 	UplinkShared   int       `json:"uplinkShared,omitempty"`   // Topologie per SNMP: wie viele MACs an diesem Port gesehen wurden (>1 = Switch/AP dahinter)
@@ -194,4 +195,18 @@ func (h *Host) FillWebLinks() {
 			Label: fmt.Sprintf("%s :%d", scheme, n),
 		})
 	}
+}
+
+// SameMACNote liefert den Exporthinweis zu gleicher MAC (leer, wenn die MAC eindeutig ist).
+// Er steht in PDF, CSV, Markdown und HTML, damit der Hinweis aus der Oberflaeche (⚠ MAC mehrfach)
+// nicht verloren geht. Es wird nichts ausgeblendet, der Text ist nur ein Hinweis zum Gegenpruefen.
+func (h Host) SameMACNote() string {
+	if len(h.SameMAC) == 0 {
+		return ""
+	}
+	note := "MAC mehrfach: " + strings.Join(h.SameMAC, ", ")
+	if h.MirrorOf != "" {
+		note += " (gleiche MAC wie " + h.MirrorOf + ", vermutlich Scheineintrag)"
+	}
+	return note
 }

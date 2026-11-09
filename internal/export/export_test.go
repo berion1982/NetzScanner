@@ -24,7 +24,7 @@ func TestCSVStandard(t *testing.T) {
 	if err := WriteCSV(&b, sample(), false); err != nil {
 		t.Fatal(err)
 	}
-	want := "Benutzername,IP,MAC,Hersteller (Chip),Gerätename,Standort,Offene Ports,Kategorie,Betriebssystem (Vermutung)\r\nadmin,192.168.1.10,00:11:32:AA:BB:CC,Synology,nas-01,\"Büro, Raum 2\",\"22, 5000\",Server,Linux (Synology DSM)\r\n"
+	want := "Benutzername,IP,MAC,Hersteller (Chip),Gerätename,Standort,Offene Ports,Kategorie,Betriebssystem (Vermutung),Hinweis\r\nadmin,192.168.1.10,00:11:32:AA:BB:CC,Synology,nas-01,\"Büro, Raum 2\",\"22, 5000\",Server,Linux (Synology DSM),\r\n"
 	if b.String() != want {
 		t.Errorf("CSV:\n%q\nerwartet:\n%q", b.String(), want)
 	}
@@ -145,5 +145,17 @@ func TestRouterExport(t *testing.T) {
 	}
 	if strings.Contains(md.String(), "<b>") || !strings.Contains(cs.String(), "'=EVIL|<b>") {
 		t.Errorf("Maskierung/Formelschutz fehlt:\nMD: %s\nCSV: %s", md.String(), cs.String())
+	}
+}
+
+// TestCSVSameMACNote: Gleiche MAC erscheint als Hinweis in der CSV (I-065); nichts wird ausgeblendet.
+func TestCSVSameMACNote(t *testing.T) {
+	hosts := []model.Host{{IP: "10.0.0.5", MAC: "02:00:00:00:00:01", SameMAC: []string{"10.0.0.1"}, MirrorOf: "10.0.0.1"}}
+	var b bytes.Buffer
+	if err := WriteCSV(&b, hosts, false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(b.String(), "MAC mehrfach: 10.0.0.1 (gleiche MAC wie 10.0.0.1") {
+		t.Errorf("Hinweis fehlt: %q", b.String())
 	}
 }

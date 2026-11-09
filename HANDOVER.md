@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.25.0 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.25.1 · **Datum:** 2026-11-09 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -11,7 +11,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 
 ## Was existiert
 - **Start:** `./dist/netzscanner` → http://127.0.0.1:8484. Optionen: `--demo`, `--listen`, `--token`/`--no-token` (I-025), `--allow-public`, `--diagnose <IP>`, `--diagnose-router <IP>`, `--diagnose-mesh <IP>`, `--data <Datei>`, `--no-save`, `--version`. Bauen: `scripts/build.sh` (7 Plattformen).
-- **Scan** (`internal/scan`): Ziel-Parser (Bereiche/Listen), TCP-Portscan, ARP/MAC, Banner, OUI (IEEE-Liste), OS-Vermutung (`osguess.go`), Namenssuche (`names.go`: DNS, mDNS, NetBIOS, LLMNR, SSDP, TLS, Seitentitel), Kategorien (`category.go`), Gateway/Uplink (`gateway.go`), SNMP (`snmp.go`, `lldp.go`, `vendor.go`), `MarkSharedMAC` (⚠ gleiche MAC).
+- **Scan** (`internal/scan`): Ziel-Parser (Bereiche/Listen), TCP-Portscan, ARP/MAC, Banner, OUI (IEEE-Liste), OS-Vermutung (`osguess.go`), Namenssuche (`names.go`: DNS, mDNS, NetBIOS, LLMNR, SSDP, TLS, Seitentitel), Kategorien (`category.go`), Gateway/Uplink (`gateway.go`), SNMP (`snmp.go`, `lldp.go`, `vendor.go`), `MarkSharedMAC` (⚠ gleiche MAC, `MirrorOf` = Spiegel eines Routers/Switches, zählt nicht als Netzwerkgerät; Hinweis steht in PDF und allen Exporten).
 - **Web** (`internal/web`): Server, Scan-API mit Live-Ergebnissen, Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien) mit Zwischenspeicher `eingaben.json` (`store.go`), SNMP-Topologie, Router (`router.go`), Mesh (`mesh.go`), Windows-DHCP (`dhcp.go`), Reservierungen (`reservations.go`), Befundliste (`findings.go`, Paket `internal/findings`, I-064), Export-API, Oberfläche `static/index.html`.
 - **Router** (`internal/router`): FRITZ!Box per TR-064 (Geräteliste, Info, WLAN, Mesh). Nur Loopback, ein Anmeldeversuch pro Klick, Zugangsdaten und Ergebnis nur im RAM.
 - **DHCP** (`internal/dhcp`): Windows-DHCP per WinRM (nur mit Testdaten geprüft).
@@ -19,11 +19,10 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
-1. **I-065** Gleiche MAC in PDF/Exporten kennzeichnen, nicht als eigene Netzwerkgeräte zählen.
-2. **I-067** Mesh-Zuordnung prüfen (Gruppe hing im PDF unter einem Smartphone).
-3. **I-066** Kennungs-Namen besser abwerten · **I-068** Status „Connecting“ + PDF-Kleinigkeiten.
-4. **I-059** Kategorie „Mobilgeräte“ · **I-053** SNMP v3 · **I-020/I-022** Logins.
+Reihenfolge (I-025 erledigt in 0.24.0, I-064 in 0.25.0, I-065 in 0.25.1; Befunde aus dem Test von 0.23.7 stehen als Ideen in `IDEAS.md`; danach laut Vorschlag I-035 → I-034 → I-060/I-061):
+1. **I-067** Mesh-Zuordnung prüfen (Gruppe hing im PDF unter einem Smartphone).
+2. **I-066** Kennungs-Namen besser abwerten · **I-068** Status „Connecting“ + PDF-Kleinigkeiten.
+3. **I-059** Kategorie „Mobilgeräte“ · **I-053** SNMP v3 · **I-020/I-022** Logins.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
@@ -32,6 +31,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - SNMP-Topologie und LLDP an einem verwalteten Switch (SNMP v2c, LLDP am Gerät an): stimmen Ports/Uplinks?
 - Hersteller-Erkennung per `sysObjectID` (`vendor.go`): Tabelle ungeprüft.
 - Kategorie-Vermutung und OS-Vermutung bei weiteren Geräten; fehlende oder falsche Geräte melden.
+- MAC-Hinweis (0.25.1): Erscheint die Spalte „Hinweis“ in PDF/CSV, und zählen Scheineinträge des Routers nicht mehr als Netzwerkgeräte?
 - Reiter „Befunde“ (0.25.0): Sinnvolle Schweregrade/Texte? Zu viele oder fehlende Regeln melden.
 - Zugangstoken (0.24.0): Login im echten Browser über `--listen 0.0.0.0:8484` und `/?token=…` testen (bisher nur Unit-Test und curl).
 - Die Annahmen im Mesh-Parser (`node_1` = Vorgänger, Raten in kbit/s) sind nur an einer Box gesehen.
@@ -59,8 +59,8 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 | 0.19.0–0.20.0 ✅ | Windows-DHCP per WinRM, Reiter „Reservierungen“ (I-056/I-057) |
 | 0.21.0–0.22.x ✅ | `--diagnose-router`, Reservierungen der Box als nicht machbar geklärt |
 | 0.23.0–0.23.7 ✅ | Mesh-Topologie (I-055 c), Router-Login-Meldungen, Linien in Karte und PDF, ⚠ „MAC mehrfach“ |
-| 0.24.0–0.25.0 ✅ | Zugangstoken (I-025), Befundliste (I-064) |
-| Plan | I-065 → I-067 → I-066/I-068 → I-059 → I-053 → I-020/I-022 |
+| 0.24.0–0.25.1 ✅ | Zugangstoken (I-025), Befundliste (I-064), MAC-Hinweis in Exporten (I-065) |
+| Plan | I-067 → I-066/I-068 → I-059 → I-053 → I-020/I-022 |
 | später (Plan) | SNMP sysName, ICMP mit Rechten, SMB/TTL, JSON/XLSX-Export, Scan-Vergleich, Eingaben-Datei verschlüsseln |
 
 „Plan“ = Vorschlag; Sascha entscheidet die Reihenfolge, Details in `IDEAS.md`.

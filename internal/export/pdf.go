@@ -542,7 +542,7 @@ var pdfCols = []struct {
 	title string
 	w     float64
 }{
-	{"Name", 40}, {"IP", 26}, {"MAC", 32}, {"Hersteller (Chip)", 36}, {"Kategorie", 22}, {"System (Vermutung)", 44}, {"Standort", 32}, {"Offene Ports", 45},
+	{"Name", 36}, {"IP", 26}, {"MAC", 30}, {"Hersteller (Chip)", 32}, {"Kategorie", 22}, {"System (Vermutung)", 38}, {"Standort", 28}, {"Offene Ports", 35}, {"Hinweis", 30},
 }
 
 // drawDeviceList zeichnet die Geraeteliste ab Seite 2; Zeilen mit langem Text werden umgebrochen.
@@ -564,7 +564,7 @@ func drawDeviceList(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host) {
 	header()
 	pdf.SetFont("Helvetica", "", 8)
 	for _, h := range hosts {
-		cells := []string{h.Name, h.IP, h.MAC, h.Vendor, model.CategoryLabel(h.Category), h.OS, h.Location, portsText(h)}
+		cells := []string{h.Name, h.IP, h.MAC, h.Vendor, model.CategoryLabel(h.Category), h.OS, h.Location, portsText(h), h.SameMACNote()}
 		// Zeilenhoehe = hoechste Zelle (Text je Spalte umbrechen).
 		lines := make([][]string, len(cells))
 		maxLines := 1
