@@ -461,3 +461,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Nur lesend (Schnittstellen, `/etc/resolv.conf` bzw. `/run/systemd/resolve/resolv.conf`, unter Windows PowerShell), kein Netzverkehr, keine Rechte nötig. Nicht ermittelbare Angaben bleiben leer; Loopback-Stubs (z. B. 127.0.0.53) gelten nicht als DNS-Server.
 ### Grenzen
 - Die Prüfung auf mehrere DHCP-Server ist als I-070 ausgelagert (offen). Unter Windows und macOS nur nach Dokumentation umgesetzt, nicht getestet; Linux nur mit Unit-Tests.
+
+## [0.33.0] – 2026-11-09
+### Hinzugefügt
+- **AD-Domäne und Domänencontroller ohne Login erkennen** (I-061): Ist Port 389 (LDAP) offen, liest der Scan den `rootDSE` anonym aus (`internal/scan/ldap.go`, eigener minimaler BER-Leser, keine neue Bibliothek). Das Detail-Panel zeigt beim Port 389 z. B. „LDAP: Domäne corp.example.com · Server dc1.corp.example.com · Funktionsebene 2016“. Nur eine lesende Suchanfrage, kein Bind, keine Zugangsdaten, nichts wird geschrieben.
+- Bei Nicht-AD-LDAP-Servern wird, falls vorhanden, der erste Namenskontext als „Basis …“ gezeigt. Antworten werden auf 64 KB begrenzt, Texte bereinigt.
+### Grenzen
+- **Ungeprüft:** Ob ein echter Domänencontroller den anonymen Abruf erlaubt (manche Server oder Richtlinien verweigern ihn) – dann bleibt nur die Port-Anzeige „ldap“. Nur mit Unit-Tests (Beispielantwort, kaputte Daten) geprüft, noch nicht an einem echten DC. LDAPS (636) wird nicht abgefragt.
