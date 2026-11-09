@@ -99,11 +99,8 @@ func (c *client) readInfo(ctx context.Context) Info {
 		note("Geräteinfo", err)
 	}
 
-	// WAN: erst IP-Anschluss, sonst PPP (DSL mit PPPoE).
-	r, err := c.call(ctx, svcWANIP, "GetInfo", "")
-	if err != nil {
-		r, err = c.call(ctx, svcWANPPP, "GetInfo", "")
-	}
+	// WAN: beide Dienste (IP-Anschluss und PPP) abfragen und den verbundenen waehlen (I-068).
+	r, err := c.readWAN(ctx)
 	if err == nil {
 		info.WANStatus = clean(r["NewConnectionStatus"], 30)
 		info.WANUptime = atoi64(r["NewUptime"])
@@ -139,6 +136,36 @@ func (c *client) readInfo(ctx context.Context) Info {
 		info.WLANs = append(info.WLANs, w)
 	}
 	return info
+}
+
+// readWAN fragt WANIPConnection und WANPPPConnection ab. Manche Boxen antworten bei beiden
+// Diensten, aber nur einer ist die echte Verbindung; der andere meldet z. B. "Connecting"
+// oder "Unconfigured". Gewaehlt wird daher der Dienst mit Status "Connected"; gibt es keinen,
+// der erste, der ueberhaupt geantwortet hat (dann steht dessen echter Status in der Anzeige).
+// Ist nichts lesbar, kommt der Fehler des letzten Versuchs zurueck.
+func (c *client) readWAN(ctx context.Context) (map[string]string, error) {
+	var first map[string]string
+	var lastErr error
+	for _, svc := range []service{svcWANIP, svcWANPPP} {
+		r, err := c.call(ctx, svc, "GetInfo", "")
+		if err != nil {
+			if errors.Is(err, ErrAuth) {
+				return nil, err // falsche Anmeldung: nicht weiter probieren
+			}
+			lastErr = err
+			continue
+		}
+		if strings.EqualFold(strings.TrimSpace(r["NewConnectionStatus"]), "Connected") {
+			return r, nil
+		}
+		if first == nil {
+			first = r
+		}
+	}
+	if first != nil {
+		return first, nil
+	}
+	return nil, lastErr
 }
 
 // readWLAN liest eine WLAN-Schnittstelle samt angemeldeter Clients. Es wird nur GetInfo,

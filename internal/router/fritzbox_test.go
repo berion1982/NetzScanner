@@ -19,6 +19,8 @@ type fakeBox struct {
 	failures   int
 	forbidden  bool     // true, sobald eine verbotene Aktion (Schluessel lesen / Setzen) aufgerufen wurde
 	entries    []string // Rohwerte: ip|mac|name|iface|active
+	ipStatus   string   // Status von WANIPConnection (leer = "Connected")
+	pppStatus  string   // Status von WANPPPConnection (leer = Dienst nicht vorhanden)
 }
 
 func md5hex(s string) string { h := md5.Sum([]byte(s)); return hex.EncodeToString(h[:]) }
@@ -63,7 +65,14 @@ func (f *fakeBox) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		resp("GetInfo", map[string]string{"NewModelName": "FRITZ!Box 7590", "NewSoftwareVersion": "7.57", "NewUpTime": "90061"})
 		return
 	case r.URL.Path == "/upnp/control/wanipconnection1":
-		resp("GetInfo", map[string]string{"NewConnectionStatus": "Connected", "NewUptime": "3600", "NewExternalIPAddress": "203.0.113.5"})
+		st := f.ipStatus
+		if st == "" {
+			st = "Connected"
+		}
+		resp("GetInfo", map[string]string{"NewConnectionStatus": st, "NewUptime": "3600", "NewExternalIPAddress": "203.0.113.5"})
+		return
+	case r.URL.Path == "/upnp/control/wanpppconn1" && f.pppStatus != "":
+		resp("GetInfo", map[string]string{"NewConnectionStatus": f.pppStatus, "NewUptime": "7200", "NewExternalIPAddress": "203.0.113.9"})
 		return
 	case r.URL.Path == "/upnp/control/wancommonifconfig1":
 		resp("GetCommonLinkProperties", map[string]string{"NewWANAccessType": "DSL", "NewLayer1DownstreamMaxBitRate": "100000000", "NewLayer1UpstreamMaxBitRate": "40000000"})
@@ -148,6 +157,28 @@ func TestReadFritzbox(t *testing.T) {
 	if len(hosts) != 2 || hosts[0].Name != "homeassistant" || hosts[0].Iface != "LAN (Kabel)" || !hosts[0].Active ||
 		hosts[1].Iface != "WLAN" || hosts[1].Active {
 		t.Errorf("Ergebnis: %+v", hosts)
+	}
+}
+
+// I-068: Meldet der IP-Dienst "Connecting", der PPP-Dienst aber "Connected", gilt "Connected".
+// Ohne verbundenen Dienst bleibt der echte Status des ersten Dienstes stehen.
+func TestReadFritzboxWANStatus(t *testing.T) {
+	cases := []struct{ ip, ppp, want string }{
+		{"Connecting", "Connected", "Connected"},
+		{"Connecting", "", "Connecting"},
+		{"Connected", "Connecting", "Connected"},
+	}
+	for _, c := range cases {
+		f := &fakeBox{user: "u", pass: "p", ipStatus: c.ip, pppStatus: c.ppp}
+		host, done := withFake(t, f)
+		res, err := ReadFritzbox(context.Background(), host, "u", "p")
+		done()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.Info.WANStatus != c.want {
+			t.Errorf("ip=%q ppp=%q: Status %q, erwartet %q", c.ip, c.ppp, res.Info.WANStatus, c.want)
+		}
 	}
 }
 
