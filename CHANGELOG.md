@@ -580,3 +580,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Neue Bibliothek `hirochachacha/go-smb2` (BSD-2, Pure Go) mit `geoffgarside/ber` (BSD); Fremdlizenzen neu erzeugt.
 ### Grenzen
 - Nur SMB direkt über Port 445 (kein NetBIOS-Port 139), nur NTLM (kein Kerberos). Hat ein Server das **Gast-Konto aktiv und keine Signierung**, kann er falsche Zugangsdaten als Gast annehmen; die Bibliothek macht das nicht erkennbar (dann wäre „ok“ falsch). **Ungeprüft an einem echten SMB-Server** (nur Unit-Tests der Auswertung).
+
+## [0.48.0] – 2026-11-10
+### Hinzugefügt
+- **Diagnose-Knopf je Gerät** (I-074): Im Detail-Panel erzeugt „Diagnose-Daten erzeugen“ einen Textbericht zu einem Gerät, zum Kopieren oder Speichern als Textdatei. Inhalt: (A) alles Gespeicherte (Name samt Quelle, Hersteller, System, Kategorie, Uplink/Mesh/WLAN, Ports mit Banner und Zertifikat, Login-Test-Ergebnisse, Netz-Grunddaten des Scan-Rechners), (B) die aktiven Prüfungen der bisherigen `--diagnose`-Ausgabe, (C) auf Wunsch **Ping**, **Traceroute** und **voller Portscan** 1–65535 (nur dieses Gerät, nur Ports mit Hinweis, was nicht in der Standardliste steht).
+- Ping/Traceroute laufen über die Systembefehle (`ping`, `traceroute`/`tracepath`, unter Windows `ping`/`tracert`) mit festen Argumenten ohne Shell. Fehlt `ping`, misst der Bericht ersatzweise die Laufzeit per TCP-Verbindungsaufbau. Braucht ein Befehl höhere Rechte, steht ein Hinweis im Bericht.
+- Der Bericht wird zeilenweise gesendet (Streaming), jeder Baustein hat eine eigene Frist, ein Fehler bricht den Bericht nicht ab. Nur von diesem Rechner aus, nur Geräte aus der Liste, ein Bericht je Gerät gleichzeitig, kein Passwort im Bericht. Der Bericht bleibt je Gerät erhalten, auch wenn das Panel neu gezeichnet wird.
+### Grenzen
+- Nur IPv4 für Ping/Traceroute. Die Ausgabe der Systembefehle hängt vom Betriebssystem/der Sprache ab (unter Linux/macOS wird `LC_ALL=C` gesetzt). **Nur in einer Sandbox ohne `ping`/`traceroute` geprüft** (TCP-Ersatz), echte Systembefehle ungeprüft.
+- NetzScanner startet sich nicht selbst mit Root-/Administratorrechten (Idee I-075).

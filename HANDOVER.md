@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.47.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.48.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -24,16 +24,18 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **WinRM-Login-Test** (I-022 Rest, 0.42.0, `logintest.WinRM`, Methode `winrm`, Port 5985): NTLM, ein Versuch, danach ein fester lesender PowerShell-Befehl; ab 0.43.0 (I-023) liefert er Computername, Domäne/Arbeitsgruppe, Modell, Windows-Version, Laufzeit. Kein 5986/Kerberos.
 - **LDAP-Login-Test** (I-022 Rest, 0.46.0, `logintest.LDAP`, Methode `ldap`, Ports 389/636/3268/3269): ein einfacher Bind, LDAPS bzw. StartTLS mit bestätigtem Fingerabdruck, Klartext nur nach ausdrücklicher Bestätigung; danach rootDSE (Domäne, Server).
 - **SMB-Login-Test** (I-022 Rest, 0.47.0, `logintest.SMB`, Methode `smb`, Port 445): ein NTLM-Versuch (`go-smb2`), danach nur die Freigabenamen (IPC$/srvsvc). Kein Kerberos, kein NetBIOS-Port 139.
+- **Diagnose-Knopf je Gerät** (I-074, 0.48.0, `scan/diagdevice.go`, `web/diagnose.go`, `POST /api/diagnose`): Textbericht (Gespeichertes + aktive Prüfungen aus `--diagnose` + optional Ping, Traceroute, voller Portscan). Ping/Traceroute per Systembefehl (feste Argumente, keine Shell), Ersatz: TCP-Laufzeit. Streaming, nur Loopback, nur Listen-Geräte.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0, I-047 CLI-Modus in 0.45.0, I-022 LDAP in 0.46.0, I-022 SMB in 0.47.0 – I-022 damit vollständig):
-1. **I-023 Rest** (Web-Infos nach Login) oder nächste offene Idee aus `IDEAS.md` (z. B. I-054, Rest von I-013).
+Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0, I-047 CLI-Modus in 0.45.0, I-022 LDAP in 0.46.0, I-022 SMB in 0.47.0 – I-022 damit vollständig, I-074 Diagnose-Knopf in 0.48.0):
+1. **I-075** (Rechte-Abfrage für Ping/Traceroute, nur falls nötig), **I-023 Rest** (Web-Infos nach Login) oder nächste offene Idee aus `IDEAS.md` (z. B. I-054, Rest von I-013).
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Diagnose-Knopf (0.48.0): Gerät wählen, rechts unten „Diagnose-Daten erzeugen“ mit Ping + Traceroute – stehen echte `ping`-/`traceroute`-Ausgaben im Bericht (nicht nur der TCP-Ersatz)? Fehlt dem Befehl ein Recht: kommt der Hinweis? Voller Portscan an einem Gerät: Dauer, Ergebnis plausibel? Gern einen Bericht schicken, wenn etwas fehlt, das du dir gewünscht hättest.
 - SMB-Login-Test (0.47.0): An einem Windows-Rechner/NAS mit Port 445 Zugang merken (`DOMÄNE\benutzer` oder lokal), „SMB-Login testen“ – kommt „ok“ mit Liste der Freigaben? Falsches Passwort **einmal**: „abgelehnt“? Server mit aktivem Gast-Konto: wird ein falsches Passwort fälschlich akzeptiert? Meldung bei Abweichung schicken.
 - Karte/PDF (0.46.1): Steht eine Gruppe neben einer anderen in derselben Zeile (z. B. Mobilgeräte neben IoT), läuft die Linie jetzt über die Lücke oberhalb der Zeile und von oben hinein – nicht mehr durch Titel/Rahmen der Gruppe davor. Stimmt das in Karte **und** PDF?
 - LDAP-Login-Test (0.46.0): An einem Domänencontroller/LDAP-Server Zugang merken (`DOMÄNE\benutzer`), „LDAP-Login testen“ – erscheint erst der Fingerabdruck, danach „ok“ mit Domäne/Server? Falsches Passwort **einmal**: „abgelehnt“? Server ohne StartTLS: kommt die Klartext-Rückfrage? Meldung bei Abweichung schicken.
@@ -94,7 +96,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 | 0.23.0–0.23.7 ✅ | Mesh-Topologie (I-055 c), Router-Login-Meldungen, Linien in Karte und PDF, ⚠ „MAC mehrfach“ |
 | 0.24.0–0.30.0 ✅ | Zugangstoken (I-025), Befundliste (I-064), MAC-Hinweis in Exporten (I-065), Mesh-Zuordnung abgesichert (I-067), Kennungs-Namen (I-066), WAN-Status (I-068), Kategorie Mobilgeräte (I-059), SNMP v3 (I-053), Scan speichern/laden (I-035) |
 | 0.31.0–0.34.0 ✅ | Netzdokumentation-PDF (I-036), Netz-Grunddaten (I-060), AD-Domäne per rootDSE (I-061) |
-| 0.38.0–0.47.0 ✅ | System-Infos (SSH/SNMP/WinRM), IPP, Login-Tests SNMPv3/WinRM/LDAP/SMB, CLI-Modus, Drucker/Scanner-Kategorie |
+| 0.38.0–0.48.0 ✅ | System-Infos (SSH/SNMP/WinRM), IPP, Login-Tests SNMPv3/WinRM/LDAP/SMB, CLI-Modus, Drucker/Scanner-Kategorie, Diagnose-Knopf je Gerät |
 | 0.35.0–0.37.0 ✅ | Zugangsdaten im RAM (I-020), Login-Test SSH/Web (I-022 Teil 1), System-Infos per SSH (I-023 Teil 1) |
 | später (Plan) | SNMP sysName, ICMP mit Rechten, SMB/TTL, JSON/XLSX-Export, Scan-Vergleich, Eingaben-Datei verschlüsseln |
 
