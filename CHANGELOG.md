@@ -510,3 +510,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.37.2] – 2026-11-10
 ### Behoben
 - **Netzdokumentation-PDF, Deckblatt:** Lange Bezeichnungen (z. B. „Scan-Rechner (IP / Netzmaske)“) überlappten mit dem Wert. Die Bezeichnungsspalte richtet sich jetzt nach der längsten Bezeichnung (mindestens 50 mm, höchstens die halbe Seitenbreite; zu lange Texte werden gekürzt).
+
+## [0.38.0] – 2026-11-10
+### Hinzugefügt
+- **System-Infos erweitert** (I-023 Rest, Teil 2): Der feste, nur lesende SSH-Befehl liest zusätzlich Modell (DMI bzw. Device-Tree), BIOS-/Firmware-Version, Firmware-Beschreibung bei Router-Linux (`/etc/openwrt_release`), Laufzeit und die **Schnittstellen** (Zustand, MAC, IPv4-Adressen; Loopback entfällt, höchstens 32). Weiterhin über dieselbe Verbindung, ohne zweiten Passwort-Versuch, nur im RAM.
+### Grenzen
+- Nur Geräte mit Linux-Shell und `ip`/`/sys`/`/proc`; Router/Switches ohne Shell liefern weiter nichts. Web-/SNMP-/Domänen-Infos bleiben offen.

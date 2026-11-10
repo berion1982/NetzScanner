@@ -188,7 +188,13 @@ const maxInfoBytes = 16 * 1024
 // infoCommand ist der EINZIGE Befehl, der je auf einem Geraet ausgefuehrt wird: nur lesend,
 // ohne Parameter von aussen. Die "#"-Marken trennen die Abschnitte, damit auch Geraete
 // ausgewertet werden koennen, auf denen einzelne Teile fehlen.
-const infoCommand = `echo "#uname"; uname -srm 2>/dev/null; echo "#host"; hostname 2>/dev/null; echo "#os"; cat /etc/os-release 2>/dev/null`
+const infoCommand = `echo "#uname"; uname -srm 2>/dev/null; echo "#host"; hostname 2>/dev/null; echo "#os"; cat /etc/os-release 2>/dev/null; ` +
+	`echo "#owrt"; cat /etc/openwrt_release 2>/dev/null; ` +
+	`echo "#model"; cat /sys/class/dmi/id/product_name /proc/device-tree/model 2>/dev/null; ` +
+	`echo "#bios"; cat /sys/class/dmi/id/bios_version 2>/dev/null; ` +
+	`echo "#up"; cat /proc/uptime 2>/dev/null; ` +
+	`echo "#addr"; ip -o -4 addr show 2>/dev/null; ` +
+	`echo "#link"; ip -o link show 2>/dev/null`
 
 // limitedBuffer sammelt Ausgabe bis maxInfoBytes und verwirft den Rest.
 type limitedBuffer struct{ b []byte }
@@ -224,6 +230,7 @@ func readSystemInfo(client *ssh.Client) []Field {
 // werden bereinigt (Steuerzeichen raus, Laenge begrenzt); die Oberflaeche zeigt sie als Text.
 func parseSystemInfo(raw string) []Field {
 	var fields []Field
+	var ifaces ifaceList // Schnittstellen aus "#addr" und "#link"
 	section := ""
 	for _, line := range strings.Split(raw, "\n") {
 		line = strings.TrimSpace(line)
@@ -251,9 +258,136 @@ func parseSystemInfo(raw string) []Field {
 			case "VERSION_ID":
 				fields = append(fields, Field{"Version", cleanValue(val)})
 			}
+		case "owrt": // Router-Linux ohne os-release: Firmware-Beschreibung
+			if key, val, ok := strings.Cut(line, "="); ok && key == "DISTRIB_DESCRIPTION" {
+				fields = append(fields, Field{"Firmware", cleanValue(strings.Trim(val, `"'`))})
+			}
+		case "model":
+			// Erste brauchbare Zeile gewinnt; das Modell wird nur einmal ausgegeben.
+			if !hasField(fields, "Modell") {
+				fields = append(fields, Field{"Modell", cleanValue(line)})
+			}
+		case "bios":
+			fields = append(fields, Field{"BIOS/Firmware", cleanValue(line)})
+		case "up":
+			if txt, ok := parseUptime(line); ok {
+				fields = append(fields, Field{"Laufzeit", txt})
+			}
+		case "addr":
+			ifaces.addAddr(line)
+		case "link":
+			ifaces.addLink(line)
 		}
 	}
-	return fields
+	return append(fields, ifaces.fields()...)
+}
+
+// hasField prüft, ob schon ein Feld mit diesem Namen vorhanden ist.
+func hasField(fields []Field, name string) bool {
+	for _, f := range fields {
+		if f.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// parseUptime wertet die erste Zahl aus /proc/uptime (Sekunden) aus und formatiert sie als "3 T 4 Std 5 Min".
+func parseUptime(line string) (string, bool) {
+	first := strings.Fields(line)
+	if len(first) == 0 {
+		return "", false
+	}
+	secs, err := strconv.ParseFloat(first[0], 64)
+	if err != nil || secs < 0 || secs > 1e9 {
+		return "", false
+	}
+	m := int(secs) / 60
+	return fmt.Sprintf("%d T %d Std %d Min", m/1440, (m/60)%24, m%60), true
+}
+
+// ifaceList sammelt je Schnittstelle Zustand, MAC und IPv4-Adressen aus "ip -o"-Zeilen.
+// Die Reihenfolge der ersten Nennung bleibt erhalten.
+type ifaceList struct {
+	order []string
+	info  map[string]*ifaceInfo
+}
+
+type ifaceInfo struct {
+	state, mac string
+	addrs      []string
+}
+
+// get liefert (und legt bei Bedarf an) den Eintrag einer Schnittstelle.
+func (l *ifaceList) get(name string) *ifaceInfo {
+	if l.info == nil {
+		l.info = map[string]*ifaceInfo{}
+	}
+	if i, ok := l.info[name]; ok {
+		return i
+	}
+	if len(l.order) >= 32 { // Obergrenze gegen übergroße Ausgaben
+		return nil
+	}
+	i := &ifaceInfo{}
+	l.info[name] = i
+	l.order = append(l.order, name)
+	return i
+}
+
+// addAddr wertet eine Zeile von "ip -o -4 addr show": "2: eth0    inet 192.0.2.5/24 brd ..."
+func (l *ifaceList) addAddr(line string) {
+	f := strings.Fields(line)
+	if len(f) < 4 || f[2] != "inet" {
+		return
+	}
+	if i := l.get(cleanValue(f[1])); i != nil {
+		i.addrs = append(i.addrs, cleanValue(f[3]))
+	}
+}
+
+// addLink wertet eine Zeile von "ip -o link show": "2: eth0: <FLAGS> ... state UP ... link/ether aa:bb:.. brd ..."
+func (l *ifaceList) addLink(line string) {
+	f := strings.Fields(line)
+	if len(f) < 3 {
+		return
+	}
+	i := l.get(cleanValue(strings.TrimSuffix(strings.SplitN(f[1], "@", 2)[0], ":")))
+	if i == nil {
+		return
+	}
+	for k := 0; k+1 < len(f); k++ {
+		switch f[k] {
+		case "state":
+			i.state = cleanValue(f[k+1])
+		case "link/ether":
+			i.mac = cleanValue(f[k+1])
+		}
+	}
+}
+
+// fields erzeugt je Schnittstelle ein Feld "Schnittstelle <Name>" mit Zustand, MAC und Adressen.
+// Die Loopback-Schnittstelle "lo" ist uninteressant und entfällt.
+func (l *ifaceList) fields() []Field {
+	var out []Field
+	for _, name := range l.order {
+		if name == "lo" {
+			continue
+		}
+		i := l.info[name]
+		parts := []string{}
+		if i.state != "" {
+			parts = append(parts, i.state)
+		}
+		if i.mac != "" {
+			parts = append(parts, i.mac)
+		}
+		parts = append(parts, i.addrs...)
+		if len(parts) > 0 {
+			out = append(out, Field{"Schnittstelle " + name, strings.Join(parts, " · ")})
+		}
+	}
+	return out
 }
 
 // cleanValue entfernt Steuerzeichen und kuerzt auf 120 Zeichen.
