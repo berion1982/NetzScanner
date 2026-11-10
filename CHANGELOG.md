@@ -618,3 +618,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.50.2] – 2026-11-10
 ### Hinzugefügt
 - **Detail-Panel ein-/ausklappen** (I-079, Wunsch Sascha): Neuer Knopf „Details einklappen ▸“ / „◂ Details“ oben im Detail-Panel (Übersicht und Topologie). Zugeklappt bleibt nur der Knopf stehen und Tabelle/Karte bekommen die volle Breite – praktisch nach einem breiten Diagnose-Bericht. Das Verhalten beim Anklicken eines Geräts bleibt gleich; Inhalt und Auswahl bleiben beim Zuklappen erhalten. Die Wahl gilt für beide Reiter und wird im Browser gemerkt (`localStorage`, ohne Speicher läuft alles weiter).
+
+## [0.50.3] – 2026-11-10
+### Geändert
+- **Breite des Detail-Panels steuerbar** (I-080, Wunsch Sascha): Lange Zeilen des Diagnose-Berichts blähen das Panel nicht mehr unkontrolliert auf. Stattdessen erweitert sich das Panel beim Start eines Berichts bewusst und der Bericht scrollt bei Bedarf waagerecht. Ein runder Knopf **mittig an der linken Kante** des Panels schaltet um: „›“ = wieder verkleinern, „‹“ = erweitern (erscheint nur, wenn zu dem gewählten Gerät ein Bericht existiert). Der Knopf bleibt beim Scrollen mittig im Sichtfeld (`sticky`). Der Zustand gilt nur für die Sitzung. Der Ein-/Ausklapp-Knopf aus 0.50.2 bleibt unverändert.

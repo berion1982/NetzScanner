@@ -121,6 +121,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-077 | **Sommer-Deko** (Vorschlag Sascha, 2026-11-10; Ergänzung zu I-076): im Sommer zusätzlich Rasen am unteren Fensterrand und eine Blume links neben der Versionsnummer. Gleiche Regeln wie I-076 (Canvas, `pointer-events:none`, abschaltbar, keine Last). | niedrig | S | Umgesetzt in 0.49.1 |
 | I-078 | **Diagnose-Bericht live** (Meldung Sascha, 2026-11-10): Ausgabe von Ping/Traceroute sofort Zeile für Zeile statt erst nach Befehlsende | klein | S | **erledigt (0.50.1)** |
 | I-079 | **Detail-Panel ein-/ausklappen** (Wunsch Sascha, 2026-11-10): Knopf, um die durch den Diagnose-Bericht verbreiterte Detail-Spalte wieder zu schmälern; sonst Verhalten unverändert | klein | S | **erledigt (0.50.2)** |
+| I-080 | **Panelbreite per Randknopf** (Wunsch Sascha, 2026-11-10): Knopf mittig an der Kante des Detail-Panels, der die durch den Diagnose-Bericht erweiterte Breite verkleinert bzw. wieder erweitert (nur wenn ein Bericht existiert) | klein | S | **erledigt (0.50.3)** |
 
 ## Vorschlag zur Reihenfolge (Claude, nicht verbindlich)
 1. I-005 (echter Scan) → I-040 (Auswahl) → I-021 (Namen) → I-030/I-031 (CSV, Tabelle) → I-032 (Lesezeichen)

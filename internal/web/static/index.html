@@ -52,6 +52,10 @@ th{color:var(--mut);font-weight:500}tr.r{cursor:pointer}tr.r:hover,tr.sel{backgr
 a.web{display:inline-block;background:#1f6feb22;border:1px solid var(--acc);color:var(--acc);border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;text-decoration:none;font-size:12px}
 a.web:hover{background:#1f6feb55}
 aside{flex:1 1 240px;padding:16px}
+aside.detail{position:relative;min-width:0}
+aside.detail.wide{flex:2 1 480px}
+.dwide{position:sticky;top:45vh;height:0;z-index:2}
+.dwide button{position:absolute;left:-31px;top:-28px;width:28px;height:56px;padding:0;border-radius:14px;cursor:pointer;font-size:16px;line-height:1}
 aside.detail.fold{flex:0 0 auto;min-width:0}aside.detail.fold>:not(.dfold){display:none}
 .dfold{float:right;margin:0 0 6px 8px}aside.detail.fold .dfold{float:none;margin:0}
 aside h3{margin:0 0 8px}aside dt{color:var(--mut);margin-top:8px;font-size:12px}
@@ -413,7 +417,9 @@ function snmpV3Row(h, box) {
 // Die Auswahl (Ping, Traceroute, voller Portscan) sendet aktiv Pakete NUR an dieses Geraet. Der Server streamt
 // den Bericht Zeile fuer Zeile; der Text bleibt je Geraet erhalten, auch wenn das Panel neu gezeichnet wird.
 const diagCache = {}, diagAbort = {}; // IP -> Berichtstext / laufende Anfrage
-function diagShow(ip) { document.querySelectorAll(".diagpre").forEach(p => { if (p.dataset.ip === ip) { p.textContent = diagCache[ip] || ""; p.style.display = diagCache[ip] ? "" : "none"; } }); }
+function diagShow(ip) { document.querySelectorAll(".diagpre").forEach(p => { if (p.dataset.ip === ip) { p.textContent = diagCache[ip] || ""; p.style.display = diagCache[ip] ? "" : "none"; } });
+  // Sobald der erste Berichtstext da ist, erscheint der Breiten-Knopf am Panelrand.
+  if (diagCache[ip] && ip === currentIp && !document.querySelector(".dwide")) applyDetailFold(); }
 function diagnoseBox(h) {
   const opt = (label, title, on) => { const c = el("input", { type: "checkbox" }); c.checked = !!on; return { c, row: el("label", { style: "display:block", title }, [c, " " + label]) }; };
   const ping = opt("Ping (4×)", "Erreichbarkeit und Laufzeit; ohne ping-Programm als TCP-Messung", true);
@@ -428,7 +434,7 @@ function diagnoseBox(h) {
   go.addEventListener("click", async () => {
     if (full.c.checked && !confirm("Der volle Portscan prüft 65535 Ports dieses Geräts und kann mehrere Minuten dauern. Fortfahren?")) return;
     const ctl = new AbortController(); diagAbort[h.ip] = ctl;
-    diagCache[h.ip] = ""; go.disabled = true; stop.style.display = ""; msg.className = "msg"; msg.textContent = "Bericht läuft …";
+    diagCache[h.ip] = ""; detailWide = true; applyDetailFold(); go.disabled = true; stop.style.display = ""; msg.className = "msg"; msg.textContent = "Bericht läuft …";
     try {
       const r = await fetch("/api/diagnose", { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
         body: JSON.stringify({ ip: h.ip, ping: ping.c.checked, trace: trace.c.checked, fullPorts: full.c.checked }) });
@@ -437,7 +443,7 @@ function diagnoseBox(h) {
       for (;;) { const { done, value } = await rd.read(); if (done) break; diagCache[h.ip] += dec.decode(value, { stream: true }); diagShow(h.ip); }
       msg.textContent = "Bericht fertig.";
     } catch (e) { msg.className = "msg err"; msg.textContent = e.name === "AbortError" ? "Abgebrochen (Bericht unvollständig)." : "Bericht fehlgeschlagen."; }
-    finally { delete diagAbort[h.ip]; go.disabled = false; stop.style.display = "none"; refresh(); }
+    finally { delete diagAbort[h.ip]; go.disabled = false; stop.style.display = "none"; refresh(); applyDetailFold(); }
   });
   stop.addEventListener("click", () => diagAbort[h.ip] && diagAbort[h.ip].abort());
   copy.addEventListener("click", () => navigator.clipboard.writeText(diagCache[h.ip] || "").then(() => { msg.className = "msg"; msg.textContent = "Kopiert."; }, () => { msg.className = "msg err"; msg.textContent = "Kopieren nicht möglich – Text markieren und mit Strg+C kopieren."; }));
@@ -568,7 +574,30 @@ function applyDetailFold() {
     b.textContent = detailFold ? "◂ Details" : "Details einklappen ▸";
     b.title = detailFold ? "Detail-Panel wieder aufklappen" : "Detail-Panel zuklappen (Tabelle/Karte werden breiter)";
     b.setAttribute("aria-expanded", detailFold ? "false" : "true");
+    applyDetailWide(d);
   });
+}
+
+// Breite des Detail-Panels (Wunsch Sascha): Ein Diagnose-Bericht erweitert das Panel (breitere Zeilen lesbar).
+// Der runde Knopf mittig an der linken Kante schaltet um: "›" = verkleinern (jetzt erweitert), "‹" = erweitern
+// (jetzt normal). Er erscheint nur, wenn zu dem gewaehlten Geraet ein Bericht existiert; ohne Bericht bleibt das
+// Panel normal breit. Der Zustand gilt nur fuer diese Sitzung (nicht gespeichert).
+let detailWide = false;
+function applyDetailWide(d) {
+  const has = !!(typeof currentIp !== "undefined" && currentIp && diagCache[currentIp]);
+  d.classList.toggle("wide", has && detailWide);
+  let w = d.querySelector(":scope > .dwide");
+  if (!has) { if (w) w.remove(); return; }
+  if (!w) {
+    // Zero-Height-Huelle mit "sticky": Der Knopf bleibt beim Scrollen mittig im Sichtfeld an der Panelkante.
+    w = el("div", { class: "dwide" }, [el("button", { type: "button" })]);
+    w.firstChild.addEventListener("click", () => { detailWide = !detailWide; applyDetailFold(); });
+    d.prepend(w);
+  }
+  const btn = w.firstChild;
+  btn.textContent = detailWide ? "›" : "‹";
+  btn.title = detailWide ? "Detail-Panel wieder verkleinern" : "Detail-Panel erweitern (Diagnose-Bericht besser lesbar)";
+  btn.setAttribute("aria-label", btn.title);
 }
 applyDetailFold();
 
