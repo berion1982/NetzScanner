@@ -568,3 +568,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Neue Bibliothek `go-ldap/ldap` (MIT, Pure Go); Fremdlizenzen neu erzeugt. Dabei hob `go get` `golang.org/x/crypto`, `net`, `sys`, `text` auf neuere Versionen an.
 ### Grenzen
 - Nur einfacher Bind (kein Kerberos/NTLM/SASL). SMB bleibt offen. **Ungeprüft an einem echten Verzeichnisdienst** (nur Unit-Tests ohne Server).
+
+## [0.46.1] – 2026-11-10
+### Behoben
+- **Topologie-Karte und -PDF:** Steht eine Gruppe/ein Gerät in einer Ebenenzeile nicht ganz links, lief die Verbindungslinie auf Titelhöhe waagerecht durch die Gruppen davor (z. B. durch den Titel „Mobilgeräte“ zur Gruppe „IoT“). Die Linie läuft jetzt durch die Lücke oberhalb der Zeile und tritt von oben in die Einheit ein.

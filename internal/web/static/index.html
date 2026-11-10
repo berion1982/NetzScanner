@@ -755,7 +755,7 @@ function renderMap(allHosts) {
     const levelTop = y, firstLink = links.length; let minX = W;
     lines.forEach(line => {
       let x = (W - (line.reduce((n, u) => n + u.w, 0) + UGAP * (line.length - 1))) / 2;
-      line.forEach(u => {
+      line.forEach((u, ui) => {
         const first = u.list[0];
         if (u.group) {
           frames.push({ x, y, w: u.w, h: u.h, cat: first.category, label: catLabel(first.category) + " (" + u.list.length + ")" });
@@ -764,7 +764,9 @@ function renderMap(allHosts) {
           pos[first.ip] = { x: x + BW / 2, y };
         }
         minX = Math.min(minX, x);
-        if (first.uplink && !u.list.some(h => h.ip === first.uplink)) links.push({ from: first.uplink, srcLvl: depth(byIp[first.uplink]), x, y: y + (u.group ? 14 : BH / 2) });
+        if (first.uplink && !u.list.some(h => h.ip === first.uplink)) links.push({ from: first.uplink, srcLvl: depth(byIp[first.uplink]), x, y: y + (u.group ? 14 : BH / 2),
+          // Nicht ganz links in der Zeile: Linie durch die Luecke ueber der Zeile, von oben hinein (sonst quert sie die Gruppen davor)
+          above: ui > 0, lane: y - GAP, cx: x + u.w / 2, top: y });
         x += u.w + UGAP;
       });
       y += Math.max(...line.map(u => u.h)) + GAP * 2;
@@ -783,7 +785,8 @@ function renderMap(allHosts) {
     // in die Luecke unter dem Geraet, dann waagerecht nach links aus der Gruppe heraus (Rand dieser Ebene), dort senkrecht
     // nach unten - so quert sie keine fremde Gruppe.
     const gx = (levelMinX[l.srcLvl] ?? l.trunk + 14) - 24, gy = f.y + BH + GAP / 2;
-    out.push(mk("path", { class: "lnk", d: "M" + f.x + " " + (f.y + BH) + " V" + gy + " H" + gx + " V" + l.busY + " H" + l.trunk + " V" + l.y + " H" + l.x }));
+    out.push(mk("path", { class: "lnk", d: "M" + f.x + " " + (f.y + BH) + " V" + gy + " H" + gx + " V" + l.busY + " H" + l.trunk
+      + (l.above ? " V" + l.lane + " H" + l.cx + " V" + l.top : " V" + l.y + " H" + l.x) }));
   });
   frames.forEach(f => {
     const g = catStyle(mk("g", { class: "grp " + catClass(f.cat) }), f.cat);
