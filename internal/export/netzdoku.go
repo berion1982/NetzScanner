@@ -78,6 +78,22 @@ func drawCoverPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host, li
 	// Netz-Grunddaten des Scan-Rechners (I-060) direkt nach den Angaben.
 	rows = append(rows, meta.NetLines...)
 	pdf.Ln(6)
+	// Breite der Bezeichnungsspalte aus dem laengsten Text berechnen (statt fest), damit
+	// lange Bezeichnungen wie "Scan-Rechner (IP / Netzmaske)" nicht in den Wert hineinragen.
+	pdf.SetFont("Helvetica", "", 11)
+	labelW := 50.0 // Mindestbreite in mm
+	for _, r := range rows {
+		if r[1] == "" {
+			continue
+		}
+		if w := pdf.GetStringWidth(t(r[0])) + 6; w > labelW { // +6 mm Abstand zum Wert
+			labelW = w
+		}
+	}
+	// Die Bezeichnungen duerfen hoechstens die halbe nutzbare Breite einnehmen; der Wert braucht Platz.
+	if maxW := (pdfPageW - 2*pdfMargin) / 2; labelW > maxW {
+		labelW = maxW
+	}
 	for _, r := range rows {
 		if r[1] == "" {
 			continue
@@ -85,9 +101,9 @@ func drawCoverPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host, li
 		pdf.SetX(pdfMargin)
 		pdf.SetFont("Helvetica", "", 11)
 		pdf.SetTextColor(90, 90, 90)
-		pdf.CellFormat(50, 7, t(r[0]), "", 0, "L", false, 0, "")
+		pdf.CellFormat(labelW, 7, t(fitText(pdf, r[0], labelW-2)), "", 0, "L", false, 0, "")
 		pdf.SetTextColor(20, 20, 20)
-		pdf.CellFormat(0, 7, t(fitText(pdf, r[1], pdfPageW-2*pdfMargin-50)), "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, 7, t(fitText(pdf, r[1], pdfPageW-2*pdfMargin-labelW)), "", 1, "L", false, 0, "")
 	}
 
 	// Zusammenfassung in Zahlen.
