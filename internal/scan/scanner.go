@@ -167,6 +167,11 @@ func scanHost(ctx context.Context, ip netip.Addr, ports []int, timeout time.Dura
 					banner = info
 				}
 			}
+			if p == 631 { // IPP: Drucker-Details (Modell, Firmware, Fuellstaende) ohne Login (I-062)
+				if info := QueryIPP(ctx, ip.String(), 1500*time.Millisecond); info != "" {
+					banner = info
+				}
+			}
 			var cert *model.Cert
 			if httpsPorts[p] { // TLS-Port: Zertifikat lesen (I-004)
 				cert = readCert(ctx, ip.String(), p)
