@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -71,5 +72,27 @@ func TestLoginResultsFollowCredentials(t *testing.T) {
 	cs.setResult("192.0.2.10", logintest.Result{Method: "ssh"}) // ohne Zugang wird nichts gemerkt
 	if len(cs.results) != 0 {
 		t.Fatal("Ergebnis ohne Zugang gemerkt")
+	}
+}
+
+// SNMPv3-Test (I-022 Rest): unbekanntes Geraet und fehlender Zugang werden abgewiesen, ohne etwas zu senden.
+func TestLoginTestSNMPv3Rejects(t *testing.T) {
+	s := newLoginServer()
+	if rec := postLogin(s, "127.0.0.1:5555", `{"ip":"192.0.2.99","method":"snmpv3"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("unbekanntes Gerät: 400 erwartet, war %d", rec.Code)
+	}
+	if rec := postLogin(s, "127.0.0.1:5555", `{"ip":"192.0.2.10","method":"snmpv3"}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("ohne Zugang: 400 erwartet, war %d", rec.Code)
+	}
+}
+
+// Ungueltige Eingaben (zu kurze Passphrase) enden als "nicht testbar" - es geht nichts ins Netz.
+func TestRunSNMPv3TestBadSettings(t *testing.T) {
+	res := runSNMPv3Test(context.Background(), "192.0.2.10", "u", "kurz", "SHA", "", "")
+	if res.Status != logintest.StatusUnavailable || res.Method != logintest.MethodSNMPv3 || res.Port != 161 {
+		t.Fatalf("unerwartet: %+v", res)
+	}
+	if strings.Contains(res.Message, "kurz") && !strings.Contains(res.Message, "Zeichen") {
+		t.Fatal("Meldung darf die Passphrase nicht enthalten")
 	}
 }

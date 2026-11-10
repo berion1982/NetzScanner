@@ -51,3 +51,11 @@ func TestNewSNMP(t *testing.T) {
 		t.Errorf("noAuthNoPriv falsch: %v", g.MsgFlags)
 	}
 }
+
+// ProbeSNMPLogin: ungueltige Zugangsdaten werden erkannt, bevor irgendein Paket gesendet wird.
+func TestProbeSNMPLoginBadSettings(t *testing.T) {
+	out, msg := ProbeSNMPLogin(context.Background(), "192.0.2.1", SNMPCreds{User: "u", AuthProto: "SHA", AuthPass: "x"})
+	if out != SNMPLoginBadSettings || msg == "" {
+		t.Fatalf("erwartet BadSettings, war %v %q", out, msg)
+	}
+}

@@ -341,8 +341,10 @@ function loginTestRows(h, mine, box) {
     }
     else if (WEB[p.number]) targets.push({ method: "web", port: p.number, scheme: WEB[p.number], label: "Web-Login testen (" + WEB[p.number] + ", Port " + p.number + ")" });
   });
+  // I-022 Rest: SNMPv3-Test (UDP 161, vom TCP-Scan nicht sichtbar) - immer anbieten, Protokolle waehlbar.
+  const snmpRow = snmpV3Row(h, box);
   const out = el("div", { class: "msg" });
-  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
+  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : t.method === "snmpv3" ? "SNMPv3" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
     + (t.info || []).map(f => "\n   " + f.name + ": " + f.value).join("")).join("\n");
   out.style.whiteSpace = "pre-wrap";
   out.textContent = targets.length ? (last || "Noch kein Login-Test. Pro Klick wird genau ein Anmeldeversuch gesendet (Konto-Sperren vermeiden).") : "Kein SSH- oder Web-Port gefunden – Login-Test nicht möglich.";
@@ -362,7 +364,26 @@ function loginTestRows(h, mine, box) {
     renderCreds(h, box); // zeigt das gemerkte Ergebnis
   };
   const btns = targets.map(t => { const b = el("button", { text: t.label }); b.addEventListener("click", () => run(t, "")); return el("div", { class: "rename" }, [b]); });
-  return [...btns, out];
+  return [...btns, snmpRow, out];
+}
+// SNMPv3-Login-Test: Benutzer und Passwort stammen aus dem gemerkten Zugang (Passwort = Authentifizierungs-Passphrase).
+// Protokolle waehlt man hier; die Verschluesselungs-Passphrase wird nur fuer diesen Klick gesendet und nicht gespeichert.
+function snmpV3Row(h, box) {
+  const sel = (label, opts) => { const s = el("select", { "aria-label": label }); opts.forEach(o => s.append(el("option", { value: o[0], text: o[1] }))); return s; };
+  const auth = sel("SNMPv3 Authentifizierung", [["", "keine Auth"], ["SHA", "SHA"], ["SHA256", "SHA256"], ["SHA512", "SHA512"], ["SHA224", "SHA224"], ["SHA384", "SHA384"], ["MD5", "MD5"]]);
+  const priv = sel("SNMPv3 Verschlüsselung", [["", "keine Verschl."], ["AES", "AES"], ["AES192", "AES192"], ["AES256", "AES256"], ["DES", "DES"]]);
+  const pp = el("input", { type: "password", maxlength: "128", autocomplete: "new-password", "aria-label": "Verschlüsselungs-Passphrase", placeholder: "Verschl.-Passphrase" });
+  const go = el("button", { text: "SNMPv3-Login testen (UDP 161)" });
+  const msg = el("div", { class: "msg" });
+  go.addEventListener("click", async () => {
+    msg.className = "msg"; msg.textContent = "Teste …";
+    const r = await post("/api/logintest", { ip: h.ip, method: "snmpv3", authProto: auth.value, privProto: priv.value, privPass: pp.value });
+    pp.value = ""; // Passphrase sofort aus dem Feld entfernen
+    const b = await r.json();
+    if (!r.ok) { msg.className = "msg err"; msg.textContent = b.error; return; }
+    renderCreds(h, box); // zeigt das gemerkte Ergebnis
+  });
+  return el("div", { class: "rename" }, [auth, priv, pp, go, msg]);
 }
 function buildDetails(h) {
   const dl = el("dl");

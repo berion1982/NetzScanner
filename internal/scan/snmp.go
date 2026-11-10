@@ -458,3 +458,42 @@ func breakCycles(links map[string]Link) {
 		}
 	}
 }
+
+// SNMPLoginOutcome ist das Ergebnis einer Anmelde-Pruefung per SNMP (I-022).
+type SNMPLoginOutcome int
+
+const (
+	SNMPLoginOK          SNMPLoginOutcome = iota // Geraet hat mit den Zugangsdaten geantwortet
+	SNMPLoginRejected                            // Geraet hat geantwortet, aber die Anmeldung abgelehnt
+	SNMPLoginNoAnswer                            // keine Antwort (SNMP aus, Port gesperrt oder Zugang falsch)
+	SNMPLoginBadSettings                         // Eingaben unvollstaendig/ungueltig (nichts gesendet)
+)
+
+// ProbeSNMPLogin prueft mit EINER Anfrage (sysDescr, nur lesend, kein SET), ob die SNMP-Zugangsdaten
+// (v2c oder v3) am Geraet funktionieren. Es gibt keine Wiederholung: pro Klick hoechstens ein Versuch,
+// damit ein falscher Zugang keine Konto-Sperre ausloest. Die Meldung enthaelt nie Zugangsdaten.
+//
+// Ehrliche Grenze: Viele Geraete schweigen bei falschem v3-Benutzer oder falscher Passphrase,
+// statt abzulehnen. Ein Timeout heisst daher "keine Antwort" und beweist nicht, dass der Zugang falsch ist.
+func ProbeSNMPLogin(ctx context.Context, ip string, creds SNMPCreds) (SNMPLoginOutcome, string) {
+	if err := creds.Validate(); err != nil {
+		return SNMPLoginBadSettings, err.Error()
+	}
+	g := newSNMP(ctx, ip, creds)
+	g.Retries = 0 // genau ein Versuch
+	if err := g.Connect(); err != nil {
+		return SNMPLoginNoAnswer, "Verbindung nicht möglich"
+	}
+	defer g.Conn.Close()
+	res, err := g.Get([]string{oidSysDescr})
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "timeout") {
+			return SNMPLoginNoAnswer, "keine Antwort (SNMP am Gerät aus, UDP 161 gesperrt – oder Benutzer/Passphrase falsch, manche Geräte schweigen dann)"
+		}
+		return SNMPLoginRejected, "Anmeldung abgelehnt (Benutzer, Passphrase oder Protokoll stimmen nicht)"
+	}
+	if res.Error != gosnmp.NoError || len(res.Variables) == 0 {
+		return SNMPLoginRejected, "Gerät antwortet, verweigert aber den Zugriff"
+	}
+	return SNMPLoginOK, "SNMP-Anmeldung akzeptiert"
+}
