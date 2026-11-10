@@ -600,3 +600,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Schalter „Jahreszeiten-Effekt“ unten in der Navigation (Standard: an), Wahl im Browser gemerkt. Aus bei `prefers-reduced-motion`, pausiert bei verstecktem Tab, nicht im Druck; Exporte/PDF unberührt. Hilfe-Abschnitt ergänzt.
 ### Grenzen
 - Sondertage (Weihnachten, Silvester, Halloween) bewusst nicht umgesetzt. Nur im Code geprüft (Syntax), **Optik und CPU-Last im Browser ungeprüft**.
+
+## [0.49.1] – 2026-11-10
+### Hinzugefügt
+- **Sommer-Deko** (I-077): Im Sommer zeigt der Jahreszeiten-Effekt zusätzlich Rasen (leicht wiegende Halme) am unteren Fensterrand und eine Blume links neben der Versionsnummer. Gleiche Regeln wie I-076 (abschaltbar, keine Klicks, nicht im Druck). Im Browser mit erzwungenem Juli-Datum per Screenshot geprüft.
