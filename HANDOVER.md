@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.43.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.44.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -26,12 +26,13 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0):
+Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0):
 1. **I-022 Rest** (optional): LDAP/SMB (Domain-Admins, neue Bibliothek nötig). Sonst I-023 Rest (Web-Infos nach Login) oder nächste offene Idee aus `IDEAS.md`.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Kategorie „Drucker/Scanner“ (0.44.0): Landen Drucker/Scanner dort (nicht mehr in IoT), Kameras/Smart-Home weiter in IoT? Fehlzuordnungen melden. Alte Projektdatei laden: Drucker ggf. noch „IoT“?
 - WinRM-Infos (0.43.0): Nach „WinRM-Login testen“ an einem Windows-Rechner – erscheinen Computername, Domäne/Arbeitsgruppe, Modell, System, Laufzeit? Sonst Meldung schicken (z. B. „keine System-Infos lesbar“).
 - WinRM-Login-Test (0.42.0): An einem Windows-Rechner mit Port 5985 Zugang merken, „WinRM-Login testen“ – kommt „ok“ mit Computername? Falsches Passwort **einmal**: „abgelehnt“? Domänenkonto als `DOMÄNE\benutzer` probieren. Meldung bei Abweichung schicken.
 - SNMPv3-Login-Test (0.41.0): An einem Gerät mit SNMPv3 Zugang merken (Benutzer + Auth-Passphrase), Protokolle wählen, „SNMPv3-Login testen“ – kommt „ok“? Falsche Passphrase **einmal** testen: „abgelehnt“ oder nur „keine Antwort“ (viele Geräte schweigen)? Meldung bitte schicken.

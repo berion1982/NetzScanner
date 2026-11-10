@@ -233,6 +233,8 @@ func categoryStroke(c string) [3]int {
 		return [3]int{140, 90, 190}
 	case model.CatIoT:
 		return [3]int{200, 130, 20}
+	case model.CatPrinter:
+		return [3]int{0, 140, 150}
 	case model.CatClient:
 		return [3]int{120, 120, 120}
 	}
@@ -496,6 +498,8 @@ func categoryFill(c string) [3]int {
 		return [3]int{236, 226, 248} // helllila
 	case model.CatIoT:
 		return [3]int{255, 236, 204} // hellorange
+	case model.CatPrinter:
+		return [3]int{210, 242, 244} // hellturkis
 	}
 	if model.IsCustom(c) { // eigene Kategorie: heller Ton passend zur Rahmenfarbe
 		return hslToRGB(model.CategoryHue(c), 0.60, 0.90)
