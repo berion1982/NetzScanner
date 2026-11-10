@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.49.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.49.1 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -25,7 +25,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **LDAP-Login-Test** (I-022 Rest, 0.46.0, `logintest.LDAP`, Methode `ldap`, Ports 389/636/3268/3269): ein einfacher Bind, LDAPS bzw. StartTLS mit bestätigtem Fingerabdruck, Klartext nur nach ausdrücklicher Bestätigung; danach rootDSE (Domäne, Server).
 - **SMB-Login-Test** (I-022 Rest, 0.47.0, `logintest.SMB`, Methode `smb`, Port 445): ein NTLM-Versuch (`go-smb2`), danach nur die Freigabenamen (IPC$/srvsvc). Kein Kerberos, kein NetBIOS-Port 139.
 - **Diagnose-Knopf je Gerät** (I-074, 0.48.0, `scan/diagdevice.go`, `web/diagnose.go`, `POST /api/diagnose`): Textbericht (Gespeichertes + aktive Prüfungen aus `--diagnose` + optional Ping, Traceroute, voller Portscan). Ping/Traceroute per Systembefehl (feste Argumente, keine Shell), Ersatz: TCP-Laufzeit. Streaming, nur Loopback, nur Listen-Geräte.
-- **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung.
+- **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung. Ab 0.49.1 (I-077) im Sommer zusätzlich Rasen unten und Blume neben der Versionsnummer.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
