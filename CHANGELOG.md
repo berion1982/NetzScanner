@@ -547,3 +547,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **WinRM-Login-Test liest jetzt Domänen-/Systeminfos** (I-023, Teil „Domäne“): Statt nur `hostname` läuft nach der Anmeldung ein einziger, fest einprogrammierter, rein lesender PowerShell-Befehl (CIM: Computername, Domäne bzw. Arbeitsgruppe, Hersteller/Modell, Windows-Version, Laufzeit). Die Felder erscheinen im Detail-Panel wie bei SSH/SNMP, nur im RAM. Es wird nichts geschrieben und nichts aus Eingaben in den Befehl eingesetzt.
 ### Grenzen
 - Gegen einen echten Windows-Rechner ungeprüft (nur Parser-Tests). Ist PowerShell/CIM nicht nutzbar, bleibt der Login „ok“ mit dem Hinweis „keine System-Infos lesbar“. Web-Infos nach Login bleiben offen.
+
+## [0.44.0] – 2026-11-10
+### Geändert
+- **Eigene Kategorie „Drucker/Scanner“** (I-072): Drucker/Scanner sind nicht mehr unter „IoT“. Erkennung (Vermutung): Port 631/9100/515, IPP-Antwort („IPP: …“ aus I-062) oder Druckerhersteller laut MAC. „IoT“ bleibt für Smart-Home, Kameras (Port 554) und Sensoren. Neue Farbe in Karte, Legende, Detail-Auswahl, Tabelle, Exporten und PDF.
+### Grenzen
+- Alte Projektdateien laden weiter; Drucker darin behalten ihre gespeicherte Kategorie „IoT“, bis neu gescannt oder die Kategorie im Detail-Panel geändert wird (ungeprüft, ob beim Laden neu eingeordnet wird). mDNS-/SSDP-Diensttypen (`_ipp._tcp` …) werden noch nicht ausgewertet, weil sie nicht am Gerät gespeichert werden.

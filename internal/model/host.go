@@ -47,11 +47,12 @@ const (
 	CatServer  = "server"  // Server, NAS, Dienste-Rechner
 	CatClient  = "client"  // PCs, Laptops und alles, was nicht eindeutig anders passt
 	CatMobile  = "mobile"  // Smartphones und Tablets (I-059), nur wo erkennbar
-	CatIoT     = "iot"     // Smart-Home, Drucker, Kameras, Medienplayer ...
+	CatIoT     = "iot"     // Smart-Home, Kameras, Sensoren, Medienplayer ...
+	CatPrinter = "printer" // Drucker und Scanner (I-072); aeltere Dateien haben sie unter "iot"
 )
 
 // Categories listet alle Kategorien in der Reihenfolge der Anzeige (Karte, Legende, Liste).
-var Categories = []string{CatNetwork, CatServer, CatClient, CatMobile, CatIoT}
+var Categories = []string{CatNetwork, CatServer, CatClient, CatMobile, CatIoT, CatPrinter}
 
 // CustomPrefix kennzeichnet eigene Kategorien (I-017): Der Schluessel ist "custom:" + frei gewaehlter Name.
 // So braucht jede Stelle (Karte, Exporte, PDF) keine Nachschlagetabelle: der Name steckt im Schluessel.
@@ -105,6 +106,8 @@ func CategoryLabel(c string) string {
 		return "Mobilgeräte"
 	case CatIoT:
 		return "IoT"
+	case CatPrinter:
+		return "Drucker/Scanner"
 	}
 	if IsCustom(c) {
 		if l, ok := CleanCustomLabel(strings.TrimPrefix(c, CustomPrefix)); ok {

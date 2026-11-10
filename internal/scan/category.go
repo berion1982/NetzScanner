@@ -8,7 +8,7 @@ import (
 )
 
 // Kategorisierung (I-015): ordnet jedes Geraet einer der Kategorien
-// Netzwerkgeraet, IoT, Server oder Client zu.
+// Netzwerkgeraet, Drucker/Scanner, IoT, Server oder Client zu.
 //
 // WICHTIG: Das ist eine VERMUTUNG aus Rolle, Hersteller (MAC-Chip), Betriebssystem
 // und offenen Ports - kein sicheres Wissen. Ein WLAN-Chip-Hersteller sagt z. B. nicht,
@@ -23,19 +23,25 @@ var networkVendors = []string{
 	"lancom", "edgecore", "tenda", "extreme networks",
 }
 
-// iotVendors: Hersteller typischer Smart-Home-, Medien- und Druckergeraete.
+// iotVendors: Hersteller typischer Smart-Home-, Medien- und Kamerageraete.
 var iotVendors = []string{
 	"espressif", "shelly", "allterco", "tuya", "signify", "philips lighting", "sonos",
 	"amazon", "nest", "roku", "ring", "ecobee", "sonoff", "itead", "xiaomi", "ikea",
-	"lifx", "wyze", "eufy", "tado", "eq-3", "homematic", "brother", "canon", "epson",
-	"lexmark", "kyocera", "ricoh", "hikvision", "dahua", "reolink", "axis comm", "nuki", "somfy",
+	"lifx", "wyze", "eufy", "tado", "eq-3", "homematic", "hikvision", "dahua", "reolink", "axis comm", "nuki", "somfy",
 }
 
 // serverVendors: Hersteller von NAS-/Serversystemen.
 var serverVendors = []string{"synology", "qnap", "supermicro", "truenas", "ixsystems", "asustor"}
 
-// iotPorts: Ports, die auf Drucker (631 IPP, 9100 JetDirect, 515 LPD) oder Kameras (554 RTSP) hindeuten.
-var iotPorts = []int{631, 9100, 515, 554}
+// printerVendors: Hersteller, die vor allem Drucker/Scanner bauen (I-072). Nur ein Hinweis aus dem
+// MAC-Chip-Hersteller; sicherer sind die Druckerports und die IPP-Antwort (s. isPrinter).
+var printerVendors = []string{"brother", "canon", "epson", "lexmark", "kyocera", "ricoh"}
+
+// printerPorts: 631 IPP, 9100 JetDirect/RAW, 515 LPD.
+var printerPorts = []int{631, 9100, 515}
+
+// iotPorts: Ports, die auf Kameras (554 RTSP) hindeuten.
+var iotPorts = []int{554}
 
 // serverPorts: Dienste, die ein normaler Client praktisch nie anbietet
 // (Datenbanken, Mail, Verzeichnisdienste, NFS, DNS-Server-Rolle bleibt bewusst draussen).
@@ -47,7 +53,7 @@ var serverPorts = []int{
 }
 
 // Categorize liefert die vermutete Kategorie eines Geraets (immer einen gueltigen Schluessel).
-// Reihenfolge: Netzwerk -> IoT -> Server -> Client (Standard).
+// Reihenfolge: Netzwerk -> Drucker -> IoT -> Server -> Client (Standard).
 func Categorize(h model.Host) string {
 	vendor := strings.ToLower(h.Vendor)
 	osName := strings.ToLower(h.OS)
@@ -63,7 +69,11 @@ func Categorize(h model.Host) string {
 	if hasAnyPort(h, []int{8123}) {
 		return model.CatServer
 	}
-	// 2) IoT: Smart-Home-/Druckerhersteller oder Drucker-/Kamera-Ports.
+	// 2a) Drucker/Scanner (I-072): Druckerports, IPP-Antwort oder Druckerhersteller.
+	if isPrinter(h, vendor) {
+		return model.CatPrinter
+	}
+	// 2) IoT: Smart-Home-/Kamerahersteller oder Kamera-Ports.
 	if containsAny(vendor, iotVendors) || hasAnyPort(h, iotPorts) {
 		return model.CatIoT
 	}
@@ -84,6 +94,20 @@ func Categorize(h model.Host) string {
 	}
 	// 4) Alles andere: Client (PC, Laptop ...).
 	return model.CatClient
+}
+
+// isPrinter erkennt Drucker/Scanner (I-072) aus Druckerports (IPP/JetDirect/LPD), einer IPP-Antwort
+// (Banner "IPP: ...", siehe ipp.go) oder dem Chip-Hersteller. Keine Gerätetabelle. Vermutung.
+func isPrinter(h model.Host, vendor string) bool {
+	if hasAnyPort(h, printerPorts) || containsAny(vendor, printerVendors) {
+		return true
+	}
+	for _, p := range h.Ports {
+		if strings.HasPrefix(p.Banner, "IPP:") {
+			return true
+		}
+	}
+	return false
 }
 
 // isMobileOS erkennt iOS/iPadOS/Android in der OS-Vermutung (Kleinbuchstaben).
