@@ -553,3 +553,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Eigene Kategorie „Drucker/Scanner“** (I-072): Drucker/Scanner sind nicht mehr unter „IoT“. Erkennung (Vermutung): Port 631/9100/515, IPP-Antwort („IPP: …“ aus I-062) oder Druckerhersteller laut MAC. „IoT“ bleibt für Smart-Home, Kameras (Port 554) und Sensoren. Neue Farbe in Karte, Legende, Detail-Auswahl, Tabelle, Exporten und PDF.
 ### Grenzen
 - Alte Projektdateien laden weiter; Drucker darin behalten ihre gespeicherte Kategorie „IoT“, bis neu gescannt oder die Kategorie im Detail-Panel geändert wird (ungeprüft, ob beim Laden neu eingeordnet wird). mDNS-/SSDP-Diensttypen (`_ipp._tcp` …) werden noch nicht ausgewertet, weil sie nicht am Gerät gespeichert werden.
+
+## [0.45.0] – 2026-11-10
+### Hinzugefügt
+- **Kommandozeilen-Modus ohne Browser** (I-047): `netzscanner --scan 192.168.1.0/24 --out kunde.csv` scannt, schreibt die Geräteliste und beendet sich – ohne Webserver. Format aus der Dateiendung (`.csv`, `.md`, `.html`, `.pdf`) oder `--format` (auch `csv-excel`); ohne `--out` (oder `-`) geht CSV nach stdout, Meldungen nach stderr. `--ports` wie in der Oberfläche, `--allow-public` wie bisher nötig für öffentliche Adressen. Ausgabedatei mit Rechten 0600. Nur lesend.
+### Grenzen
+- Keine gespeicherten Eingaben (Namen, Standorte) und kein Router-Login im CLI-Modus; Projektdatei-Export folgt ggf. später. Praxistest im LAN offen.
