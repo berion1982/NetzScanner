@@ -39,7 +39,7 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		IP, Method, Scheme, Fingerprint string
 		Port                            int
 		AllowPlain                      bool
-		ReadInfo                        bool // I-023: nach dem SSH-Login System-Infos lesen (nur Methode ssh)
+		ReadInfo                        bool // I-023: nach dem Login Infos lesen (Methode ssh: System-Infos, web: Seitentitel/Server/Realm)
 		// Nur Methode snmpv3: Protokolle und Verschluesselungs-Passphrase. Benutzer und
 		// Authentifizierungs-Passphrase kommen aus dem gemerkten Zugang. Die Priv-Passphrase
 		// wird nur fuer diesen einen Test benutzt und nirgends gespeichert.
@@ -118,6 +118,9 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		res = logintest.SSHInfo(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
 	} else if req.Method == logintest.MethodSSH {
 		res = logintest.SSH(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
+	} else if req.ReadInfo {
+		// I-023 Rest: gleicher einzelner Web-Versuch, danach die Startseite auswerten (Titel, Server, Realm).
+		res = logintest.WebInfo(ctx, req.IP, req.Port, req.Scheme, user, password, strings.TrimSpace(req.Fingerprint))
 	} else {
 		res = logintest.Web(ctx, req.IP, req.Port, req.Scheme, user, password, strings.TrimSpace(req.Fingerprint))
 	}

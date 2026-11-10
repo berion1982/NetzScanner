@@ -351,7 +351,11 @@ function loginTestRows(h, mine, box) {
     else if (p.number === 445) targets.push({ method: "smb", port: 445, label: "SMB-Login testen (Port 445)" });
     // I-022 Rest: LDAP-Bind (AD/Verzeichnisdienst). 636/3269 = LDAPS, 389/3268 = StartTLS.
     else if ([389, 636, 3268, 3269].includes(p.number)) targets.push({ method: "ldap", port: p.number, label: "LDAP-Login testen (Port " + p.number + ")" });
-    else if (WEB[p.number]) targets.push({ method: "web", port: p.number, scheme: WEB[p.number], label: "Web-Login testen (" + WEB[p.number] + ", Port " + p.number + ")" });
+    else if (WEB[p.number]) {
+      targets.push({ method: "web", port: p.number, scheme: WEB[p.number], label: "Web-Login testen (" + WEB[p.number] + ", Port " + p.number + ")" });
+      // I-023 Rest: gleicher einzelner Versuch, danach Titel/Server/Realm der angemeldeten Startseite lesen
+      targets.push({ method: "web", port: p.number, scheme: WEB[p.number], readInfo: true, label: "Web-Login testen + Web-Infos lesen (" + WEB[p.number] + ", Port " + p.number + ")" });
+    }
   });
   // I-022 Rest: SNMPv3-Test (UDP 161, vom TCP-Scan nicht sichtbar) - immer anbieten, Protokolle waehlbar.
   const snmpRow = snmpV3Row(h, box);

@@ -604,3 +604,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.49.1] – 2026-11-10
 ### Hinzugefügt
 - **Sommer-Deko** (I-077): Im Sommer zeigt der Jahreszeiten-Effekt zusätzlich Rasen (leicht wiegende Halme) am unteren Fensterrand und eine Blume links neben der Versionsnummer. Gleiche Regeln wie I-076 (abschaltbar, keine Klicks, nicht im Druck). Im Browser mit erzwungenem Juli-Datum per Screenshot geprüft.
+
+## [0.50.0] – 2026-11-10
+### Hinzugefügt
+- **Web-Infos nach Login** (I-023 Rest): Neuer Knopf „Web-Login testen + Web-Infos lesen“. Nach dem **einen** erfolgreichen HTTP-Basic-Versuch wertet der Test die dabei gelieferte Startseite aus (max. 64 KB, keine zusätzliche Anfrage): Seitentitel, Server-Kennung (Header), Anmelde-Realm, Generator-Meta-Tag. Anzeige im Detail-Panel, nur im RAM; Werte bereinigt und gekürzt.
+### Grenzen
+- Nur HTTP-Basic (wie der Web-Login-Test); Formular-/Digest-Logins und weitere Unterseiten werden nicht gelesen. Welche Angaben ein Gerät liefert, ist modellabhängig – **nur mit Testserver geprüft, nicht an echten Geräten**.
