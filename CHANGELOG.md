@@ -506,3 +506,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **`scripts/start.sh`** (I-071): Ein Aufruf macht `git pull --ff-only`, `scripts/build.sh native` und startet `dist/netzscanner`. Optionen (z. B. `--listen`, `--token`) werden an das Programm durchgereicht. Bricht beim ersten Fehler ab, damit keine alte Version startet.
 ### Grenzen
 - Nur bash (Linux/macOS, unter Windows Git-Bash/WSL). Nur lokal getestet (Syntaxprüfung), nicht im echten Ablauf mit `git pull`.
+
+## [0.37.2] – 2026-11-10
+### Behoben
+- **Netzdokumentation-PDF, Deckblatt:** Lange Bezeichnungen (z. B. „Scan-Rechner (IP / Netzmaske)“) überlappten mit dem Wert. Die Bezeichnungsspalte richtet sich jetzt nach der längsten Bezeichnung (mindestens 50 mm, höchstens die halbe Seitenbreite; zu lange Texte werden gekürzt).
