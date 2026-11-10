@@ -16,6 +16,12 @@ section{display:none}section.on{display:block}
 .scanbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px}
 .scanbar input{background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:7px 10px;font:inherit}
 .scanbar input.t{width:260px}.tgt{display:flex;flex-direction:column}.hint{color:var(--mut);font-size:11px;margin-top:3px;max-width:340px;line-height:1.35}.scanbar input.p{width:160px}
+/* Basis-Gestaltung ALLER Knoepfe im Stil der Detail-Knoepfe (dunkel statt heller Browser-Standard).
+   Sonderfaelle (nav, .btn, .selbar, .legend, .rename, Randknoepfe) ueberschreiben das ueber hoehere Spezifitaet. */
+button{background:#21262d;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit}
+select{background:#0d1117;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 8px;font:inherit;max-width:100%}
+button:hover:not(:disabled){border-color:var(--mut)}
+button:disabled{opacity:.5;cursor:default}
 .btn{background:#238636;border:1px solid #2ea043;color:#fff;border-radius:6px;padding:7px 14px;font:inherit;cursor:pointer}
 .btn.stop{background:#8b2a2a;border-color:var(--bad)}.btn:disabled{opacity:.5;cursor:default}
 .prog{flex:1;min-width:160px;color:var(--mut)}
