@@ -76,6 +76,12 @@ type pdfLink struct {
 	srcLvl       int     // Ebene des Uplinks (fuer den linken Rand, an dem die Linie herausgefuehrt wird)
 	trunkX, busY float64 // senkrechte Schiene / waagerechte Hoehe unter dem Uplink
 	toX, toY     float64 // Ziel: linke Kante der Einheit
+	// Steht die Einheit NICHT ganz links in ihrer Zeile, wuerde die waagerechte Linie auf Titelhoehe
+	// durch die Gruppen davor laufen. Dann laeuft sie stattdessen durch die Luecke ueber der Zeile
+	// (laneY) und tritt von oben in die Einheit ein (Mitte topX, Oberkante topY).
+	fromAbove   bool
+	laneY, topX float64
+	topY        float64
 }
 
 // pdfLayout ist das Ergebnis von layoutTopology.
@@ -185,7 +191,7 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 				}
 			}
 			x := (usableW - total) / 2
-			for _, u := range line {
+			for ui, u := range line {
 				first := u.list[0]
 				toY := y + pdfBoxH/2
 				if u.group {
@@ -204,7 +210,8 @@ func layoutTopology(hosts []model.Host) pdfLayout {
 					minX = x
 				}
 				if _, ok := byIP[first.Uplink]; ok && first.Uplink != "" && first.Uplink != first.IP {
-					lay.links = append(lay.links, pdfLink{from: first.Uplink, srcLvl: pdfDepth(byIP[first.Uplink], byIP), toX: x, toY: toY})
+					lay.links = append(lay.links, pdfLink{from: first.Uplink, srcLvl: pdfDepth(byIP[first.Uplink], byIP), toX: x, toY: toY,
+						fromAbove: ui > 0, laneY: y - pdfRowGap/2, topX: x + u.w/2, topY: y})
 				}
 				x += u.w + pdfUnitGap
 			}
@@ -411,7 +418,14 @@ func drawTopologyPage(pdf *fpdf.Fpdf, t func(string) string, hosts []model.Host,
 		pdf.Line(ux, uy, ux, gy)
 		pdf.Line(ux, gy, gx, gy)
 		pdf.Line(gx, gy, gx, sy(l.busY))
-		pdf.Line(gx, sy(l.busY), sx(l.trunkX), sy(l.busY))          // waagerecht zur Sammelschiene
+		pdf.Line(gx, sy(l.busY), sx(l.trunkX), sy(l.busY)) // waagerecht zur Sammelschiene
+		if l.fromAbove {
+			// Einheit steht nicht links in der Zeile: durch die Luecke ueber der Zeile, von oben hinein.
+			pdf.Line(sx(l.trunkX), sy(l.busY), sx(l.trunkX), sy(l.laneY))
+			pdf.Line(sx(l.trunkX), sy(l.laneY), sx(l.topX), sy(l.laneY))
+			pdf.Line(sx(l.topX), sy(l.laneY), sx(l.topX), sy(l.topY))
+			continue
+		}
 		pdf.Line(sx(l.trunkX), sy(l.busY), sx(l.trunkX), sy(l.toY)) // senkrecht zur Einheit
 		pdf.Line(sx(l.trunkX), sy(l.toY), sx(l.toX), sy(l.toY))     // kurz hinein
 	}

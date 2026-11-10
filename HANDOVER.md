@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.46.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.46.1 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -33,6 +33,7 @@ Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Karte/PDF (0.46.1): Steht eine Gruppe neben einer anderen in derselben Zeile (z. B. Mobilgeräte neben IoT), läuft die Linie jetzt über die Lücke oberhalb der Zeile und von oben hinein – nicht mehr durch Titel/Rahmen der Gruppe davor. Stimmt das in Karte **und** PDF?
 - LDAP-Login-Test (0.46.0): An einem Domänencontroller/LDAP-Server Zugang merken (`DOMÄNE\benutzer`), „LDAP-Login testen“ – erscheint erst der Fingerabdruck, danach „ok“ mit Domäne/Server? Falsches Passwort **einmal**: „abgelehnt“? Server ohne StartTLS: kommt die Klartext-Rückfrage? Meldung bei Abweichung schicken.
 - CLI-Modus (0.45.0): `./dist/netzscanner --scan <dein-Netz> --out test.csv` (auch `.md/.html/.pdf`) – stimmt die Liste mit der Oberfläche überein? Ohne Rechte: wie bisher TCP-Fallback.
 - Kategorie „Drucker/Scanner“ (0.44.0): Landen Drucker/Scanner dort (nicht mehr in IoT), Kameras/Smart-Home weiter in IoT? Fehlzuordnungen melden. Alte Projektdatei laden: Drucker ggf. noch „IoT“?
