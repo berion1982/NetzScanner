@@ -30,7 +30,13 @@ func Diagnose(ctx context.Context, ip string, w io.Writer) {
 		p("FEHLER: keine gueltige IP-Adresse")
 		return
 	}
+	diagChecks(ctx, p, ip)
+}
 
+// diagChecks sind die Pruefschritte 1-7 (DNS, Ports, ARP, Reverse-DNS, TLS, Web, Namenssuche).
+// Sie werden vom Kommandozeilen-Aufruf (Diagnose) und vom Geraete-Bericht (DiagnoseDevice) benutzt.
+// Die IP muss vorher als gueltig geprueft sein.
+func diagChecks(ctx context.Context, p func(string, ...any), ip string) {
 	// 1. DNS-Konfiguration dieses Rechners (nur nameserver/search-Zeilen).
 	p("\n[1] DNS-Konfiguration dieses Rechners (/etc/resolv.conf)")
 	if data, err := os.ReadFile("/etc/resolv.conf"); err != nil {
