@@ -614,3 +614,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.50.1] – 2026-11-10
 ### Geändert
 - **Diagnose-Bericht: Live-Ausgabe** (I-074): Die Ausgabe von Ping und Traceroute erscheint jetzt Zeile für Zeile, sobald der Systembefehl sie liefert, statt erst nach dessen Ende. Vorher wirkte der Abschnitt „[8] Ping“ bis zu etwa 30 Sekunden leer. Rechte-Hinweis und Zeitlimit-Meldung bleiben unverändert; die Ausgabe ist weiter auf 32 KB begrenzt und bereinigt.
+
+## [0.50.2] – 2026-11-10
+### Hinzugefügt
+- **Detail-Panel ein-/ausklappen** (I-079, Wunsch Sascha): Neuer Knopf „Details einklappen ▸“ / „◂ Details“ oben im Detail-Panel (Übersicht und Topologie). Zugeklappt bleibt nur der Knopf stehen und Tabelle/Karte bekommen die volle Breite – praktisch nach einem breiten Diagnose-Bericht. Das Verhalten beim Anklicken eines Geräts bleibt gleich; Inhalt und Auswahl bleiben beim Zuklappen erhalten. Die Wahl gilt für beide Reiter und wird im Browser gemerkt (`localStorage`, ohne Speicher läuft alles weiter).
