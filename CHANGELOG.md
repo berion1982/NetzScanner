@@ -516,3 +516,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **System-Infos erweitert** (I-023 Rest, Teil 2): Der feste, nur lesende SSH-Befehl liest zusätzlich Modell (DMI bzw. Device-Tree), BIOS-/Firmware-Version, Firmware-Beschreibung bei Router-Linux (`/etc/openwrt_release`), Laufzeit und die **Schnittstellen** (Zustand, MAC, IPv4-Adressen; Loopback entfällt, höchstens 32). Weiterhin über dieselbe Verbindung, ohne zweiten Passwort-Versuch, nur im RAM.
 ### Grenzen
 - Nur Geräte mit Linux-Shell und `ip`/`/sys`/`/proc`; Router/Switches ohne Shell liefern weiter nichts. Web-/SNMP-/Domänen-Infos bleiben offen.
+
+## [0.39.0] – 2026-11-10
+### Hinzugefügt
+- **System-Infos per SNMP** (I-023 Rest, Teil 3): Beim „Lesen“ im SNMP-Formular (v2c oder v3) holt der Scanner zusätzlich Standort, Laufzeit, Modell/Firmware/Software (ENTITY-MIB, falls vorhanden) und die **Schnittstellen** (Zustand, MAC, Geschwindigkeit; Loopback entfällt, höchstens 32). Anzeige im Detail-Panel; nur im RAM, kein zusätzlicher Knopf und kein zusätzlicher Zugang nötig.
+- Ausschließlich lesende Abfragen standardisierter OIDs (kein SET). Bewusst nicht gelesen: `sysContact` (kann Personendaten enthalten) und Seriennummern. Fehlende Werte lassen nur die Zeile weg, die Topologie-Abfrage scheitert deshalb nicht.
+### Grenzen
+- Welcher Eintrag der ENTITY-MIB als „Modell“ gilt, entscheidet nur der kleinste Index mit Inhalt – bei manchen Geräten ist das nicht das Hauptgerät (unbestätigt, im LAN prüfen). Web- und Domänen-Infos bleiben offen.

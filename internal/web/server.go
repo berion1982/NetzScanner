@@ -216,6 +216,7 @@ func (s *server) viewLocked() []model.Host {
 			if hosts[i].Role == "" {
 				hosts[i].Role = "switch"
 			}
+			hosts[i].SysInfo = sw.Info // System-Infos laut SNMP (I-023)
 			if sw.Descr != "" {
 				hosts[i].OS = sw.Descr + " (SNMP)"
 			}

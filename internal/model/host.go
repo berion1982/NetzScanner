@@ -28,6 +28,13 @@ type Cert struct {
 	SelfSigned bool   `json:"selfSigned"` // Aussteller == Inhaber (selbst signiert)
 }
 
+// InfoField ist eine Zeile "Name: Wert" mit Infos, die ein Geraet nach einer Abfrage (SNMP, SSH ...)
+// selbst preisgibt. Nur im RAM, nie in der Datei der Eingaben.
+type InfoField struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 // WebLink ist ein per Klick erreichbarer Web-Zugang (Router-Oberflaeche, NAS ...).
 type WebLink struct {
 	URL   string `json:"url"`
@@ -134,34 +141,35 @@ func CategoryHue(c string) int {
 
 // Host ist ein gefundenes Geraet im Netz.
 type Host struct {
-	IP             string    `json:"ip"`
-	Name           string    `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
-	NameSource     string    `json:"nameSource,omitempty"`  // Herkunft des Namens: dns, dns-geraet, zertifikat, http-titel, nutzer
-	Location       string    `json:"location,omitempty"`    // optional vom Nutzer eingetragener Standort (Freitext, z. B. "Buero, Raum 2")
-	Username       string    `json:"username,omitempty"`    // optional vom Nutzer eingetragen (KEIN Passwort!)
-	ScannedName    string    `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
-	MAC            string    `json:"mac"`
-	Vendor         string    `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
-	OS             string    `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
-	Ports          []Port    `json:"ports"`
-	Uplink         string    `json:"uplink,omitempty"`         // Topologie: ID (IP) des vorgelagerten Geraets
-	DHCP           string    `json:"dhcp,omitempty"`           // Angabe des DHCP-Servers: "Reservierung" oder "Lease bis ..." (I-056), nur nach DHCP-Abfrage
-	RouterName     string    `json:"routerName,omitempty"`     // Name laut Router-Geraeteliste (I-024), nur nach Router-Login
-	Connection     string    `json:"connection,omitempty"`     // Verbindungsart laut Router: "WLAN", "LAN (Kabel)" ...
-	WifiSSID       string    `json:"wifiSSID,omitempty"`       // WLAN, an dem das Geraet laut Router haengt (I-055)
-	WifiSignal     int       `json:"wifiSignal,omitempty"`     // Signalstaerke in Prozent laut Router (0 = unbekannt)
-	WifiSpeed      int       `json:"wifiSpeed,omitempty"`      // WLAN-Verbindungsgeschwindigkeit in Mbit/s laut Router
-	SameMAC        []string  `json:"sameMac,omitempty"`        // andere IPs mit derselben MAC (Hinweis: im Router gegenpruefen, siehe scan.MarkSharedMAC)
-	MirrorOf       string    `json:"mirrorOf,omitempty"`       // IP des Routers/Switches, dessen MAC dieses Geraet (vermutlich als Scheineintrag) teilt (I-065)
-	MeshLink       string    `json:"meshLink,omitempty"`       // Mesh der FRITZ!Box: Art/Geschwindigkeit/Signal der Verbindung zum Uplink (I-055 c)
-	UplinkPort     string    `json:"uplinkPort,omitempty"`     // Topologie per SNMP: Port am Uplink-Switch (z. B. "Gi1/0/5")
-	UplinkShared   int       `json:"uplinkShared,omitempty"`   // Topologie per SNMP: wie viele MACs an diesem Port gesehen wurden (>1 = Switch/AP dahinter)
-	Role           string    `json:"role,omitempty"`           // "router", "switch" oder leer
-	Category       string    `json:"category"`                 // Kategorie (CatNetwork ...): Vermutung aus dem Scan oder Wahl des Nutzers
-	CategoryManual bool      `json:"categoryManual,omitempty"` // true = Nutzer hat die Kategorie selbst gesetzt
-	Known          bool      `json:"known"`                    // false = unbekanntes Geraet
-	Pending        bool      `json:"pending,omitempty"`        // true = Scan laeuft noch, Angaben (Name) unvollstaendig
-	WebLinks       []WebLink `json:"webLinks"`                 // wird durch FillWebLinks berechnet
+	IP             string      `json:"ip"`
+	Name           string      `json:"name"`                  // angezeigter Name (ggf. vom Nutzer geaendert)
+	NameSource     string      `json:"nameSource,omitempty"`  // Herkunft des Namens: dns, dns-geraet, zertifikat, http-titel, nutzer
+	Location       string      `json:"location,omitempty"`    // optional vom Nutzer eingetragener Standort (Freitext, z. B. "Buero, Raum 2")
+	Username       string      `json:"username,omitempty"`    // optional vom Nutzer eingetragen (KEIN Passwort!)
+	ScannedName    string      `json:"scannedName,omitempty"` // urspruenglicher Name aus dem Scan, nur gesetzt wenn umbenannt
+	MAC            string      `json:"mac"`
+	Vendor         string      `json:"vendor,omitempty"` // Hersteller aus der MAC (OUI)
+	OS             string      `json:"os,omitempty"`     // Vermutung, kann leer/falsch sein
+	Ports          []Port      `json:"ports"`
+	Uplink         string      `json:"uplink,omitempty"`         // Topologie: ID (IP) des vorgelagerten Geraets
+	DHCP           string      `json:"dhcp,omitempty"`           // Angabe des DHCP-Servers: "Reservierung" oder "Lease bis ..." (I-056), nur nach DHCP-Abfrage
+	RouterName     string      `json:"routerName,omitempty"`     // Name laut Router-Geraeteliste (I-024), nur nach Router-Login
+	Connection     string      `json:"connection,omitempty"`     // Verbindungsart laut Router: "WLAN", "LAN (Kabel)" ...
+	WifiSSID       string      `json:"wifiSSID,omitempty"`       // WLAN, an dem das Geraet laut Router haengt (I-055)
+	WifiSignal     int         `json:"wifiSignal,omitempty"`     // Signalstaerke in Prozent laut Router (0 = unbekannt)
+	WifiSpeed      int         `json:"wifiSpeed,omitempty"`      // WLAN-Verbindungsgeschwindigkeit in Mbit/s laut Router
+	SameMAC        []string    `json:"sameMac,omitempty"`        // andere IPs mit derselben MAC (Hinweis: im Router gegenpruefen, siehe scan.MarkSharedMAC)
+	MirrorOf       string      `json:"mirrorOf,omitempty"`       // IP des Routers/Switches, dessen MAC dieses Geraet (vermutlich als Scheineintrag) teilt (I-065)
+	MeshLink       string      `json:"meshLink,omitempty"`       // Mesh der FRITZ!Box: Art/Geschwindigkeit/Signal der Verbindung zum Uplink (I-055 c)
+	UplinkPort     string      `json:"uplinkPort,omitempty"`     // Topologie per SNMP: Port am Uplink-Switch (z. B. "Gi1/0/5")
+	UplinkShared   int         `json:"uplinkShared,omitempty"`   // Topologie per SNMP: wie viele MACs an diesem Port gesehen wurden (>1 = Switch/AP dahinter)
+	SysInfo        []InfoField `json:"sysInfo,omitempty"`        // System-Infos laut SNMP (I-023): Standort, Laufzeit, Modell, Schnittstellen
+	Role           string      `json:"role,omitempty"`           // "router", "switch" oder leer
+	Category       string      `json:"category"`                 // Kategorie (CatNetwork ...): Vermutung aus dem Scan oder Wahl des Nutzers
+	CategoryManual bool        `json:"categoryManual,omitempty"` // true = Nutzer hat die Kategorie selbst gesetzt
+	Known          bool        `json:"known"`                    // false = unbekanntes Geraet
+	Pending        bool        `json:"pending,omitempty"`        // true = Scan laeuft noch, Angaben (Name) unvollstaendig
+	WebLinks       []WebLink   `json:"webLinks"`                 // wird durch FillWebLinks berechnet
 }
 
 // webPorts ordnet Ports, die typischerweise eine Weboberflaeche liefern,
