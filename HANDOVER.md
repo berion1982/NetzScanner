@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.36.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.37.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -19,15 +19,17 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Lizenz** (I-069, 0.27.0): AGPL-3.0-or-later (`LICENSE`). Fremdlizenzen in `internal/licenses/THIRD_PARTY_LICENSES.txt` (eingebettet, `--licenses`), erzeugt mit `scripts/third-party-licenses.sh` – **nach jeder Änderung an `go.mod` neu erzeugen** (Test schlägt sonst fehl). `build.sh` legt `LICENSE` + Fremdlizenzen nach `dist/`. Quellcode-Link in der Oberfläche (AGPL §13).
 - **Zugangsdaten** (I-020, `creds.go`): je Geräte-IP Benutzer/Passwort nur im RAM, nur Loopback, 15 Min Inaktivität, API ohne Passwort-Rückgabe.
 - **Login-Test** (I-022, 0.36.0, `internal/logintest`, `internal/web/logintest.go`): SSH (Passwort/kbd-interaktiv) und Web (HTTP-Basic) mit dem Zugang aus `credStore`. Ein Passwort-Versuch pro Klick, Hostkey/Zertifikat erst nach bestätigtem Fingerabdruck, Ergebnisse nur im RAM am Zugang.
+- **System-Infos** (I-023 Teil 1, 0.37.0, `logintest.SSHInfo`): nach SSH-Login über dieselbe Verbindung ein fester, lesender Befehl (Kernel, Hostname, os-release); Anzeige im Detail-Panel, nur RAM.
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-020 0.35.0, I-022 Teil 1 in 0.36.0):
-1. **I-022 Rest** (optional): SNMPv3-Login-Test (eigene Auth-/Priv-Angaben nötig, vorhandenes SNMP-Formular nutzen), später LDAP/WinRM/SMB. Sonst nächste offene Idee aus `IDEAS.md` (z. B. I-023 Router-/Server-Infos nach Login).
+Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0):
+1. **I-022 Rest** (optional): SNMPv3-Login-Test (eigene Auth-/Priv-Angaben nötig, vorhandenes SNMP-Formular nutzen), später LDAP/WinRM/SMB. Sonst I-023 Rest (Schnittstellen/Firmware, Web-/SNMP-Infos) oder nächste offene Idee aus `IDEAS.md` (z. B. I-062 Drucker per IPP).
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- System-Infos (0.37.0): An einem Linux-Gerät mit SSH „SSH-Login testen + System-Infos lesen“ – erscheinen Kernel, Hostname, System? Bei Router/Switch ohne Unix-Shell: kommt der Hinweis „keine System-Infos lesbar“ und bleibt der Login „ok“?
 - Login-Test (0.36.0): An einem Gerät mit SSH und einem mit Web-Basic-Login (z. B. Router, NAS): Zugang merken, „SSH-/Web-Login testen“ – erscheint erst der Fingerabdruck zur Bestätigung (ohne Passwort), danach „ok“/„abgelehnt“? Falsches Passwort absichtlich nur **einmal** testen. Geräte mit nur Tastatur-interaktiv oder Formular-Login: kommt eine verständliche Meldung?
 - Zugangsdaten (0.35.0): Im Browser Gerät wählen, Benutzer/Passwort merken – erscheint „gemerkt“ mit Restzeit, nie das Passwort? Verschwindet es nach „Zugang vergessen“? Per `--listen 0.0.0.0` von einem anderen Gerät: Eingabe gesperrt?
 - DHCP-Prüfung (0.34.0): Knopf „DHCP-Server prüfen“ mit Root/Admin-Rechten im echten LAN – erscheint der Router als Server? Ohne Rechte: kommt „nicht prüfbar“? Zweiter Server (z. B. Testgerät) sichtbar?
@@ -77,7 +79,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 | 0.23.0–0.23.7 ✅ | Mesh-Topologie (I-055 c), Router-Login-Meldungen, Linien in Karte und PDF, ⚠ „MAC mehrfach“ |
 | 0.24.0–0.30.0 ✅ | Zugangstoken (I-025), Befundliste (I-064), MAC-Hinweis in Exporten (I-065), Mesh-Zuordnung abgesichert (I-067), Kennungs-Namen (I-066), WAN-Status (I-068), Kategorie Mobilgeräte (I-059), SNMP v3 (I-053), Scan speichern/laden (I-035) |
 | 0.31.0–0.34.0 ✅ | Netzdokumentation-PDF (I-036), Netz-Grunddaten (I-060), AD-Domäne per rootDSE (I-061) |
-| 0.35.0–0.36.0 ✅ | Zugangsdaten im RAM (I-020), Login-Test SSH/Web (I-022 Teil 1) |
+| 0.35.0–0.37.0 ✅ | Zugangsdaten im RAM (I-020), Login-Test SSH/Web (I-022 Teil 1), System-Infos per SSH (I-023 Teil 1) |
 | später (Plan) | SNMP sysName, ICMP mit Rechten, SMB/TTL, JSON/XLSX-Export, Scan-Vergleich, Eingaben-Datei verschlüsseln |
 
 „Plan“ = Vorschlag; Sascha entscheidet die Reihenfolge, Details in `IDEAS.md`.

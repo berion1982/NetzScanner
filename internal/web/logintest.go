@@ -38,6 +38,7 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		IP, Method, Scheme, Fingerprint string
 		Port                            int
 		AllowPlain                      bool
+		ReadInfo                        bool // I-023: nach dem SSH-Login System-Infos lesen (nur Methode ssh)
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
@@ -76,7 +77,9 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
 	defer cancel()
 	var res logintest.Result
-	if req.Method == logintest.MethodSSH {
+	if req.Method == logintest.MethodSSH && req.ReadInfo {
+		res = logintest.SSHInfo(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
+	} else if req.Method == logintest.MethodSSH {
 		res = logintest.SSH(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
 	} else {
 		res = logintest.Web(ctx, req.IP, req.Port, req.Scheme, user, password, strings.TrimSpace(req.Fingerprint))

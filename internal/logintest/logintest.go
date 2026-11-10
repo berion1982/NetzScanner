@@ -54,7 +54,14 @@ type Result struct {
 	Status      Status    `json:"status"`
 	Message     string    `json:"message"`
 	Fingerprint string    `json:"fingerprint,omitempty"` // bei StatusConfirm: zu bestaetigender Fingerabdruck
+	Info        []Field   `json:"info,omitempty"`        // nur SSHInfo (I-023): vom Geraet gelesene System-Infos
 	At          time.Time `json:"at"`
+}
+
+// Field ist eine vom Geraet gelesene Information (Name/Wert), z. B. "System" = "Debian GNU/Linux 12".
+type Field struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // Zeitlimits: ein haengendes Geraet darf die Oberflaeche nicht blockieren.
@@ -75,6 +82,20 @@ var errMismatch = errors.New("fingerabdruck weicht vom bestaetigten ab")
 // SSH testet eine Anmeldung per Passwort bzw. Tastatur-interaktiv.
 // pinned ist der vom Nutzer bestaetigte Hostkey-Fingerabdruck ("SHA256:..."); leer = erst nur anzeigen.
 func SSH(ctx context.Context, host string, port int, user, password, pinned string) Result {
+	return sshRun(ctx, host, port, user, password, pinned, false)
+}
+
+// SSHInfo testet wie SSH die Anmeldung und liest bei Erfolg ueber DIESELBE Verbindung
+// (also ohne zweiten Passwort-Versuch) die System-Infos des Geraets (I-023, erster Schnitt).
+// Dazu laeuft genau ein fest eingebauter, nur lesender Befehl (siehe infoCommand) -
+// nie ein Befehl aus der Oberflaeche. Liefert das Geraet nichts Auswertbares (z. B. Router
+// ohne Unix-Shell), bleibt Info leer; der Login-Status bleibt trotzdem "ok".
+func SSHInfo(ctx context.Context, host string, port int, user, password, pinned string) Result {
+	return sshRun(ctx, host, port, user, password, pinned, true)
+}
+
+// sshRun ist die gemeinsame Umsetzung von SSH und SSHInfo.
+func sshRun(ctx context.Context, host string, port int, user, password, pinned string, readInfo bool) Result {
 	res := Result{Method: MethodSSH, Port: port, At: time.Now()}
 	var seen string // Fingerabdruck, den das Geraet praesentiert hat
 
@@ -125,12 +146,23 @@ func SSH(ctx context.Context, host string, port int, user, password, pinned stri
 	defer conn.Close()
 	_ = conn.SetDeadline(time.Now().Add(handshakeLimit))
 
-	client, _, _, err := ssh.NewClientConn(conn, addr, cfg)
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, cfg)
 	switch {
 	case err == nil:
-		// Angemeldet. Es wird bewusst keine Sitzung geoeffnet - sofort wieder trennen.
-		_ = client.Close()
+		// Angemeldet. Ohne Info-Wunsch wird bewusst keine Sitzung geoeffnet - sofort trennen.
 		res.Status, res.Message = StatusOK, "SSH-Anmeldung erfolgreich"
+		if readInfo {
+			// Die Gesamtfrist der Verbindung neu setzen, damit der Befehl nicht am
+			// (schon fast abgelaufenen) Handshake-Limit scheitert.
+			_ = conn.SetDeadline(time.Now().Add(infoLimit))
+			res.Info = readSystemInfo(ssh.NewClient(sshConn, chans, reqs))
+			if len(res.Info) == 0 {
+				res.Message += " - keine System-Infos lesbar (Gerät hat vermutlich keine Unix-Shell)"
+			} else {
+				res.Message += " - System-Infos gelesen"
+			}
+		}
+		_ = sshConn.Close()
 	case seen != "" && pinned == "":
 		res.Status, res.Fingerprint = StatusConfirm, seen
 		res.Message = "Hostkey noch nicht bestaetigt. Es wurde KEIN Passwort gesendet."
@@ -143,6 +175,99 @@ func SSH(ctx context.Context, host string, port int, user, password, pinned stri
 		res.Status, res.Message = StatusUnavailable, "SSH nicht auswertbar: "+cleanErr(err, password)
 	}
 	return res
+}
+
+// ---------------------------------------------------------------- System-Infos (I-023)
+
+// infoLimit: Gesamtzeit fuer das Lesen der System-Infos nach der Anmeldung.
+const infoLimit = 10 * time.Second
+
+// maxInfoBytes begrenzt die Ausgabe, die vom (nicht vertrauenswuerdigen) Geraet gelesen wird.
+const maxInfoBytes = 16 * 1024
+
+// infoCommand ist der EINZIGE Befehl, der je auf einem Geraet ausgefuehrt wird: nur lesend,
+// ohne Parameter von aussen. Die "#"-Marken trennen die Abschnitte, damit auch Geraete
+// ausgewertet werden koennen, auf denen einzelne Teile fehlen.
+const infoCommand = `echo "#uname"; uname -srm 2>/dev/null; echo "#host"; hostname 2>/dev/null; echo "#os"; cat /etc/os-release 2>/dev/null`
+
+// limitedBuffer sammelt Ausgabe bis maxInfoBytes und verwirft den Rest.
+type limitedBuffer struct{ b []byte }
+
+func (l *limitedBuffer) Write(p []byte) (int, error) {
+	if room := maxInfoBytes - len(l.b); room > 0 {
+		if len(p) > room {
+			l.b = append(l.b, p[:room]...)
+		} else {
+			l.b = append(l.b, p...)
+		}
+	}
+	return len(p), nil // immer "alles geschrieben", damit die Sitzung nicht blockiert
+}
+
+// readSystemInfo fuehrt infoCommand in einer neuen Sitzung aus und wertet die Ausgabe aus.
+// Fehler (keine Sitzung erlaubt, Befehl nicht ausfuehrbar ...) ergeben einfach keine Infos.
+func readSystemInfo(client *ssh.Client) []Field {
+	sess, err := client.NewSession()
+	if err != nil {
+		return nil
+	}
+	defer sess.Close()
+	var out limitedBuffer
+	sess.Stdout = &out
+	// Der Exit-Code ist egal (z. B. fehlt /etc/os-release); es zaehlt, was ausgewertet werden kann.
+	_ = sess.Run(infoCommand)
+	return parseSystemInfo(string(out.b))
+}
+
+// parseSystemInfo zerlegt die Ausgabe von infoCommand in Name/Wert-Paare.
+// Reine Funktion (ohne Netz), daher einzeln testbar. Alle Werte stammen vom Geraet und
+// werden bereinigt (Steuerzeichen raus, Laenge begrenzt); die Oberflaeche zeigt sie als Text.
+func parseSystemInfo(raw string) []Field {
+	var fields []Field
+	section := ""
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "#") {
+			section = strings.TrimPrefix(line, "#")
+			continue
+		}
+		if line == "" {
+			continue
+		}
+		switch section {
+		case "uname":
+			fields = append(fields, Field{"Kernel", cleanValue(line)})
+		case "host":
+			fields = append(fields, Field{"Hostname", cleanValue(line)})
+		case "os":
+			key, val, ok := strings.Cut(line, "=")
+			if !ok {
+				continue
+			}
+			val = strings.Trim(val, `"'`)
+			switch key {
+			case "PRETTY_NAME":
+				fields = append(fields, Field{"System", cleanValue(val)})
+			case "VERSION_ID":
+				fields = append(fields, Field{"Version", cleanValue(val)})
+			}
+		}
+	}
+	return fields
+}
+
+// cleanValue entfernt Steuerzeichen und kuerzt auf 120 Zeichen.
+func cleanValue(s string) string {
+	s = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, s)
+	if r := []rune(s); len(r) > 120 {
+		s = string(r[:120]) + "…"
+	}
+	return s
 }
 
 // ---------------------------------------------------------------- Web

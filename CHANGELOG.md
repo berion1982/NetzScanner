@@ -493,3 +493,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - `golang.org/x/crypto` ist jetzt direkte Abhängigkeit (SSH); Fremdlizenzen neu erzeugt.
 ### Grenzen
 - Nicht enthalten: SNMPv3 (braucht eigene Auth-/Priv-Angaben, hat sein eigenes Formular), LDAP/WinRM/SMB, Formular-Logins und Digest-Auth bei Web. SSH-Schlüssel-Anmeldung entfällt. Es gibt keine bekannten-Hosts-Datei: Der Fingerabdruck muss bei jedem Test neu bestätigt werden. **Nur gegen lokale Test-Server geprüft, nicht an echten Geräten im LAN.**
+
+## [0.37.0] – 2026-11-10
+### Hinzugefügt
+- **System-Infos per SSH lesen** (I-023, erster Schnitt): Neuer Knopf „SSH-Login testen + System-Infos lesen“ im Detail-Panel. Nach erfolgreicher Anmeldung läuft über **dieselbe Verbindung** (kein zweiter Passwort-Versuch) genau **ein fest eingebauter, nur lesender Befehl** (`uname -srm`, `hostname`, `/etc/os-release`). Angezeigt werden Kernel, Hostname, System und Version. Es gibt keine frei eingebbaren Befehle.
+- **Sicherheit:** Hostkey-Bestätigung wie beim Login-Test (ohne bestätigten Fingerabdruck geht kein Passwort raus). Ausgabe auf 16 KiB begrenzt, 10 s Frist, Werte von Steuerzeichen befreit und gekürzt. Ergebnis nur im RAM am Zugang, nicht in Exporten.
+### Grenzen
+- Geräte ohne Unix-Shell (viele Router/Switches) liefern keine Infos; der Login gilt trotzdem als „ok“ mit entsprechendem Hinweis. Nur SSH; Web-/SNMP-/Domänen-Infos sowie Schnittstellen und Firmware sind noch offen (Rest von I-023).
