@@ -28,6 +28,7 @@ Voraussetzung: Go ≥ 1.24.
 
 ## Fehlersuche
 ```bash
+./dist/netzscanner --scan 192.168.178.0/24 --out kunde.csv   # ohne Browser: scannt und schreibt CSV/MD/HTML/PDF
 ./dist/netzscanner --diagnose 192.168.178.1   # prüft ein Gerät Schritt für Schritt
 ```
 Die Ausgabe zeigt, welche Quellen (DNS, Zertifikat, Webseite) etwas liefern – hilfreich, wenn ein Name fehlt.

@@ -10,7 +10,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/berion1982/netzscanner/internal/licenses"
 	"github.com/berion1982/netzscanner/internal/router"
@@ -35,6 +37,11 @@ func main() {
 	noSave := flag.Bool("no-save", false, "Eingaben nicht auf die Platte speichern (nur im Arbeitsspeicher)")
 	token := flag.String("token", "", "Zugangstoken fuer die Oberflaeche (mind. 8 Zeichen; auch per Umgebung NETZSCANNER_TOKEN). Ohne Angabe wird bei --listen ausserhalb von Loopback automatisch eines erzeugt")
 	noToken := flag.Bool("no-token", false, "Zugangstoken auch bei --listen ausserhalb von Loopback abschalten (NICHT empfohlen: jeder im Netz sieht alle Daten)")
+	// Kommandozeilen-Modus ohne Browser (I-047)
+	scanTarget := flag.String("scan", "", "Kommandozeilen-Modus: Ziel scannen (z. B. 192.168.1.0/24), Ergebnis nach --out schreiben, kein Webserver")
+	scanOut := flag.String("out", "", "mit --scan: Ausgabedatei (.csv, .md, .html, .pdf); leer oder - = CSV nach stdout")
+	scanFormat := flag.String("format", "", "mit --scan: csv, csv-excel, md, html oder pdf (Standard: aus der Dateiendung)")
+	scanPorts := flag.String("ports", "", "mit --scan: Portliste wie in der Oberflaeche (leer = Standardports)")
 	flag.Parse()
 	if *noSave || *demo { // Demo-Daten sind erfunden: nie speichern
 
@@ -61,6 +68,18 @@ func main() {
 	}
 	if *diagnose != "" {
 		scan.Diagnose(context.Background(), *diagnose, os.Stdout)
+		return
+	}
+
+	if *scanTarget != "" {
+		// Meldungen nach stderr, Daten ggf. nach stdout; Strg+C bricht den Scan sauber ab.
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		err := runCLIScan(ctx, cliOptions{Target: *scanTarget, Ports: *scanPorts, Out: *scanOut, Format: *scanFormat, AllowPublic: *allowPublic}, os.Stdout, os.Stderr)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Fehler:", err)
+			os.Exit(1)
+		}
 		return
 	}
 

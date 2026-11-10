@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.44.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.45.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -10,7 +10,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - Keine Einzelgeräte-Tabellen, keine Änderungen nur für ein einzelnes Netz (siehe `CLAUDE.md`).
 
 ## Was existiert
-- **Start:** `./dist/netzscanner` → http://127.0.0.1:8484. Optionen: `--demo`, `--listen`, `--token`/`--no-token` (I-025), `--allow-public`, `--diagnose <IP>`, `--diagnose-router <IP>`, `--diagnose-mesh <IP>`, `--data <Datei>`, `--no-save`, `--version`, `--licenses`. Bauen: `scripts/build.sh` (7 Plattformen). Pull + Bauen + Starten in einem Schritt: `scripts/start.sh [Optionen]` (I-071).
+- **Start:** `./dist/netzscanner` → http://127.0.0.1:8484. Optionen: `--demo`, `--listen`, `--token`/`--no-token` (I-025), `--allow-public`, `--diagnose <IP>`, `--diagnose-router <IP>`, `--diagnose-mesh <IP>`, `--data <Datei>`, `--no-save`, `--version`, `--licenses`, `--scan <Ziel> --out <Datei>` (CLI ohne Browser, I-047, `cmd/netzscanner/cli.go`). Bauen: `scripts/build.sh` (7 Plattformen). Pull + Bauen + Starten in einem Schritt: `scripts/start.sh [Optionen]` (I-071).
 - **Scan** (`internal/scan`): Ziel-Parser (Bereiche/Listen), TCP-Portscan, ARP/MAC, Banner, OUI (IEEE-Liste), OS-Vermutung (`osguess.go`), Namenssuche (`names.go`: DNS, mDNS, NetBIOS, LLMNR, SSDP, TLS, Seitentitel), Kategorien (`category.go`), Gateway/Uplink (`gateway.go`), Netz-Grunddaten des Scan-Rechners (`netinfo.go`, I-060: IP/Maske, Gateway, DNS, Suchdomäne), SNMP (`snmp.go`, `lldp.go`, `vendor.go`), `MarkSharedMAC` (⚠ gleiche MAC, `MirrorOf` = Spiegel eines Routers/Switches, zählt nicht als Netzwerkgerät; Hinweis steht in PDF und allen Exporten).
 - **Web** (`internal/web`): Server, Scan-API mit Live-Ergebnissen, Eingaben (Name, Benutzer, Standort, Kategorie, eigene Kategorien) mit Zwischenspeicher `eingaben.json` (`store.go`), SNMP-Topologie, Router (`router.go`), Mesh (`mesh.go`), Windows-DHCP (`dhcp.go`), Reservierungen (`reservations.go`), Projektdatei speichern/laden (`project.go`, I-035), Scan-Vergleich (`compare.go`, I-034), Befundliste (`findings.go`, Paket `internal/findings`, I-064), Export-API, Oberfläche `static/index.html`.
 - **Router** (`internal/router`): FRITZ!Box per TR-064 (Geräteliste, Info, WLAN, Mesh). Nur Loopback, ein Anmeldeversuch pro Klick, Zugangsdaten und Ergebnis nur im RAM.
@@ -26,12 +26,13 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0):
+Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0, I-047 CLI-Modus in 0.45.0):
 1. **I-022 Rest** (optional): LDAP/SMB (Domain-Admins, neue Bibliothek nötig). Sonst I-023 Rest (Web-Infos nach Login) oder nächste offene Idee aus `IDEAS.md`.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- CLI-Modus (0.45.0): `./dist/netzscanner --scan <dein-Netz> --out test.csv` (auch `.md/.html/.pdf`) – stimmt die Liste mit der Oberfläche überein? Ohne Rechte: wie bisher TCP-Fallback.
 - Kategorie „Drucker/Scanner“ (0.44.0): Landen Drucker/Scanner dort (nicht mehr in IoT), Kameras/Smart-Home weiter in IoT? Fehlzuordnungen melden. Alte Projektdatei laden: Drucker ggf. noch „IoT“?
 - WinRM-Infos (0.43.0): Nach „WinRM-Login testen“ an einem Windows-Rechner – erscheinen Computername, Domäne/Arbeitsgruppe, Modell, System, Laufzeit? Sonst Meldung schicken (z. B. „keine System-Infos lesbar“).
 - WinRM-Login-Test (0.42.0): An einem Windows-Rechner mit Port 5985 Zugang merken, „WinRM-Login testen“ – kommt „ok“ mit Computername? Falsches Passwort **einmal**: „abgelehnt“? Domänenkonto als `DOMÄNE\benutzer` probieren. Meldung bei Abweichung schicken.
