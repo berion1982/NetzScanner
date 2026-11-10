@@ -67,3 +67,31 @@ func TestSSHInfoNeedsConfirm(t *testing.T) {
 		t.Fatalf("confirm ohne Passwort erwartet: %+v", r)
 	}
 }
+
+// Erweiterte Infos (I-023 Rest): Modell, Firmware, Laufzeit und Schnittstellen aus "ip -o".
+func TestParseSystemInfoExtended(t *testing.T) {
+	raw := "#uname\nLinux 6.1.0 x86_64\n#owrt\nDISTRIB_DESCRIPTION='OpenWrt 23.05.0'\n" +
+		"#model\nTestModell 1\n#bios\nF12\n#up\n90061.52 1000.0\n" +
+		"#addr\n1: lo    inet 127.0.0.1/8 scope host lo\n2: eth0    inet 192.0.2.5/24 brd 192.0.2.255 scope global eth0\n" +
+		"#link\n1: lo: <LOOPBACK,UP> mtu 65536 state UNKNOWN mode DEFAULT link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00\n" +
+		"2: eth0: <BROADCAST,UP> mtu 1500 state UP mode DEFAULT link/ether aa:bb:cc:dd:ee:ff brd ff:ff:ff:ff:ff:ff\n"
+	got := map[string]string{}
+	for _, f := range parseSystemInfo(raw) {
+		got[f.Name] = f.Value
+	}
+	want := map[string]string{
+		"Firmware":           "OpenWrt 23.05.0",
+		"Modell":             "TestModell 1",
+		"BIOS/Firmware":      "F12",
+		"Laufzeit":           "1 T 1 Std 1 Min",
+		"Schnittstelle eth0": "UP · aa:bb:cc:dd:ee:ff · 192.0.2.5/24",
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s: erwartet %q, bekam %q", k, v, got[k])
+		}
+	}
+	if _, ok := got["Schnittstelle lo"]; ok {
+		t.Error("Loopback sollte entfallen")
+	}
+}
