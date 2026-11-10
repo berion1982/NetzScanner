@@ -200,3 +200,38 @@ func TestWebDigestNotSupported(t *testing.T) {
 		t.Fatalf("unavailable erwartet: %+v", r)
 	}
 }
+
+// I-023 Rest: WebInfo liest nach EINEM erfolgreichen Basic-Login Titel, Server, Realm und Generator.
+func TestWebInfoReadsPage(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, _, ok := r.BasicAuth(); !ok {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Testgeraet"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.Header().Set("Server", "TestHTTPd/1.2")
+		_, _ = w.Write([]byte(`<html><head><title> Router  Verwaltung </title><meta name="generator" content="TestCMS 3"></head></html>`))
+	}))
+	defer srv.Close()
+	host, port := hostPort(t, srv.URL)
+	fp := Web(context.Background(), host, port, "https", "a", "b", "").Fingerprint
+
+	r := WebInfo(context.Background(), host, port, "https", "a", "b", fp)
+	if r.Status != StatusOK {
+		t.Fatalf("ok erwartet: %+v", r)
+	}
+	got := map[string]string{}
+	for _, f := range r.Info {
+		got[f.Name] = f.Value
+	}
+	want := map[string]string{"Seitentitel": "Router  Verwaltung", "Server-Kennung": "TestHTTPd/1.2", "Anmelde-Realm": "Testgeraet", "Generator": "TestCMS 3"}
+	for k, v := range want {
+		if strings.TrimSpace(got[k]) != v {
+			t.Errorf("%s: erwartet %q, bekam %q", k, v, got[k])
+		}
+	}
+	// Ohne Info-Wunsch bleibt Info leer.
+	if r := Web(context.Background(), host, port, "https", "a", "b", fp); len(r.Info) != 0 {
+		t.Errorf("Web darf keine Infos liefern: %+v", r.Info)
+	}
+}

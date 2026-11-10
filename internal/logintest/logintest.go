@@ -21,8 +21,10 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -415,6 +417,18 @@ func cleanValue(s string) string {
 // scheme "https": pinned ist der bestaetigte Zertifikats-Fingerabdruck; "http": unverschluesselt,
 // der Aufrufer muss das ausdruecklich erlaubt haben.
 func Web(ctx context.Context, host string, port int, scheme, user, password, pinned string) Result {
+	return webRun(ctx, host, port, scheme, user, password, pinned, false)
+}
+
+// WebInfo (I-023 Rest) ist Web plus Infos: Nach erfolgreicher Anmeldung wird die Seite, die der
+// EINE Anmeldeversuch ohnehin liefert, ausgewertet (Titel, Server-Kennung, Realm, Generator).
+// Es gibt keine zusaetzliche Anfrage und keine weiteren Seiten.
+func WebInfo(ctx context.Context, host string, port int, scheme, user, password, pinned string) Result {
+	return webRun(ctx, host, port, scheme, user, password, pinned, true)
+}
+
+// webRun ist die gemeinsame Umsetzung von Web und WebInfo.
+func webRun(ctx context.Context, host string, port int, scheme, user, password, pinned string, readInfo bool) Result {
 	res := Result{Method: MethodWeb, Port: port, Scheme: scheme, At: time.Now()}
 	var seen string // SHA-256-Fingerabdruck des praesentierten Zertifikats
 
@@ -461,7 +475,8 @@ func Web(ctx context.Context, host string, port int, scheme, user, password, pin
 		res.Message = fmt.Sprintf("Das Gerät verlangt auf dieser Seite keine HTTP-Anmeldung (Status %d). Formular-Logins kann der Test nicht prüfen. Es wurde kein Passwort gesendet.", resp.StatusCode)
 		return res
 	}
-	if !wantsBasic(resp.Header.Values("WWW-Authenticate")) {
+	challenge := resp.Header.Values("WWW-Authenticate") // enthaelt ggf. den Realm
+	if !wantsBasic(challenge) {
 		res.Status = StatusUnavailable
 		res.Message = "Das Gerät verlangt eine andere HTTP-Anmeldeart als Basic (z. B. Digest) - nicht unterstützt. Es wurde kein Passwort gesendet."
 		return res
@@ -472,12 +487,20 @@ func Web(ctx context.Context, host string, port int, scheme, user, password, pin
 	if err != nil {
 		return webError(res, err, seen, pinned, password)
 	}
+	// Nur bei akzeptierter Anmeldung und nur auf Wunsch den Anfang der Seite lesen (max. 64 KB).
+	var body []byte
+	if readInfo && resp.StatusCode < 400 {
+		body, _ = io.ReadAll(io.LimitReader(resp.Body, 64*1024))
+	}
 	resp.Body.Close()
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		res.Status, res.Message = StatusFailed, fmt.Sprintf("HTTP-Anmeldung abgelehnt (Status %d)", resp.StatusCode)
 	case resp.StatusCode < 400:
 		res.Status, res.Message = StatusOK, fmt.Sprintf("HTTP-Anmeldung akzeptiert (Status %d)", resp.StatusCode)
+		if readInfo {
+			res.Info = parseWebInfo(resp.Header, challenge, string(body))
+		}
 	default:
 		res.Status, res.Message = StatusUnavailable, fmt.Sprintf("Unklare Antwort nach der Anmeldung (Status %d)", resp.StatusCode)
 	}
@@ -542,4 +565,38 @@ func cleanErr(err error, password string) string {
 		t = t[:160] + "…"
 	}
 	return t
+}
+
+// ---------------------------------------------------------------- Web-Infos (I-023 Rest)
+
+var (
+	reWebTitle     = regexp.MustCompile(`(?is)<title[^>]*>(.*?)</title>`)
+	reWebGenerator = regexp.MustCompile(`(?is)<meta[^>]+name\s*=\s*["']?(?:generator|application-name)["']?[^>]*content\s*=\s*["']([^"']*)["']`)
+	reWebRealm     = regexp.MustCompile(`(?i)realm\s*=\s*"([^"]*)"`)
+)
+
+// parseWebInfo sammelt aus der Antwort der angemeldeten Startseite die Angaben, die ein Geraet
+// ueber sich verraet: Seitentitel, Server-Kennung (Header), Anmelde-Realm, Generator-Meta-Tag.
+// Alle Werte werden bereinigt und gekuerzt (cleanValue); fehlende Angaben entfallen einfach.
+func parseWebInfo(h http.Header, challenge []string, body string) []Field {
+	var out []Field
+	add := func(name, value string) {
+		if v := cleanValue(value); v != "" {
+			out = append(out, Field{Name: name, Value: v})
+		}
+	}
+	if m := reWebTitle.FindStringSubmatch(body); m != nil {
+		add("Seitentitel", m[1])
+	}
+	add("Server-Kennung", h.Get("Server"))
+	for _, c := range challenge {
+		if m := reWebRealm.FindStringSubmatch(c); m != nil {
+			add("Anmelde-Realm", m[1])
+			break
+		}
+	}
+	if m := reWebGenerator.FindStringSubmatch(body); m != nil {
+		add("Generator", m[1])
+	}
+	return out
 }
