@@ -610,3 +610,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Web-Infos nach Login** (I-023 Rest): Neuer Knopf „Web-Login testen + Web-Infos lesen“. Nach dem **einen** erfolgreichen HTTP-Basic-Versuch wertet der Test die dabei gelieferte Startseite aus (max. 64 KB, keine zusätzliche Anfrage): Seitentitel, Server-Kennung (Header), Anmelde-Realm, Generator-Meta-Tag. Anzeige im Detail-Panel, nur im RAM; Werte bereinigt und gekürzt.
 ### Grenzen
 - Nur HTTP-Basic (wie der Web-Login-Test); Formular-/Digest-Logins und weitere Unterseiten werden nicht gelesen. Welche Angaben ein Gerät liefert, ist modellabhängig – **nur mit Testserver geprüft, nicht an echten Geräten**.
+
+## [0.50.1] – 2026-11-10
+### Geändert
+- **Diagnose-Bericht: Live-Ausgabe** (I-074): Die Ausgabe von Ping und Traceroute erscheint jetzt Zeile für Zeile, sobald der Systembefehl sie liefert, statt erst nach dessen Ende. Vorher wirkte der Abschnitt „[8] Ping“ bis zu etwa 30 Sekunden leer. Rechte-Hinweis und Zeitlimit-Meldung bleiben unverändert; die Ausgabe ist weiter auf 32 KB begrenzt und bereinigt.

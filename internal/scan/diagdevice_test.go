@@ -102,3 +102,34 @@ func TestDiagnoseDeviceInvalidIP(t *testing.T) {
 		t.Errorf("unerwartet:\n%s", out.String())
 	}
 }
+
+// lineWriter gibt fertige Zeilen sofort aus (auch wenn Bytes mitten in einer Zeile ankommen),
+// ueberspringt Leerzeilen, entfernt "\r" und liefert die letzte Zeile erst bei flush.
+func TestLineWriterLive(t *testing.T) {
+	var got []string
+	w := &lineWriter{emit: func(l string) { got = append(got, l) }, max: 1000}
+	w.Write([]byte("64 bytes fr"))
+	if len(got) != 0 {
+		t.Fatalf("unvollstaendige Zeile darf noch nicht erscheinen: %v", got)
+	}
+	w.Write([]byte("om x\r\n\n2. Zeile\nOhne Ende"))
+	if len(got) != 2 || got[0] != "64 bytes from x" || got[1] != "2. Zeile" {
+		t.Fatalf("Zeilen sofort erwartet: %v", got)
+	}
+	w.flush()
+	if len(got) != 3 || got[2] != "Ohne Ende" {
+		t.Fatalf("flush erwartet letzte Zeile: %v", got)
+	}
+}
+
+// Ueber max hinaus wird Ausgabe verworfen, Write meldet trotzdem alles als geschrieben.
+func TestLineWriterLimit(t *testing.T) {
+	var got []string
+	w := &lineWriter{emit: func(l string) { got = append(got, l) }, max: 6}
+	if n, _ := w.Write([]byte("abc\ndef\nghi\n")); n != 12 {
+		t.Fatalf("Write muss alles annehmen, war %d", n)
+	}
+	if len(got) != 1 || got[0] != "abc" {
+		t.Fatalf("nur Zeilen bis max erwartet: %v", got)
+	}
+}

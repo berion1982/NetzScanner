@@ -249,14 +249,15 @@ func runDiagCommand(ctx context.Context, p func(string, ...any), c diagCommand, 
 	if runtime.GOOS != "windows" {
 		cmd.Env = append(os.Environ(), "LC_ALL=C") // gleichbleibende Meldungen fuer die Fehlersuche
 	}
+	// Die Ausgabe wird Zeile fuer Zeile SOFORT in den Bericht geschrieben (Live-Anzeige, I-074/0.49.2),
+	// damit man bei langsamen Befehlen (ping, traceroute) nicht bis zum Ende warten muss.
+	// Zusaetzlich bleibt eine begrenzte Kopie, um spaeter auf fehlende Rechte zu pruefen.
 	buf := &limitedBuffer{max: diagCmdMaxBytes}
-	cmd.Stdout, cmd.Stderr = buf, buf
+	live := &lineWriter{emit: func(l string) { p("    %s", l) }, max: diagCmdMaxBytes}
+	cmd.Stdout = io.MultiWriter(live, buf) // Stdout und Stderr teilen sich dasselbe Ziel (eine Reihenfolge)
+	cmd.Stderr = cmd.Stdout
 	runErr := cmd.Run()
-	for _, line := range strings.Split(strings.TrimRight(buf.String(), "\r\n"), "\n") {
-		if l := sanitizeUTF8(strings.TrimRight(line, "\r")); l != "" {
-			p("    %s", l)
-		}
-	}
+	live.flush() // unvollstaendige letzte Zeile (ohne Zeilenende) nicht verlieren
 	switch {
 	case ctx.Err() != nil:
 		p("    (abgebrochen: Zeitlimit von %s erreicht)", timeout)
@@ -269,6 +270,52 @@ func runDiagCommand(ctx context.Context, p func(string, ...any), c diagCommand, 
 		p("    mit sudo bzw. als Administrator starten, oder dem Systembefehl die Berechtigung geben.")
 	}
 	return true
+}
+
+// lineWriter zerlegt geschriebene Bytes in Zeilen und gibt jede fertige Zeile sofort an emit weiter.
+// Zeilen werden bereinigt (Steuerzeichen, ungueltiges UTF-8) und leere Zeilen uebersprungen.
+// Nach max Bytes insgesamt wird weitere Ausgabe verworfen (Schutz vor endloser Ausgabe).
+type lineWriter struct {
+	emit    func(string)
+	max     int
+	written int
+	pending []byte
+}
+
+// Write nimmt immer alles an (sonst bricht der Befehl mit einem Schreibfehler ab).
+func (l *lineWriter) Write(b []byte) (int, error) {
+	n := len(b)
+	if room := l.max - l.written; room < len(b) {
+		if room < 0 {
+			room = 0
+		}
+		b = b[:room]
+	}
+	l.written += len(b)
+	l.pending = append(l.pending, b...)
+	for {
+		i := bytes.IndexByte(l.pending, '\n')
+		if i < 0 {
+			return n, nil
+		}
+		l.line(string(l.pending[:i]))
+		l.pending = l.pending[i+1:]
+	}
+}
+
+// flush gibt eine noch offene letzte Zeile aus.
+func (l *lineWriter) flush() {
+	if len(l.pending) > 0 {
+		l.line(string(l.pending))
+		l.pending = nil
+	}
+}
+
+// line bereinigt und gibt eine einzelne Zeile aus.
+func (l *lineWriter) line(s string) {
+	if t := sanitizeUTF8(strings.TrimRight(s, "\r")); t != "" {
+		l.emit(t)
+	}
 }
 
 // needsRightsHint erkennt typische Meldungen, die auf fehlende Rechte hindeuten.

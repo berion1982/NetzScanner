@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.50.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.50.1 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -24,7 +24,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **WinRM-Login-Test** (I-022 Rest, 0.42.0, `logintest.WinRM`, Methode `winrm`, Port 5985): NTLM, ein Versuch, danach ein fester lesender PowerShell-Befehl; ab 0.43.0 (I-023) liefert er Computername, Domäne/Arbeitsgruppe, Modell, Windows-Version, Laufzeit. Kein 5986/Kerberos.
 - **LDAP-Login-Test** (I-022 Rest, 0.46.0, `logintest.LDAP`, Methode `ldap`, Ports 389/636/3268/3269): ein einfacher Bind, LDAPS bzw. StartTLS mit bestätigtem Fingerabdruck, Klartext nur nach ausdrücklicher Bestätigung; danach rootDSE (Domäne, Server).
 - **SMB-Login-Test** (I-022 Rest, 0.47.0, `logintest.SMB`, Methode `smb`, Port 445): ein NTLM-Versuch (`go-smb2`), danach nur die Freigabenamen (IPC$/srvsvc). Kein Kerberos, kein NetBIOS-Port 139.
-- **Diagnose-Knopf je Gerät** (I-074, 0.48.0, `scan/diagdevice.go`, `web/diagnose.go`, `POST /api/diagnose`): Textbericht (Gespeichertes + aktive Prüfungen aus `--diagnose` + optional Ping, Traceroute, voller Portscan). Ping/Traceroute per Systembefehl (feste Argumente, keine Shell), Ersatz: TCP-Laufzeit. Streaming, nur Loopback, nur Listen-Geräte.
+- **Diagnose-Knopf je Gerät** (I-074, 0.48.0, `scan/diagdevice.go`, `web/diagnose.go`, `POST /api/diagnose`): Textbericht (Gespeichertes + aktive Prüfungen aus `--diagnose` + optional Ping, Traceroute, voller Portscan). Ping/Traceroute per Systembefehl (feste Argumente, keine Shell), Ersatz: TCP-Laufzeit. Streaming, nur Loopback, nur Listen-Geräte. Ab 0.50.1 erscheint die Befehlsausgabe live Zeile für Zeile (`lineWriter`).
 - **Web-Infos nach Login** (I-023 Rest, 0.50.0, `logintest.WebInfo`, `readInfo` bei Methode `web`): derselbe eine Basic-Versuch, danach Seitentitel, Server-Kennung, Realm, Generator aus der gelieferten Startseite (max. 64 KB). Nur RAM. I-023 damit vollständig.
 - **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung. Ab 0.49.1 (I-077) im Sommer zusätzlich Rasen unten und Blume neben der Versionsnummer.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
@@ -37,6 +37,7 @@ Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Live-Diagnose (0.50.1): Erscheinen die Ping-/Traceroute-Zeilen nach „Diagnose-Daten erzeugen“ sofort einzeln statt erst am Ende? Bei Teil B (aktive Prüfungen) vor Ping kann es weiter etwas dauern.
 - Web-Infos (0.50.0): An einem Gerät mit HTTP-Basic-Login (Router, NAS) Zugang merken, „Web-Login testen + Web-Infos lesen“ – erscheinen Seitentitel/Server/Realm? Geräte mit Formular-Login: kommt wie bisher „nicht testbar“? Falsches Passwort **einmal**: „abgelehnt" ohne Infos?
 - Jahreszeiten-Effekt (0.49.0): Erscheint passend zum Monat eine dezente Animation? Stört sie Lesen/Klicken/Tabelle? Schalter unten links merkt sich die Wahl nach Neuladen? CPU-Last im Leerlauf spürbar?
 - Diagnose-Knopf (0.48.0): Gerät wählen, rechts unten „Diagnose-Daten erzeugen“ mit Ping + Traceroute – stehen echte `ping`-/`traceroute`-Ausgaben im Bericht (nicht nur der TCP-Ersatz)? Fehlt dem Befehl ein Recht: kommt der Hinweis? Voller Portscan an einem Gerät: Dauer, Ergebnis plausibel? Gern einen Bericht schicken, wenn etwas fehlt, das du dir gewünscht hättest.
