@@ -593,3 +593,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.48.1] – 2026-11-10
 ### Geändert
 - **Diagnose-Bericht:** Das Ausgabefeld hat jetzt einen sichtbaren Rahmen (mit Innenabstand), damit man mit der Maus klar im Feld steht und zum Scrollen sicher dort ist; es lässt sich auch per Tastatur fokussieren.
+
+## [0.49.0] – 2026-11-10
+### Hinzugefügt
+- **Jahreszeiten-Effekt** (I-076): dezente Hintergrund-Animation (Winter Schnee, Frühling Blütenblätter, Sommer Lichtpunkte, Herbst Blätter) nach dem Datum des Rechners (Nordhalbkugel, keine Ortserkennung). Ein Canvas mit `pointer-events:none`, 30–50 Teilchen, ca. 30 fps, reines JS ohne Bibliothek.
+- Schalter „Jahreszeiten-Effekt“ unten in der Navigation (Standard: an), Wahl im Browser gemerkt. Aus bei `prefers-reduced-motion`, pausiert bei verstecktem Tab, nicht im Druck; Exporte/PDF unberührt. Hilfe-Abschnitt ergänzt.
+### Grenzen
+- Sondertage (Weihnachten, Silvester, Halloween) bewusst nicht umgesetzt. Nur im Code geprüft (Syntax), **Optik und CPU-Last im Browser ungeprüft**.
