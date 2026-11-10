@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.50.4 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.50.5 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -39,6 +39,7 @@ Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Jahreszeiten-Effekt (0.50.5): Unter Windows Schalter unten links anklicken – startet die Animation jetzt? (War vorher gesperrt, vermutlich wegen „Animationseffekte“ aus; Ursache ist eine Annahme, nicht bestätigt.)
 - Knopf-Design (0.50.4): Sind in allen Reitern (Topologie, DHCP & Router, Befunde, Reservierungen, Hilfe, Vergleich) keine hellen Standard-Knöpfe/Listen mehr zu sehen? Wirkt etwas jetzt zu dunkel/schlecht lesbar?
 - Panelbreite (0.50.3): Erweitert sich das Panel beim Bericht, und der Randknopf (‹/›) stellt die normale Breite wieder her? Bleibt der Knopf beim Scrollen mittig sichtbar? Auch mit schmalem Fenster/Handheld prüfen.
 - Detail-Panel (0.50.2): Lässt sich das Panel nach einem breiten Diagnose-Bericht zuklappen (Tabelle/Karte volle Breite) und wieder aufklappen? Bleibt die Wahl nach Neuladen? Stört das Zuklappen sonst etwas?

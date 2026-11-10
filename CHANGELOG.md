@@ -626,3 +626,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.50.4] – 2026-11-10
 ### Geändert
 - **Einheitliches Knopf-Design** (I-081, Wunsch Sascha): Alle Knöpfe und Auswahllisten sind jetzt dunkel im Stil der Detail-Knöpfe (Hintergrund, Rahmen, Rundung, Hover, deaktiviert). Vorher hatten Knöpfe außerhalb bestimmter Bereiche (z. B. „Scan speichern/laden/vergleichen“, Panel-Knöpfe) das helle Browser-Standardaussehen, ebenso die Kategorie-Auswahl. Umgesetzt als Basisregel in `static/index.html`; vorhandene Sonderfälle (Navigation, grüne Hauptknöpfe, Auswahlleiste, Legende) bleiben unverändert.
+
+## [0.50.5] – 2026-11-10
+### Behoben
+- **Jahreszeiten-Effekt unter Windows nicht einschaltbar** (Meldung Sascha): Verlangt das Betriebssystem reduzierte Bewegung (Windows: „Animationseffekte“ aus), war der Schalter gesperrt. Jetzt bleibt er bedienbar: Ohne eigene Wahl ist der Effekt dann aus, eine bewusste Wahl im Browser hat aber Vorrang. Hilfe-Text angepasst.
