@@ -66,11 +66,16 @@ svg{width:100%;height:auto;display:block}
 .node text{fill:var(--txt);font-size:12px;text-anchor:middle}.node .s{fill:var(--mut);font-size:10px}
 line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 .ht td{padding:6px 12px 6px 0;vertical-align:top;border-bottom:1px solid var(--line)}.help h2{margin-top:24px}.help{max-width:760px}code{background:#21262d;padding:1px 5px;border-radius:4px}
+#seasonfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+nav label.fx{margin-top:auto;color:var(--mut);font-size:11px;cursor:pointer;display:flex;gap:6px;align-items:center}nav label.fx+small{margin-top:6px}
+@media print{#seasonfx{display:none}}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
 <nav><b>▣ NetzScanner</b>
 <button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="find">Befunde</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
+<label class="fx" id="fxlabel" title="Dezente Jahreszeiten-Animation (Nordhalbkugel, nach Datum des Rechners)"><input type="checkbox" id="fxtoggle"> Jahreszeiten-Effekt</label>
 <small id="ver">…</small> <small><a href="https://github.com/berion1982/NetzScanner" target="_blank" rel="noopener" title="Quellcode (Lizenz: AGPL v3)">Quellcode · AGPL</a></small></nav>
+<canvas id="seasonfx" aria-hidden="true"></canvas>
 <main>
 <section id="ov" class="on">
  <div class="card scanbar">
@@ -146,6 +151,7 @@ line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
  <h2>Auswählen und Umbenennen</h2><p>Mit den Häkchen wählst du Geräte aus (Kopf-Häkchen = alle). Ausgewählte Geräte sind auch in der Topologie hervorgehoben und werden später für Export und Lesezeichen verwendet. Im Detail-Panel kannst du den Anzeigenamen ändern („Speichern“) oder auf den Scan-Namen zurücksetzen. Änderungen werden zwischengespeichert (siehe „Datenschutz und Zwischenspeicher“).</p>
  <h2>Export</h2><p>Geräte auswählen, Format wählen, „Exportieren“. <b>CSV</b> enthält Benutzername, IP, MAC, Chip-Hersteller, Gerätename, Standort, offene Ports und Kategorie sowie als letzte Spalte die Betriebssystem-Vermutung (nur eine Vermutung, kann falsch sein) – <b>keine Passwörter</b> (die gibst du erst beim Import im Zielprogramm ein). Den Benutzernamen trägst du im Detail-Panel ein. Für deutsches Excel „Semikolon“ wählen. Die <b>lesbare Tabelle</b> (HTML/Markdown) enthält zusätzlich Web-Links. Der Chip-Hersteller ist nicht zwingend der Gerätehersteller. Beginnt ein Wert mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code>, wird ihm in der CSV ein <code>'</code> vorangestellt (Schutz vor Formeln in Excel).</p>
  <h2>Diagnose-Daten je Gerät</h2><p>Im Detail-Panel (rechts, ganz unten) erzeugt „Diagnose-Daten erzeugen“ einen Textbericht zu <b>einem</b> Gerät: alles, was schon gespeichert ist (Namensquelle, Hersteller, Ports, Banner, Zertifikate, Login-Test-Ergebnisse), die aktiven Prüfungen (DNS, ARP, Zertifikate, Web-Startseiten) und auf Wunsch <b>Ping</b>, <b>Traceroute</b> und ein <b>voller Portscan</b> (alle 65535 Ports, dauert Minuten). Ping und Traceroute nutzen die Systembefehle; fehlen sie, misst der Bericht ersatzweise die Laufzeit per TCP. Brauchen sie Root-/Administratorrechte, steht ein Hinweis im Bericht. Der Bericht lässt sich kopieren oder als Textdatei speichern und enthält nie Passwörter. Es werden nur Pakete an dieses eine Gerät gesendet.</p>
+ <h2>Jahreszeiten-Effekt</h2><p>Links unten in der Navigation lässt sich eine dezente Hintergrund-Animation ein- und ausschalten: Winter Schnee, Frühling Blütenblätter, Sommer sanfte Lichtpunkte, Herbst fallende Blätter. Die Jahreszeit richtet sich nach dem Datum des Rechners und gilt für die <b>Nordhalbkugel</b> (keine Ortserkennung). Der Effekt fängt keine Klicks ab, pausiert bei verstecktem Tab, bleibt bei „Bewegung reduzieren“ im Betriebssystem aus und erscheint nicht in Druck, PDF oder Exporten. Deine Wahl merkt sich der Browser.</p>
  <h2>Web-Zugänge</h2><p>Hat ein Gerät einen Web-Port offen (z. B. 80, 443, 5000, 8080), erscheint ein blauer Link. Ein Klick öffnet die Oberfläche des Geräts in einem neuen Tab.</p>
  <h2>Topologie</h2><p><b>Kategorien:</b> Jedes Gerät wird als <b>Netzwerkgerät</b>, <b>Server</b>, <b>Client</b>, <b>Mobilgerät</b>, <b>Drucker/Scanner</b> oder <b>IoT</b> (Smart-Home, Kameras) eingeordnet (Farbe in der Karte, Legende mit Anzahl; Klick auf die Legende blendet eine Kategorie aus). Geräte mit gleichem Uplink und gleicher Kategorie sind in einer <b>Sammelgruppe</b> (gestrichelter Rahmen mit Anzahl) zusammengefasst; eine Linie führt vom Router zur Gruppe. Einzelne Geräte stehen ohne Rahmen. Das ist eine <b>Vermutung</b> aus Router-Erkennung, Chip-Hersteller, System-Vermutung und offenen Ports (z. B. Drucker-Port oder IPP-Antwort → Drucker/Scanner, SSH + Web → Server, iOS/Android → Mobilgerät, sonst Client; als <i>schwache</i> Vermutung gilt auch „WLAN laut Router + zufällige MAC + keine offenen Ports“ → Mobilgerät, was auch Laptops treffen kann) und kann falsch sein. Im Detail-Panel stellst du die Kategorie selbst ein; „Automatisch“ setzt sie zurück. Über „+ Eigene Kategorie anlegen …“ erfindest du eigene Kategorien (z. B. „Drucker“, „Gäste“; Name bis 30 Zeichen, bis zu 20 Stück). Sie bekommen automatisch eine Farbe, erscheinen in Legende, Karte, Tabelle, Exporten und PDF und werden mit den Eingaben gespeichert. Mit „Kategorie … löschen“ entfernst du eine eigene Kategorie wieder; betroffene Geräte werden dann automatisch eingeordnet. Die Kategorie steht auch in Tabelle, Exporten und im PDF. Mit „Topologie als PDF“ speicherst du Karte und Geräteliste aller Geräte als PDF (ohne Zugangsdaten; bei sehr vielen Geräten wird die Karte klein, die Liste bleibt lesbar). Zeigt den Router oben und darunter die Geräte. <b>Wichtig:</b> Ohne Zugangsdaten ist das eine <b>Sternansicht</b>, keine echte Verkabelung. Der NetzScanner liest den Standard-Gateway deines Rechners; er wird als Router oben gezeigt, und alle Geräte im selben Subnetz (erkennbar an einer MAC-Adresse) hängen darunter. An welchem Switch oder Port ein Gerät wirklich steckt, weiß er noch nicht (geplant: LLDP/SNMP). Mit <b>SNMP</b> (Bereich „Echte Verbindungen per SNMP lesen“) liest der NetzScanner die MAC-Adresstabellen deiner Switches und hängt jedes Gerät an den Switch, an dem es steckt; im Detail-Panel steht der Port. Das ist ebenfalls eine <b>Vermutung</b> (Regel: Port mit den wenigsten gesehenen MACs, ohne den Port Richtung Router): Hinter nicht abgefragten Switches oder Access Points erscheinen mehrere Geräte am selben Port; Switches mit VLAN-Community („community@vlan“) werden evtl. nur teilweise gelesen. Die Community ist ein Zugangsdatum: nur im Arbeitsspeicher, nie gespeichert oder exportiert. Mit dem <b>Router-Login</b> (FRITZ!Box) liest der NetzScanner zusätzlich die <b>Mesh-Liste</b>: Geräte hängen dann unter dem Repeater bzw. der Box, an der sie laut FRITZ!Box wirklich verbunden sind (Detail-Panel: Verbindungsart, Geschwindigkeit, Signal). Annahme: die erste Seite einer Verbindung ist der Vorgänger Richtung Box; Zwischenknoten, die nicht mitgescannt wurden, werden übersprungen. SNMP hat bei Überschneidung Vorrang. Geräte hinter anderen Routern haben keine MAC und stehen ohne Linie in der obersten Reihe. <b>Gleiche MAC bei mehreren IPs:</b> Teilen sich mehrere Geräte dieselbe MAC-Adresse, markiert der NetzScanner sie mit ⚠ (Tabelle und Detail-Panel) und nennt die anderen IPs. Das ist oft ein Scheineintrag (ein Router beantwortet ARP manchmal für fremde Adressen, z. B. für VPN-Clients) oder ein Gerät mit mehreren Adressen; der NetzScanner kann das nicht unterscheiden und blendet deshalb nichts aus. Bitte im Router gegenprüfen. Wird der Gateway nicht gefunden oder nicht gescannt (Ziel enthält ihn nicht), gibt es keine Linien.</p>
  <h2>Ziel eingeben (ganzes Netz oder Teilbereich)</h2>
@@ -977,4 +983,73 @@ document.getElementById("dpgo").addEventListener("click", () => {
 fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
 poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
 fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });
+
+// ---------------------------------------------------------------------------
+// Jahreszeiten-Effekt (I-076): dezente Canvas-Animation, reines JS, offline.
+// Jahreszeit nach Monat des Rechners (Nordhalbkugel). Wenige Teilchen, 30 fps,
+// pausiert bei verstecktem Tab, aus bei "prefers-reduced-motion" oder Schalter aus.
+// ---------------------------------------------------------------------------
+(function seasonFx() {
+  const cv = document.getElementById("seasonfx"), box = document.getElementById("fxtoggle");
+  const ctx = cv.getContext && cv.getContext("2d");
+  if (!ctx) { document.getElementById("fxlabel").style.display = "none"; return; }
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Wahl im Browser merken; localStorage kann blockiert sein -> dann Standard "an".
+  let enabled = true;
+  try { enabled = localStorage.getItem("seasonfx") !== "off"; } catch (e) {}
+  if (reduced) { enabled = false; box.disabled = true; document.getElementById("fxlabel").title = "Aus: Betriebssystem verlangt reduzierte Bewegung"; }
+  box.checked = enabled;
+
+  // Jahreszeit aus dem Monat (0 = Januar): Dez-Feb Winter, Mär-Mai Frühling, Jun-Aug Sommer, sonst Herbst.
+  const m = new Date().getMonth();
+  const season = (m === 11 || m < 2) ? "winter" : m < 5 ? "spring" : m < 8 ? "summer" : "autumn";
+  // Farben/Mengen je Jahreszeit (halbtransparent, damit Text lesbar bleibt)
+  const look = {
+    winter: { cols: ["#e6edf3"], n: 50, vy: [0.4, 1.0], vx: [-0.2, 0.2], r: [1.2, 3] },
+    spring: { cols: ["#f5b7d0", "#ffd6e7", "#e8a0bf"], n: 35, vy: [0.3, 0.8], vx: [-0.4, 0.4], r: [2, 4] },
+    summer: { cols: ["#f2cc60", "#ffe9a0"], n: 30, vy: [-0.25, 0.1], vx: [-0.15, 0.15], r: [1, 2.5] },
+    autumn: { cols: ["#d9822b", "#b5541c", "#c9a227"], n: 30, vy: [0.4, 0.9], vx: [-0.5, 0.5], r: [3, 5] }
+  }[season];
+
+  let parts = [], raf = 0, last = 0, w = 0, h = 0;
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function make() {
+    return { x: rnd(0, w), y: rnd(0, h), r: rnd(...look.r), vx: rnd(...look.vx), vy: rnd(...look.vy),
+             col: look.cols[Math.floor(Math.random() * look.cols.length)], ph: rnd(0, 6.28), a: rnd(0.25, 0.55) };
+  }
+  function resize() { w = cv.width = window.innerWidth; h = cv.height = window.innerHeight; }
+  function frame(t) {
+    raf = requestAnimationFrame(frame);
+    if (t - last < 33) return;            // ca. 30 fps genügt und spart CPU
+    last = t;
+    ctx.clearRect(0, 0, w, h);
+    for (const p of parts) {
+      p.ph += 0.02;
+      p.x += p.vx + Math.sin(p.ph) * 0.3;  // leichtes Schwanken
+      p.y += p.vy;
+      // Teilchen, die den Rand verlassen, kommen auf der Gegenseite wieder herein
+      if (p.y > h + 10) { p.y = -10; p.x = rnd(0, w); } else if (p.y < -10) p.y = h + 10;
+      if (p.x > w + 10) p.x = -10; else if (p.x < -10) p.x = w + 10;
+      ctx.globalAlpha = season === "summer" ? p.a * (0.6 + 0.4 * Math.sin(p.ph)) : p.a; // Sommer: sanftes Glimmern
+      ctx.fillStyle = p.col;
+      ctx.beginPath();
+      if (season === "winter" || season === "summer") ctx.arc(p.x, p.y, p.r, 0, 6.28);
+      else ctx.ellipse(p.x, p.y, p.r * 1.6, p.r, p.ph, 0, 6.28); // Blatt/Blütenblatt als gedrehte Ellipse
+      ctx.fill();
+    }
+  }
+  function start() {
+    if (raf || !box.checked || document.hidden) return;
+    resize(); parts = Array.from({ length: look.n }, make);
+    raf = requestAnimationFrame(frame);
+  }
+  function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; ctx.clearRect(0, 0, cv.width, cv.height); }
+  box.addEventListener("change", () => {
+    try { localStorage.setItem("seasonfx", box.checked ? "on" : "off"); } catch (e) {}
+    box.checked ? start() : stop();
+  });
+  document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());
+  window.addEventListener("resize", () => { if (raf) resize(); });
+  start();
+})();
 </script></body></html>

@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.48.1 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.49.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -25,6 +25,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **LDAP-Login-Test** (I-022 Rest, 0.46.0, `logintest.LDAP`, Methode `ldap`, Ports 389/636/3268/3269): ein einfacher Bind, LDAPS bzw. StartTLS mit bestätigtem Fingerabdruck, Klartext nur nach ausdrücklicher Bestätigung; danach rootDSE (Domäne, Server).
 - **SMB-Login-Test** (I-022 Rest, 0.47.0, `logintest.SMB`, Methode `smb`, Port 445): ein NTLM-Versuch (`go-smb2`), danach nur die Freigabenamen (IPC$/srvsvc). Kein Kerberos, kein NetBIOS-Port 139.
 - **Diagnose-Knopf je Gerät** (I-074, 0.48.0, `scan/diagdevice.go`, `web/diagnose.go`, `POST /api/diagnose`): Textbericht (Gespeichertes + aktive Prüfungen aus `--diagnose` + optional Ping, Traceroute, voller Portscan). Ping/Traceroute per Systembefehl (feste Argumente, keine Shell), Ersatz: TCP-Laufzeit. Streaming, nur Loopback, nur Listen-Geräte.
+- **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
@@ -35,6 +36,7 @@ Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Jahreszeiten-Effekt (0.49.0): Erscheint passend zum Monat eine dezente Animation? Stört sie Lesen/Klicken/Tabelle? Schalter unten links merkt sich die Wahl nach Neuladen? CPU-Last im Leerlauf spürbar?
 - Diagnose-Knopf (0.48.0): Gerät wählen, rechts unten „Diagnose-Daten erzeugen“ mit Ping + Traceroute – stehen echte `ping`-/`traceroute`-Ausgaben im Bericht (nicht nur der TCP-Ersatz)? Fehlt dem Befehl ein Recht: kommt der Hinweis? Voller Portscan an einem Gerät: Dauer, Ergebnis plausibel? Gern einen Bericht schicken, wenn etwas fehlt, das du dir gewünscht hättest.
 - SMB-Login-Test (0.47.0): An einem Windows-Rechner/NAS mit Port 445 Zugang merken (`DOMÄNE\benutzer` oder lokal), „SMB-Login testen“ – kommt „ok“ mit Liste der Freigaben? Falsches Passwort **einmal**: „abgelehnt“? Server mit aktivem Gast-Konto: wird ein falsches Passwort fälschlich akzeptiert? Meldung bei Abweichung schicken.
 - Karte/PDF (0.46.1): Steht eine Gruppe neben einer anderen in derselben Zeile (z. B. Mobilgeräte neben IoT), läuft die Linie jetzt über die Lücke oberhalb der Zeile und von oben hinein – nicht mehr durch Titel/Rahmen der Gruppe davor. Stimmt das in Karte **und** PDF?
