@@ -340,22 +340,30 @@ function loginTestRows(h, mine, box) {
       targets.push({ method: "ssh", port: p.number, readInfo: true, label: "SSH-Login testen + System-Infos lesen (Port " + p.number + ")" });
     }
     else if (p.number === 5985) targets.push({ method: "winrm", port: 5985, label: "WinRM-Login testen (Port 5985)" });
+    // I-022 Rest: LDAP-Bind (AD/Verzeichnisdienst). 636/3269 = LDAPS, 389/3268 = StartTLS.
+    else if ([389, 636, 3268, 3269].includes(p.number)) targets.push({ method: "ldap", port: p.number, label: "LDAP-Login testen (Port " + p.number + ")" });
     else if (WEB[p.number]) targets.push({ method: "web", port: p.number, scheme: WEB[p.number], label: "Web-Login testen (" + WEB[p.number] + ", Port " + p.number + ")" });
   });
   // I-022 Rest: SNMPv3-Test (UDP 161, vom TCP-Scan nicht sichtbar) - immer anbieten, Protokolle waehlbar.
   const snmpRow = snmpV3Row(h, box);
   const out = el("div", { class: "msg" });
-  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : t.method === "snmpv3" ? "SNMPv3" : t.method === "winrm" ? "WinRM" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
+  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : t.method === "snmpv3" ? "SNMPv3" : t.method === "winrm" ? "WinRM" : t.method === "ldap" ? "LDAP" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
     + (t.info || []).map(f => "\n   " + f.name + ": " + f.value).join("")).join("\n");
   out.style.whiteSpace = "pre-wrap";
   out.textContent = targets.length ? (last || "Noch kein Login-Test. Pro Klick wird genau ein Anmeldeversuch gesendet (Konto-Sperren vermeiden).") : "Kein SSH- oder Web-Port gefunden – Login-Test nicht möglich.";
   // Sendet den Test; bei "confirm" erst den Fingerabdruck vom Nutzer bestaetigen lassen (nie still ignorieren).
-  const run = async (t, fingerprint) => {
+  const run = async (t, fingerprint, allowPlain) => {
     if (t.scheme === "http" && !confirm("Dieses Gerät spricht unverschlüsseltes HTTP. Das Passwort würde im Klartext durchs Netz gehen. Trotzdem EINEN Versuch senden?")) return;
     out.textContent = "Teste …";
-    const r = await post("/api/logintest", { ip: h.ip, method: t.method, port: t.port, scheme: t.scheme, fingerprint, allowPlain: t.scheme === "http", readInfo: !!t.readInfo });
+    const r = await post("/api/logintest", { ip: h.ip, method: t.method, port: t.port, scheme: t.scheme, fingerprint, allowPlain: t.scheme === "http" || !!allowPlain, readInfo: !!t.readInfo });
     const b = await r.json();
     if (!r.ok) { out.className = "msg err"; out.textContent = b.error; return; }
+    if (b.status === "confirm" && b.scheme === "plain") {
+      // LDAP-Server ohne StartTLS: Klartext-Bind nur nach ausdruecklicher Bestaetigung.
+      if (confirm("Dieser LDAP-Server unterstützt keine Verschlüsselung (StartTLS). Das Passwort würde im Klartext durchs Netz gehen. Trotzdem EINEN Versuch senden?")) return run(t, fingerprint, true);
+      out.textContent = "Abgebrochen – es wurde kein Passwort gesendet.";
+      return;
+    }
     if (b.status === "confirm") {
       const what = t.method === "ssh" ? "SSH-Hostkey" : "Zertifikat";
       if (confirm(what + " dieses Geräts (noch NICHT bestätigt, es wurde kein Passwort gesendet):\n\n" + b.fingerprint + "\n\nStimmt der Fingerabdruck mit dem Gerät überein? Dann wird EIN Anmeldeversuch gesendet.")) return run(t, b.fingerprint);

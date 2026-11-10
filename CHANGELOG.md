@@ -559,3 +559,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Kommandozeilen-Modus ohne Browser** (I-047): `netzscanner --scan 192.168.1.0/24 --out kunde.csv` scannt, schreibt die Geräteliste und beendet sich – ohne Webserver. Format aus der Dateiendung (`.csv`, `.md`, `.html`, `.pdf`) oder `--format` (auch `csv-excel`); ohne `--out` (oder `-`) geht CSV nach stdout, Meldungen nach stderr. `--ports` wie in der Oberfläche, `--allow-public` wie bisher nötig für öffentliche Adressen. Ausgabedatei mit Rechten 0600. Nur lesend.
 ### Grenzen
 - Keine gespeicherten Eingaben (Namen, Standorte) und kein Router-Login im CLI-Modus; Projektdatei-Export folgt ggf. später. Praxistest im LAN offen.
+
+## [0.46.0] – 2026-11-10
+### Hinzugefügt
+- **LDAP-Login-Test** (I-022 Rest): Bei offenem LDAP-Port (389, 636, 3268, 3269) bietet das Detail-Panel „LDAP-Login testen“ (Active Directory, OpenLDAP u. a.). Benutzer als `DOMÄNE\benutzer`, `benutzer@domäne` oder DN. Pro Klick genau **ein** einfacher Bind; leeres Passwort wird nie gesendet (kein anonymer Bind als „ok“).
+- Verschlüsselung zuerst: 636/3269 = LDAPS, 389/3268 = StartTLS. Das Zertifikat wird erst nach bestätigtem Fingerabdruck akzeptiert (vorher geht kein Passwort raus). Kann der Server kein StartTLS, fragt die Oberfläche ausdrücklich nach einem Klartext-Bind.
+- Nach erfolgreichem Bind liest der Test nur die rootDSE (Domäne, Servername); es wird nichts geschrieben. Ergebnis nur im RAM am Zugang, wie bei den anderen Login-Tests.
+- Neue Bibliothek `go-ldap/ldap` (MIT, Pure Go); Fremdlizenzen neu erzeugt. Dabei hob `go get` `golang.org/x/crypto`, `net`, `sys`, `text` auf neuere Versionen an.
+### Grenzen
+- Nur einfacher Bind (kein Kerberos/NTLM/SASL). SMB bleibt offen. **Ungeprüft an einem echten Verzeichnisdienst** (nur Unit-Tests ohne Server).

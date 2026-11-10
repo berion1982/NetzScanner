@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.45.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.46.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -22,16 +22,18 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **System-Infos** (I-023 Teil 1, 0.37.0, `logintest.SSHInfo`): nach SSH-Login über dieselbe Verbindung ein fester, lesender Befehl (Kernel, Hostname, os-release; ab 0.38.0 auch Modell, Firmware, Laufzeit, Schnittstellen); Anzeige im Detail-Panel, nur RAM. Ab 0.39.0 auch per SNMP (`scan/snmpinfo.go`, beim „Lesen“ im SNMP-Formular): Standort, Laufzeit, Modell/Firmware (ENTITY-MIB), Schnittstellen → `Host.SysInfo`.
 - **SNMPv3-Login-Test** (I-022 Rest, 0.41.0, `scan.ProbeSNMPLogin`, Methode `snmpv3` in `web/logintest.go`): eine lesende Anfrage ohne Wiederholung; Benutzer/Passwort aus dem gemerkten Zugang, Protokolle und Verschlüsselungs-Passphrase aus dem Formular (nicht gespeichert).
 - **WinRM-Login-Test** (I-022 Rest, 0.42.0, `logintest.WinRM`, Methode `winrm`, Port 5985): NTLM, ein Versuch, danach ein fester lesender PowerShell-Befehl; ab 0.43.0 (I-023) liefert er Computername, Domäne/Arbeitsgruppe, Modell, Windows-Version, Laufzeit. Kein 5986/Kerberos.
+- **LDAP-Login-Test** (I-022 Rest, 0.46.0, `logintest.LDAP`, Methode `ldap`, Ports 389/636/3268/3269): ein einfacher Bind, LDAPS bzw. StartTLS mit bestätigtem Fingerabdruck, Klartext nur nach ausdrücklicher Bestätigung; danach rootDSE (Domäne, Server).
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0, I-047 CLI-Modus in 0.45.0):
-1. **I-022 Rest** (optional): LDAP/SMB (Domain-Admins, neue Bibliothek nötig). Sonst I-023 Rest (Web-Infos nach Login) oder nächste offene Idee aus `IDEAS.md`.
+Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0, I-047 CLI-Modus in 0.45.0, I-022 LDAP in 0.46.0):
+1. **I-022 Rest** (optional): SMB (neue Bibliothek nötig). Sonst I-023 Rest (Web-Infos nach Login) oder nächste offene Idee aus `IDEAS.md`.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- LDAP-Login-Test (0.46.0): An einem Domänencontroller/LDAP-Server Zugang merken (`DOMÄNE\benutzer`), „LDAP-Login testen“ – erscheint erst der Fingerabdruck, danach „ok“ mit Domäne/Server? Falsches Passwort **einmal**: „abgelehnt“? Server ohne StartTLS: kommt die Klartext-Rückfrage? Meldung bei Abweichung schicken.
 - CLI-Modus (0.45.0): `./dist/netzscanner --scan <dein-Netz> --out test.csv` (auch `.md/.html/.pdf`) – stimmt die Liste mit der Oberfläche überein? Ohne Rechte: wie bisher TCP-Fallback.
 - Kategorie „Drucker/Scanner“ (0.44.0): Landen Drucker/Scanner dort (nicht mehr in IoT), Kameras/Smart-Home weiter in IoT? Fehlzuordnungen melden. Alte Projektdatei laden: Drucker ggf. noch „IoT“?
 - WinRM-Infos (0.43.0): Nach „WinRM-Login testen“ an einem Windows-Rechner – erscheinen Computername, Domäne/Arbeitsgruppe, Modell, System, Laufzeit? Sonst Meldung schicken (z. B. „keine System-Infos lesbar“).
@@ -67,7 +69,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 - FRITZ!Box-Reservierungen sind per TR-064 **nicht auslesbar** (`AddressSource` Static ≠ feste Zuweisung). Reiter „Reservierungen“ = nur Windows-DHCP.
 - Router-Login erst **nach Scan-Ende** (vorher fehlen die MACs); Router-/Mesh-Daten nur im RAM → nach Neustart neu anmelden. Nach mehreren Logins kann eine kurze Sperre greifen (ungeprüft).
 - Zufällige/lokale MACs haben keinen Hersteller. Geräte mit gleicher MAC werden nur markiert (⚠), nie ausgeblendet.
-- Login-Test: SSH, Web-Basic, SNMPv3 und WinRM (nur 5985/NTLM); kein LDAP/SMB, kein Formular-/Digest-Login, keine bekannten-Hosts-Datei (Fingerabdruck wird jedes Mal bestätigt).
+- Login-Test: SSH, Web-Basic, SNMPv3 und WinRM (nur 5985/NTLM); kein SMB, LDAP nur einfacher Bind, kein Formular-/Digest-Login, keine bekannten-Hosts-Datei (Fingerabdruck wird jedes Mal bestätigt).
 - Offen: VLAN-Communities (I-054), andere Router, Kerberos/HTTPS für WinRM, Rest von I-013 (SMB/TTL), Verschlüsselung der Eingaben-Datei.
 - I-058 (Import/Zurückschreiben) wurde verworfen (Leitlinie: nur lesen).
 - Lizenz: Nutzungsbedingungen der IEEE für die eingebettete OUI-Liste (`internal/scan/data/oui.txt`) ungeprüft; ggf. Liste statt einbetten beim ersten Start laden.
