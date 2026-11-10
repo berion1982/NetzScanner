@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/berion1982/netzscanner/internal/logintest"
+	"github.com/berion1982/netzscanner/internal/scan"
 )
 
 // loginBusy merkt Geraete, mit denen gerade ein Test laeuft (gegen Doppelklicks/Fehlversuche).
@@ -39,17 +40,28 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		Port                            int
 		AllowPlain                      bool
 		ReadInfo                        bool // I-023: nach dem SSH-Login System-Infos lesen (nur Methode ssh)
+		// Nur Methode snmpv3: Protokolle und Verschluesselungs-Passphrase. Benutzer und
+		// Authentifizierungs-Passphrase kommen aus dem gemerkten Zugang. Die Priv-Passphrase
+		// wird nur fuer diesen einen Test benutzt und nirgends gespeichert.
+		AuthProto, PrivProto, PrivPass string
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, errBody("ungueltige Anfrage"))
 		return
 	}
 	req.IP = strings.TrimSpace(req.IP)
-	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb {
+	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 {
 		writeJSON(w, http.StatusBadRequest, errBody("Unbekannte Methode"))
 		return
 	}
-	if !s.hostHasOpenPort(req.IP, req.Port) {
+	if req.Method == logintest.MethodSNMPv3 {
+		// SNMP laeuft ueber UDP 161, das der TCP-Scan nicht sieht: Es genuegt, dass das Geraet in der Liste steht.
+		req.Port = 161
+		if !s.hostKnown(req.IP) {
+			writeJSON(w, http.StatusBadRequest, errBody("Gerät nicht in den Scan-Ergebnissen"))
+			return
+		}
+	} else if !s.hostHasOpenPort(req.IP, req.Port) {
 		writeJSON(w, http.StatusBadRequest, errBody("Gerät oder Port nicht in den Scan-Ergebnissen (Port muss als offen gefunden sein)"))
 		return
 	}
@@ -77,7 +89,9 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
 	defer cancel()
 	var res logintest.Result
-	if req.Method == logintest.MethodSSH && req.ReadInfo {
+	if req.Method == logintest.MethodSNMPv3 {
+		res = runSNMPv3Test(ctx, req.IP, user, password, req.AuthProto, req.PrivProto, req.PrivPass)
+	} else if req.Method == logintest.MethodSSH && req.ReadInfo {
 		res = logintest.SSHInfo(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
 	} else if req.Method == logintest.MethodSSH {
 		res = logintest.SSH(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
@@ -107,4 +121,41 @@ func (s *server) hostHasOpenPort(ip string, port int) bool {
 		}
 	}
 	return false
+}
+
+// hostKnown prueft, ob die IP in der Geraeteliste steht.
+func (s *server) hostKnown(ip string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, h := range s.hosts {
+		if h.IP == ip {
+			return true
+		}
+	}
+	return false
+}
+
+// runSNMPv3Test baut aus dem gemerkten Zugang (Benutzer + Auth-Passphrase) und den Angaben aus der
+// Oberflaeche die SNMPv3-Zugangsdaten und prueft sie mit genau einer lesenden Anfrage.
+// Ohne Authentifizierungs-Protokoll gilt noAuthNoPriv (dann wird keine Passphrase gesendet).
+func runSNMPv3Test(ctx context.Context, ip, user, authPass, authProto, privProto, privPass string) logintest.Result {
+	res := logintest.Result{Method: logintest.MethodSNMPv3, Port: 161, At: time.Now()}
+	creds := scan.SNMPCreds{User: user, AuthProto: authProto, PrivProto: privProto}
+	if authProto != "" {
+		creds.AuthPass = authPass
+	}
+	if privProto != "" {
+		creds.PrivPass = privPass
+	}
+	outcome, msg := scan.ProbeSNMPLogin(ctx, ip, creds)
+	res.Message = msg
+	switch outcome {
+	case scan.SNMPLoginOK:
+		res.Status = logintest.StatusOK
+	case scan.SNMPLoginRejected:
+		res.Status = logintest.StatusFailed
+	default:
+		res.Status = logintest.StatusUnavailable
+	}
+	return res
 }

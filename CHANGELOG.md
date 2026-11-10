@@ -529,3 +529,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Drucker-Details per IPP** (I-062): Hat ein Gerät Port 631 offen, sendet der Scan eine einzige lesende IPP-Anfrage (`Get-Printer-Attributes`, ohne Login). Ergebnis (Modell, Firmware, UUID, Status, Meldungen, Füllstände) erscheint als Banner-Zeile „IPP: …“ im Detail-Panel. Standard-IPP, keine Einzelgeräte-Tabellen.
 ### Grenzen
 - Welche Attribute ein Drucker liefert, ist modellabhängig (ungeprüft im echten LAN): Fehlendes wird weggelassen, bei Fehler/Timeout bleibt der normale Banner. Nur unverschlüsseltes IPP (Port 631); keine Seriennummer; Füllstand-Sonderwerte (unbekannt, genug vorhanden) erscheinen als „?“.
+
+## [0.41.0] – 2026-11-10
+### Hinzugefügt
+- **SNMPv3-Login-Test** (I-022, Rest): Im Detail-Panel unter dem gemerkten Zugang neuer Knopf „SNMPv3-Login testen (UDP 161)“. Benutzer und Passwort des gemerkten Zugangs gelten als v3-Benutzer und Authentifizierungs-Passphrase; Auth-/Verschlüsselungs-Protokoll wählt man im Formular, die Verschlüsselungs-Passphrase wird nur für diesen Klick gesendet und nicht gespeichert. Genau **eine** lesende Anfrage (sysDescr, ohne Wiederholung, kein SET) pro Klick; Ergebnis „ok / abgelehnt / nicht testbar“ wie bei SSH und Web, nur im RAM, nur über Loopback. Das Gerät muss in der Scan-Liste stehen (UDP 161 sieht der TCP-Scan nicht).
+### Grenzen
+- Viele Geräte schweigen bei falschem v3-Benutzer oder falscher Passphrase. Ein Timeout wird daher als „nicht testbar“ gemeldet, nicht als „abgelehnt“. Die Abgrenzung „abgelehnt“ vs. „keine Antwort“ ist **ungeprüft an echten Geräten**.

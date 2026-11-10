@@ -44,6 +44,9 @@ const (
 const (
 	MethodSSH = "ssh"
 	MethodWeb = "web"
+	// MethodSNMPv3 (I-022 Rest): SNMPv3-Anmeldung (UDP 161). Die Pruefung selbst steht in
+	// scan.ProbeSNMPLogin; hier gibt es nur den Methodennamen fuer Ergebnis und Oberflaeche.
+	MethodSNMPv3 = "snmpv3"
 )
 
 // Result ist das Ergebnis eines Tests. Enthaelt nie ein Passwort.
