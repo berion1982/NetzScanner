@@ -311,7 +311,8 @@ function renderCreds(h, box) {
     if (mine) {
       const del = el("button", { text: "Zugang vergessen" });
       del.addEventListener("click", () => post("/api/creds/delete", { ip: h.ip }).then(() => renderCreds(h, box)));
-      box.replaceChildren(el("div", { class: "msg", text: "Benutzer „" + mine.user + "“ gemerkt (noch ca. " + Math.ceil(mine.expiresSec / 60) + " Min., dann automatisch vergessen)." }), el("div", { class: "rename" }, [del]));
+      const info = el("div", { class: "msg", text: "Benutzer „" + mine.user + "“ gemerkt (noch ca. " + Math.ceil(mine.expiresSec / 60) + " Min., dann automatisch vergessen)." });
+      box.replaceChildren(info, el("div", { class: "rename" }, [del]), ...loginTestRows(h, mine, box));
       return;
     }
     const u = el("input", { maxlength: "128", "aria-label": "Zugangs-Benutzer", autocomplete: "off", placeholder: "Benutzer" });
@@ -326,6 +327,42 @@ function renderCreds(h, box) {
     p.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
     box.replaceChildren(el("div", { class: "rename" }, [u, p, ok]), msg);
   });
+}
+// Login-Test (I-022): Knoepfe je offenem SSH-/Web-Port plus letztes Ergebnis. Pro Klick genau ein Versuch.
+const LOGIN_LABEL = { ok: "✔ Anmeldung ok", failed: "✘ abgelehnt", unavailable: "– nicht testbar", confirm: "? Bestätigung nötig" };
+function loginTestRows(h, mine, box) {
+  const WEB = { 443: "https", 8443: "https", 5001: "https", 80: "http", 8080: "http", 8000: "http" };
+  const targets = [];
+  h.ports.forEach(p => {
+    if (p.number === 22 || p.service === "ssh") {
+      targets.push({ method: "ssh", port: p.number, label: "SSH-Login testen (Port " + p.number + ")" });
+      // I-023: gleicher Login, danach EIN fester, nur lesender Befehl (uname, hostname, /etc/os-release)
+      targets.push({ method: "ssh", port: p.number, readInfo: true, label: "SSH-Login testen + System-Infos lesen (Port " + p.number + ")" });
+    }
+    else if (WEB[p.number]) targets.push({ method: "web", port: p.number, scheme: WEB[p.number], label: "Web-Login testen (" + WEB[p.number] + ", Port " + p.number + ")" });
+  });
+  const out = el("div", { class: "msg" });
+  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
+    + (t.info || []).map(f => "\n   " + f.name + ": " + f.value).join("")).join("\n");
+  out.style.whiteSpace = "pre-wrap";
+  out.textContent = targets.length ? (last || "Noch kein Login-Test. Pro Klick wird genau ein Anmeldeversuch gesendet (Konto-Sperren vermeiden).") : "Kein SSH- oder Web-Port gefunden – Login-Test nicht möglich.";
+  // Sendet den Test; bei "confirm" erst den Fingerabdruck vom Nutzer bestaetigen lassen (nie still ignorieren).
+  const run = async (t, fingerprint) => {
+    if (t.scheme === "http" && !confirm("Dieses Gerät spricht unverschlüsseltes HTTP. Das Passwort würde im Klartext durchs Netz gehen. Trotzdem EINEN Versuch senden?")) return;
+    out.textContent = "Teste …";
+    const r = await post("/api/logintest", { ip: h.ip, method: t.method, port: t.port, scheme: t.scheme, fingerprint, allowPlain: t.scheme === "http", readInfo: !!t.readInfo });
+    const b = await r.json();
+    if (!r.ok) { out.className = "msg err"; out.textContent = b.error; return; }
+    if (b.status === "confirm") {
+      const what = t.method === "ssh" ? "SSH-Hostkey" : "Zertifikat";
+      if (confirm(what + " dieses Geräts (noch NICHT bestätigt, es wurde kein Passwort gesendet):\n\n" + b.fingerprint + "\n\nStimmt der Fingerabdruck mit dem Gerät überein? Dann wird EIN Anmeldeversuch gesendet.")) return run(t, b.fingerprint);
+      out.textContent = "Abgebrochen – es wurde kein Passwort gesendet.";
+      return;
+    }
+    renderCreds(h, box); // zeigt das gemerkte Ergebnis
+  };
+  const btns = targets.map(t => { const b = el("button", { text: t.label }); b.addEventListener("click", () => run(t, "")); return el("div", { class: "rename" }, [b]); });
+  return [...btns, out];
 }
 function buildDetails(h) {
   const dl = el("dl");
