@@ -589,3 +589,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Grenzen
 - Nur IPv4 für Ping/Traceroute. Die Ausgabe der Systembefehle hängt vom Betriebssystem/der Sprache ab (unter Linux/macOS wird `LC_ALL=C` gesetzt). **Nur in einer Sandbox ohne `ping`/`traceroute` geprüft** (TCP-Ersatz), echte Systembefehle ungeprüft.
 - NetzScanner startet sich nicht selbst mit Root-/Administratorrechten (Idee I-075).
+
+## [0.48.1] – 2026-11-10
+### Geändert
+- **Diagnose-Bericht:** Das Ausgabefeld hat jetzt einen sichtbaren Rahmen (mit Innenabstand), damit man mit der Maus klar im Feld steht und zum Scrollen sicher dort ist; es lässt sich auch per Tastatur fokussieren.
