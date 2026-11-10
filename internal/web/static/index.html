@@ -410,7 +410,7 @@ function diagnoseBox(h) {
   const go = el("button", { class: "ok", text: "Diagnose-Daten erzeugen" }), stop = el("button", { text: "Abbrechen", style: "display:none" });
   const copy = el("button", { text: "Kopieren" }), save = el("button", { text: "Als Textdatei speichern" });
   const msg = el("div", { class: "msg" });
-  const pre = el("pre", { class: "diagpre", "data-ip": h.ip, style: "display:none;white-space:pre;max-height:420px;overflow:auto;font-size:12px;user-select:text" });
+  const pre = el("pre", { class: "diagpre", "data-ip": h.ip, tabindex: "0", style: "display:none;white-space:pre;max-height:420px;overflow:auto;font-size:12px;user-select:text;border:1px solid var(--mut);border-radius:6px;padding:8px;margin:6px 0;background:var(--bg)" });
   const btnRow = el("div", { class: "rename" }, [copy, save]);
   const refresh = () => { diagShow(h.ip); btnRow.style.display = diagCache[h.ip] ? "" : "none"; };
   go.addEventListener("click", async () => {
