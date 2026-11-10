@@ -52,6 +52,8 @@ th{color:var(--mut);font-weight:500}tr.r{cursor:pointer}tr.r:hover,tr.sel{backgr
 a.web{display:inline-block;background:#1f6feb22;border:1px solid var(--acc);color:var(--acc);border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0;text-decoration:none;font-size:12px}
 a.web:hover{background:#1f6feb55}
 aside{flex:1 1 240px;padding:16px}
+aside.detail.fold{flex:0 0 auto;min-width:0}aside.detail.fold>:not(.dfold){display:none}
+.dfold{float:right;margin:0 0 6px 8px}aside.detail.fold .dfold{float:none;margin:0}
 aside h3{margin:0 0 8px}aside dt{color:var(--mut);margin-top:8px;font-size:12px}
 aside dd{margin:0;font-family:ui-monospace,monospace;word-break:break-all}
 svg{width:100%;height:auto;display:block}
@@ -542,7 +544,33 @@ function buildDetails(h) {
 function showDetails(h) {
   currentIp = h.ip;
   document.querySelectorAll(".detail").forEach(d => d.replaceChildren(...buildDetails(h)));
+  applyDetailFold();
 }
+
+// Detail-Panel ein-/ausklappen: Zugeklappt bleibt nur der Knopf stehen, Tabelle/Karte bekommen die ganze Breite
+// (z. B. nach einem breiten Diagnose-Bericht). Die Wahl gilt fuer beide Reiter und wird im Browser gemerkt.
+// Inhalt und Auswahl bleiben erhalten; ueber CSS (.fold) wird nur ausgeblendet.
+let detailFold = false;
+try { detailFold = localStorage.getItem("detailFold") === "1"; } catch (e) { /* Speicher gesperrt: ohne Merken weiter */ }
+function applyDetailFold() {
+  document.querySelectorAll(".detail").forEach(d => {
+    d.classList.toggle("fold", detailFold);
+    let b = d.querySelector(":scope > .dfold");
+    if (!b) { // Knopf neu anlegen (showDetails ersetzt alle Kinder des Panels)
+      b = el("button", { class: "dfold", type: "button" });
+      b.addEventListener("click", () => {
+        detailFold = !detailFold;
+        try { localStorage.setItem("detailFold", detailFold ? "1" : "0"); } catch (e) { /* ignorieren */ }
+        applyDetailFold();
+      });
+      d.prepend(b);
+    }
+    b.textContent = detailFold ? "◂ Details" : "Details einklappen ▸";
+    b.title = detailFold ? "Detail-Panel wieder aufklappen" : "Detail-Panel zuklappen (Tabelle/Karte werden breiter)";
+    b.setAttribute("aria-expanded", detailFold ? "false" : "true");
+  });
+}
+applyDetailFold();
 
 // Auswahl: Zaehler, Alle-Checkbox, Hervorhebung in Tabelle und Topologie aktualisieren.
 // Knoepfe der Topologie/Router (einmalig registrieren - NICHT in updateSelection, sonst haeufen sich die Listener).
