@@ -33,3 +33,33 @@ func TestWinRM_ClosedPortUnavailable(t *testing.T) {
 		t.Fatalf("unerwartet: %+v", r)
 	}
 }
+
+// Die Ausgabe des festen Befehls wird in beschriftete Felder umgesetzt (Domaenenmitglied).
+func TestParseWinRMInfo_Domain(t *testing.T) {
+	raw := "Name=SRV1\r\nDomain=firma.local\r\nInDomain=True\r\nMaker=ACME\r\nModel=Box 1\r\n" +
+		"OS=Windows Server 2022\r\nBuild=10.0.20348\r\nUptimeSec=90060\r\n"
+	got := map[string]string{}
+	for _, f := range parseWinRMInfo(raw) {
+		got[f.Name] = f.Value
+	}
+	want := map[string]string{
+		"Computername": "SRV1", "Domäne": "firma.local", "Modell": "ACME Box 1",
+		"System": "Windows Server 2022 10.0.20348", "Laufzeit": "1 T 1 Std 1 Min",
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s: erwartet %q, bekam %q", k, v, got[k])
+		}
+	}
+}
+
+// Ohne Domaene heisst der Wert "Arbeitsgruppe"; Muell und leere Ausgabe ergeben keine Felder.
+func TestParseWinRMInfo_WorkgroupAndEmpty(t *testing.T) {
+	f := parseWinRMInfo("Name=PC\nDomain=WORKGROUP\nInDomain=False\n")
+	if len(f) != 2 || f[1].Name != "Arbeitsgruppe" {
+		t.Fatalf("unerwartet: %+v", f)
+	}
+	if got := parseWinRMInfo("kein key value\n"); len(got) != 0 {
+		t.Fatalf("erwartet leer: %+v", got)
+	}
+}
