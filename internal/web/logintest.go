@@ -50,7 +50,7 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.IP = strings.TrimSpace(req.IP)
-	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 {
+	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 && req.Method != logintest.MethodWinRM {
 		writeJSON(w, http.StatusBadRequest, errBody("Unbekannte Methode"))
 		return
 	}
@@ -59,6 +59,13 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		req.Port = 161
 		if !s.hostKnown(req.IP) {
 			writeJSON(w, http.StatusBadRequest, errBody("Gerät nicht in den Scan-Ergebnissen"))
+			return
+		}
+	} else if req.Method == logintest.MethodWinRM {
+		// WinRM laeuft immer auf Port 5985; der Scan muss ihn als offen gefunden haben.
+		req.Port = logintest.WinRMPort
+		if !s.hostHasOpenPort(req.IP, req.Port) {
+			writeJSON(w, http.StatusBadRequest, errBody("Gerät oder Port 5985 nicht in den Scan-Ergebnissen (Port muss als offen gefunden sein)"))
 			return
 		}
 	} else if !s.hostHasOpenPort(req.IP, req.Port) {
@@ -91,6 +98,8 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 	var res logintest.Result
 	if req.Method == logintest.MethodSNMPv3 {
 		res = runSNMPv3Test(ctx, req.IP, user, password, req.AuthProto, req.PrivProto, req.PrivPass)
+	} else if req.Method == logintest.MethodWinRM {
+		res = logintest.WinRM(ctx, req.IP, user, password)
 	} else if req.Method == logintest.MethodSSH && req.ReadInfo {
 		res = logintest.SSHInfo(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
 	} else if req.Method == logintest.MethodSSH {
