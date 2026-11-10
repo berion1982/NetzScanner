@@ -375,6 +375,8 @@ function buildDetails(h) {
   if (h.wifiSSID) add("WLAN (Router)", h.wifiSSID + (h.wifiSignal ? ", Signal " + h.wifiSignal + " %" : "") + (h.wifiSpeed ? ", " + h.wifiSpeed + " Mbit/s" : ""));
   if (h.routerName && h.routerName !== h.name) add("Name laut Router", h.routerName);
   if (h.meshLink) add("Mesh-Verbindung (FRITZ!Box)", h.meshLink + (h.uplink ? " → " + h.uplink : ""));
+  // System-Infos laut SNMP (I-023): Standort, Laufzeit, Modell, Schnittstellen (nur RAM, nach "Lesen" im SNMP-Formular)
+  (h.sysInfo || []).forEach(f => add(f.name, f.value));
   if (h.uplinkPort) add("Anschluss (SNMP)", h.uplink + ", Port " + h.uplinkPort + (h.uplinkShared > 1 ? " (" + h.uplinkShared + " Geräte an diesem Port – evtl. Switch/AP dahinter)" : ""));
   add("Offene Ports", h.ports.map(p => p.number + (p.service ? " (" + p.service + ")" : "")).join(", "));
   const banners = h.ports.filter(p => p.banner).map(p => p.number + ": " + p.banner).join("\n");

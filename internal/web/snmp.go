@@ -128,7 +128,7 @@ func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 			sr.Error = err.Error()
 		} else {
 			data = append(data, d)
-			info[ip] = scan.SwitchInfo{Name: d.SysName, Descr: d.SysDescr, Vendor: d.Vendor}
+			info[ip] = scan.SwitchInfo{Name: d.SysName, Descr: d.SysDescr, Vendor: d.Vendor, Info: d.Info}
 		}
 		res.Switches = append(res.Switches, sr)
 	}

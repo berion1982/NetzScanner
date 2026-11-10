@@ -65,7 +65,8 @@ type SwitchData struct {
 	SysDescr string
 	Vendor   string // Hersteller aus der sysObjectID (I-052), "" wenn unbekannt
 	FDB      []FDBEntry
-	LLDP     []LLDPNeighbor // direkte Nachbarn laut LLDP-MIB (I-051)
+	LLDP     []LLDPNeighbor    // direkte Nachbarn laut LLDP-MIB (I-051)
+	Info     []model.InfoField // System-Infos (I-023): Standort, Laufzeit, Modell, Schnittstellen
 }
 
 // Link beschreibt, wo ein Geraet angeschlossen ist.
@@ -80,6 +81,7 @@ type SwitchInfo struct {
 	Name   string
 	Descr  string
 	Vendor string
+	Info   []model.InfoField // System-Infos (I-023), nur im RAM
 }
 
 // NormMAC macht aus "AA:BB:CC:00:11:22", "aa-bb-..." usw. "aabbcc001122" ("" bei Unsinn).
@@ -204,6 +206,9 @@ func QuerySwitch(ctx context.Context, ip string, creds SNMPCreds) (SwitchData, e
 	if oid, ok := res.Variables[2].Value.(string); ok {
 		data.Vendor = VendorFromObjectID(oid)
 	}
+
+	// 1b) Weitere System-Infos (I-023): rein lesend, optional - fehlende Werte sind kein Fehler.
+	data.Info = querySystemInfo(g)
 
 	// 2) Tabellen: Bridge-Port -> ifIndex -> Name.
 	portIf := walkInts(g, oidBasePortIf)
