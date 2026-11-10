@@ -572,3 +572,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.46.1] – 2026-11-10
 ### Behoben
 - **Topologie-Karte und -PDF:** Steht eine Gruppe/ein Gerät in einer Ebenenzeile nicht ganz links, lief die Verbindungslinie auf Titelhöhe waagerecht durch die Gruppen davor (z. B. durch den Titel „Mobilgeräte“ zur Gruppe „IoT“). Die Linie läuft jetzt durch die Lücke oberhalb der Zeile und tritt von oben in die Einheit ein.
+
+## [0.47.0] – 2026-11-10
+### Hinzugefügt
+- **SMB-Login-Test** (I-022 Rest): Bei offenem Port 445 bietet das Detail-Panel „SMB-Login testen“ (Windows, Domänencontroller, NAS, Samba). Benutzer als `DOMÄNE\benutzer` oder `benutzer@domäne`. Genau ein NTLM-Anmeldeversuch pro Klick; das Passwort geht nie im Klartext raus (nur Challenge-Response), deshalb keine Fingerabdruck-/Klartext-Rückfrage. Abgelehnt, gesperrt, deaktiviert, Passwort abgelaufen und Anmeldezeiten werden unterschieden.
+- Nach erfolgreicher Anmeldung nur lesend: die Namen der Freigaben (Share-Liste über IPC$). Es wird nichts geschrieben, nichts eingebunden, keine Datei geöffnet. Ergebnis nur im RAM am Zugang, wie bei den anderen Login-Tests.
+- Neue Bibliothek `hirochachacha/go-smb2` (BSD-2, Pure Go) mit `geoffgarside/ber` (BSD); Fremdlizenzen neu erzeugt.
+### Grenzen
+- Nur SMB direkt über Port 445 (kein NetBIOS-Port 139), nur NTLM (kein Kerberos). Hat ein Server das **Gast-Konto aktiv und keine Signierung**, kann er falsche Zugangsdaten als Gast annehmen; die Bibliothek macht das nicht erkennbar (dann wäre „ok“ falsch). **Ungeprüft an einem echten SMB-Server** (nur Unit-Tests der Auswertung).

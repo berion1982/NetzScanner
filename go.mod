@@ -7,6 +7,7 @@ require github.com/go-pdf/fpdf v0.9.0
 require (
 	github.com/go-ldap/ldap/v3 v3.4.10
 	github.com/gosnmp/gosnmp v1.38.0
+	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/masterzen/winrm v0.0.0-20261004123143-57b335310d59
 	golang.org/x/crypto v0.31.0
 )
@@ -14,6 +15,7 @@ require (
 require (
 	github.com/Azure/go-ntlmssp v0.1.2-0.20260824092057-1c8077778c2c // indirect
 	github.com/ChrisTrenkamp/goxpath v0.0.0-20210404020558-97928f7e12b6 // indirect
+	github.com/geoffgarside/ber v1.1.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.7 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect

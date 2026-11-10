@@ -340,6 +340,8 @@ function loginTestRows(h, mine, box) {
       targets.push({ method: "ssh", port: p.number, readInfo: true, label: "SSH-Login testen + System-Infos lesen (Port " + p.number + ")" });
     }
     else if (p.number === 5985) targets.push({ method: "winrm", port: 5985, label: "WinRM-Login testen (Port 5985)" });
+    // I-022 Rest: SMB (NTLM, Port 445). Das Passwort geht nie im Klartext raus, daher keine Rueckfrage noetig.
+    else if (p.number === 445) targets.push({ method: "smb", port: 445, label: "SMB-Login testen (Port 445)" });
     // I-022 Rest: LDAP-Bind (AD/Verzeichnisdienst). 636/3269 = LDAPS, 389/3268 = StartTLS.
     else if ([389, 636, 3268, 3269].includes(p.number)) targets.push({ method: "ldap", port: p.number, label: "LDAP-Login testen (Port " + p.number + ")" });
     else if (WEB[p.number]) targets.push({ method: "web", port: p.number, scheme: WEB[p.number], label: "Web-Login testen (" + WEB[p.number] + ", Port " + p.number + ")" });
@@ -347,7 +349,7 @@ function loginTestRows(h, mine, box) {
   // I-022 Rest: SNMPv3-Test (UDP 161, vom TCP-Scan nicht sichtbar) - immer anbieten, Protokolle waehlbar.
   const snmpRow = snmpV3Row(h, box);
   const out = el("div", { class: "msg" });
-  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : t.method === "snmpv3" ? "SNMPv3" : t.method === "winrm" ? "WinRM" : t.method === "ldap" ? "LDAP" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
+  const last = (mine.tests || []).map(t => (t.method === "ssh" ? "SSH" : t.method === "snmpv3" ? "SNMPv3" : t.method === "winrm" ? "WinRM" : t.method === "ldap" ? "LDAP" : t.method === "smb" ? "SMB" : "Web") + " Port " + t.port + ": " + (LOGIN_LABEL[t.status] || t.status) + " – " + t.message
     + (t.info || []).map(f => "\n   " + f.name + ": " + f.value).join("")).join("\n");
   out.style.whiteSpace = "pre-wrap";
   out.textContent = targets.length ? (last || "Noch kein Login-Test. Pro Klick wird genau ein Anmeldeversuch gesendet (Konto-Sperren vermeiden).") : "Kein SSH- oder Web-Port gefunden – Login-Test nicht möglich.";

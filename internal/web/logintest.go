@@ -1,7 +1,7 @@
 package web
 
 // Login-Test je Geraet (I-022): prueft mit dem gemerkten Zugang (I-020), ob die Anmeldung
-// per SSH oder Web (HTTP-Basic) funktioniert. Die eigentliche Pruefung steht in
+// per SSH, Web (HTTP-Basic), SNMPv3, WinRM, LDAP oder SMB funktioniert. Die eigentliche Pruefung steht in
 // internal/logintest; hier liegen nur die Schutzregeln der HTTP-Schnittstelle.
 //
 // Regeln (IDEAS.md, Hinweise zu I-020/I-022):
@@ -50,7 +50,7 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.IP = strings.TrimSpace(req.IP)
-	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 && req.Method != logintest.MethodWinRM && req.Method != logintest.MethodLDAP {
+	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 && req.Method != logintest.MethodWinRM && req.Method != logintest.MethodLDAP && req.Method != logintest.MethodSMB {
 		writeJSON(w, http.StatusBadRequest, errBody("Unbekannte Methode"))
 		return
 	}
@@ -66,6 +66,13 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		req.Port = logintest.WinRMPort
 		if !s.hostHasOpenPort(req.IP, req.Port) {
 			writeJSON(w, http.StatusBadRequest, errBody("Gerät oder Port 5985 nicht in den Scan-Ergebnissen (Port muss als offen gefunden sein)"))
+			return
+		}
+	} else if req.Method == logintest.MethodSMB {
+		// SMB laeuft immer auf Port 445; der Scan muss ihn als offen gefunden haben.
+		req.Port = logintest.SMBPort
+		if !s.hostHasOpenPort(req.IP, req.Port) {
+			writeJSON(w, http.StatusBadRequest, errBody("Gerät oder Port 445 nicht in den Scan-Ergebnissen (Port muss als offen gefunden sein)"))
 			return
 		}
 	} else if req.Method == logintest.MethodLDAP && !logintest.IsLDAPPort(req.Port) {
@@ -103,6 +110,8 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		res = runSNMPv3Test(ctx, req.IP, user, password, req.AuthProto, req.PrivProto, req.PrivPass)
 	} else if req.Method == logintest.MethodWinRM {
 		res = logintest.WinRM(ctx, req.IP, user, password)
+	} else if req.Method == logintest.MethodSMB {
+		res = logintest.SMB(ctx, req.IP, user, password)
 	} else if req.Method == logintest.MethodLDAP {
 		res = logintest.LDAP(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint), req.AllowPlain)
 	} else if req.Method == logintest.MethodSSH && req.ReadInfo {
