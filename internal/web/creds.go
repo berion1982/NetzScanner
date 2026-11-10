@@ -21,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/berion1982/netzscanner/internal/logintest"
 )
 
 // credIdleTimeout: Nach so langer Zeit ohne Nutzung werden Zugangsdaten vergessen.
@@ -37,13 +39,14 @@ type cred struct {
 type credStore struct {
 	mu      sync.Mutex
 	items   map[string]*cred
+	results map[string]map[string]logintest.Result // IP -> Methode -> letztes Test-Ergebnis (I-022, ohne Passwort)
 	timeout time.Duration
 	now     func() time.Time // austauschbar fuer Tests
 }
 
 // newCredStore legt einen leeren Speicher an.
 func newCredStore(timeout time.Duration) *credStore {
-	return &credStore{items: map[string]*cred{}, timeout: timeout, now: time.Now}
+	return &credStore{items: map[string]*cred{}, results: map[string]map[string]logintest.Result{}, timeout: timeout, now: time.Now}
 }
 
 // wipe ueberschreibt das Passwort mit Nullen.
@@ -60,6 +63,7 @@ func (cs *credStore) expireLocked() {
 		if cs.now().Sub(c.lastUse) >= cs.timeout {
 			c.wipe()
 			delete(cs.items, ip)
+			delete(cs.results, ip)
 		}
 	}
 }
@@ -73,6 +77,20 @@ func (cs *credStore) set(ip, user, password string) {
 		old.wipe()
 	}
 	cs.items[ip] = &cred{user: user, password: []byte(password), lastUse: cs.now()}
+	delete(cs.results, ip) // Ergebnisse gehoerten zum alten Zugang
+}
+
+// setResult merkt das letzte Test-Ergebnis (nur solange der Zugang existiert).
+func (cs *credStore) setResult(ip string, r logintest.Result) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	if cs.items[ip] == nil {
+		return
+	}
+	if cs.results[ip] == nil {
+		cs.results[ip] = map[string]logintest.Result{}
+	}
+	cs.results[ip][r.Method] = r
 }
 
 // get liefert den Zugang fuer I-022 (Login-Test) und setzt die Inaktivitaetsfrist neu.
@@ -102,6 +120,12 @@ func (cs *credStore) remove(ip string) {
 			delete(cs.items, k)
 		}
 	}
+	// Ein Ergebnis gilt nur zu dem Zugang, mit dem es entstand -> mit vergessen.
+	for k := range cs.results {
+		if ip == "" || k == ip {
+			delete(cs.results, k)
+		}
+	}
 }
 
 // credInfo ist die einzige Sicht, die nach aussen geht: KEIN Passwort.
@@ -109,6 +133,8 @@ type credInfo struct {
 	IP         string `json:"ip"`
 	User       string `json:"user"`
 	ExpiresSec int    `json:"expiresSec"` // Restzeit bis zum automatischen Vergessen
+	// Tests: letzte Login-Test-Ergebnisse (I-022) zu diesem Zugang, ohne Passwort.
+	Tests []logintest.Result `json:"tests,omitempty"`
 }
 
 // list liefert die gemerkten Zugaenge ohne Passwoerter, sortiert nach IP.
@@ -119,7 +145,12 @@ func (cs *credStore) list() []credInfo {
 	out := make([]credInfo, 0, len(cs.items))
 	for ip, c := range cs.items {
 		left := cs.timeout - cs.now().Sub(c.lastUse)
-		out = append(out, credInfo{IP: ip, User: c.user, ExpiresSec: int(left.Seconds())})
+		info := credInfo{IP: ip, User: c.user, ExpiresSec: int(left.Seconds())}
+		for _, r := range cs.results[ip] {
+			info.Tests = append(info.Tests, r)
+		}
+		sort.Slice(info.Tests, func(i, j int) bool { return info.Tests[i].Method < info.Tests[j].Method })
+		out = append(out, info)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].IP < out[j].IP })
 	return out

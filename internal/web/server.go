@@ -100,6 +100,7 @@ func NewHandler(opt Options) http.Handler {
 	mux.HandleFunc("GET /api/creds", s.handleCredsList)
 	mux.HandleFunc("POST /api/creds", s.handleCredsSet)
 	mux.HandleFunc("POST /api/creds/delete", s.handleCredsDelete)
+	mux.HandleFunc("POST /api/logintest", s.handleLoginTest)
 	mux.HandleFunc("GET /api/findings", s.handleFindings)
 	mux.HandleFunc("POST /api/findings/export", s.handleFindingsExport)
 	mux.HandleFunc("POST /api/topology/snmp", s.handleSNMP)

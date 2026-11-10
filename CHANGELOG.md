@@ -484,3 +484,12 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Vergessen:** automatisch nach 15 Minuten ohne Nutzung, per Knopf „Zugang vergessen“, bei „Eingaben löschen“ und beim Laden eines Projekts; beim Beenden verschwindet der RAM ohnehin. Das Passwort wird beim Löschen mit Nullen überschrieben (Best Effort).
 ### Grenzen
 - Bei `--listen` außerhalb von Loopback ist die Eingabe gesperrt (HTTP unverschlüsselt). Go kann Kopien im Speicher nicht vollständig ausschließen. Browser-Passwortmanager können das Feld anbieten (`autocomplete="new-password"` gesetzt). Ungeprüft im Browser; nur Unit-Tests für den Speicher.
+
+## [0.36.0] – 2026-11-10
+### Hinzugefügt
+- **Login-Test je Gerät** (I-022): Mit dem gemerkten Zugang (I-020) prüft ein Knopf im Detail-Panel, ob die Anmeldung per **SSH** (Passwort bzw. Tastatur-interaktiv) oder **Web** (HTTP-Basic) klappt. Ergebnis „ok / abgelehnt / nicht testbar“ steht samt Meldung im Detail-Panel (`internal/logintest`, `internal/web/logintest.go`, `POST /api/logintest`). Es wird nichts am Gerät verändert: SSH öffnet keine Sitzung, Web sendet nur ein GET auf `/`.
+- **Sicherheit:** Pro Klick höchstens **ein** Passwort-Versuch (Schutz vor Konto-Sperren; parallele Tests je Gerät werden abgewiesen). SSH-Hostkey und Web-Zertifikat werden **nicht ignoriert**: Beim ersten Klick wird nur der Fingerabdruck geholt (es geht **kein** Passwort raus), der Nutzer bestätigt ihn, erst dann folgt der eine Versuch – bei abweichendem Fingerabdruck Abbruch. Web sendet Zugangsdaten nur, wenn das Gerät selbst 401 + „Basic“ verlangt; Weiterleitungen werden nicht verfolgt. Unverschlüsseltes HTTP nur nach ausdrücklicher Bestätigung. Nur vom eigenen Rechner (Loopback), nur für Geräte und als offen gefundene Ports aus der Scan-Liste. Ergebnisse liegen nur im RAM, ohne Passwort, und verschwinden mit dem Zugang (Vergessen, Timeout, neuer Zugang).
+### Geändert
+- `golang.org/x/crypto` ist jetzt direkte Abhängigkeit (SSH); Fremdlizenzen neu erzeugt.
+### Grenzen
+- Nicht enthalten: SNMPv3 (braucht eigene Auth-/Priv-Angaben, hat sein eigenes Formular), LDAP/WinRM/SMB, Formular-Logins und Digest-Auth bei Web. SSH-Schlüssel-Anmeldung entfällt. Es gibt keine bekannten-Hosts-Datei: Der Fingerabdruck muss bei jedem Test neu bestätigt werden. **Nur gegen lokale Test-Server geprüft, nicht an echten Geräten im LAN.**
