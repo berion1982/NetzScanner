@@ -50,7 +50,7 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.IP = strings.TrimSpace(req.IP)
-	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 && req.Method != logintest.MethodWinRM {
+	if req.Method != logintest.MethodSSH && req.Method != logintest.MethodWeb && req.Method != logintest.MethodSNMPv3 && req.Method != logintest.MethodWinRM && req.Method != logintest.MethodLDAP {
 		writeJSON(w, http.StatusBadRequest, errBody("Unbekannte Methode"))
 		return
 	}
@@ -68,6 +68,9 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, errBody("Gerät oder Port 5985 nicht in den Scan-Ergebnissen (Port muss als offen gefunden sein)"))
 			return
 		}
+	} else if req.Method == logintest.MethodLDAP && !logintest.IsLDAPPort(req.Port) {
+		writeJSON(w, http.StatusBadRequest, errBody("Kein LDAP-Port (389, 636, 3268, 3269)"))
+		return
 	} else if !s.hostHasOpenPort(req.IP, req.Port) {
 		writeJSON(w, http.StatusBadRequest, errBody("Gerät oder Port nicht in den Scan-Ergebnissen (Port muss als offen gefunden sein)"))
 		return
@@ -100,6 +103,8 @@ func (s *server) handleLoginTest(w http.ResponseWriter, r *http.Request) {
 		res = runSNMPv3Test(ctx, req.IP, user, password, req.AuthProto, req.PrivProto, req.PrivPass)
 	} else if req.Method == logintest.MethodWinRM {
 		res = logintest.WinRM(ctx, req.IP, user, password)
+	} else if req.Method == logintest.MethodLDAP {
+		res = logintest.LDAP(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint), req.AllowPlain)
 	} else if req.Method == logintest.MethodSSH && req.ReadInfo {
 		res = logintest.SSHInfo(ctx, req.IP, req.Port, user, password, strings.TrimSpace(req.Fingerprint))
 	} else if req.Method == logintest.MethodSSH {
