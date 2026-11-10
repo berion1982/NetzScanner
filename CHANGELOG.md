@@ -622,3 +622,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.50.3] – 2026-11-10
 ### Geändert
 - **Breite des Detail-Panels steuerbar** (I-080, Wunsch Sascha): Lange Zeilen des Diagnose-Berichts blähen das Panel nicht mehr unkontrolliert auf. Stattdessen erweitert sich das Panel beim Start eines Berichts bewusst und der Bericht scrollt bei Bedarf waagerecht. Ein runder Knopf **mittig an der linken Kante** des Panels schaltet um: „›“ = wieder verkleinern, „‹“ = erweitern (erscheint nur, wenn zu dem gewählten Gerät ein Bericht existiert). Der Knopf bleibt beim Scrollen mittig im Sichtfeld (`sticky`). Der Zustand gilt nur für die Sitzung. Der Ein-/Ausklapp-Knopf aus 0.50.2 bleibt unverändert.
+
+## [0.50.4] – 2026-11-10
+### Geändert
+- **Einheitliches Knopf-Design** (I-081, Wunsch Sascha): Alle Knöpfe und Auswahllisten sind jetzt dunkel im Stil der Detail-Knöpfe (Hintergrund, Rahmen, Rundung, Hover, deaktiviert). Vorher hatten Knöpfe außerhalb bestimmter Bereiche (z. B. „Scan speichern/laden/vergleichen“, Panel-Knöpfe) das helle Browser-Standardaussehen, ebenso die Kategorie-Auswahl. Umgesetzt als Basisregel in `static/index.html`; vorhandene Sonderfälle (Navigation, grüne Hauptknöpfe, Auswahlleiste, Legende) bleiben unverändert.
