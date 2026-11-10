@@ -500,3 +500,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Sicherheit:** Hostkey-Bestätigung wie beim Login-Test (ohne bestätigten Fingerabdruck geht kein Passwort raus). Ausgabe auf 16 KiB begrenzt, 10 s Frist, Werte von Steuerzeichen befreit und gekürzt. Ergebnis nur im RAM am Zugang, nicht in Exporten.
 ### Grenzen
 - Geräte ohne Unix-Shell (viele Router/Switches) liefern keine Infos; der Login gilt trotzdem als „ok“ mit entsprechendem Hinweis. Nur SSH; Web-/SNMP-/Domänen-Infos sowie Schnittstellen und Firmware sind noch offen (Rest von I-023).
+
+## [0.37.1] – 2026-11-10
+### Hinzugefügt
+- **`scripts/start.sh`** (I-071): Ein Aufruf macht `git pull --ff-only`, `scripts/build.sh native` und startet `dist/netzscanner`. Optionen (z. B. `--listen`, `--token`) werden an das Programm durchgereicht. Bricht beim ersten Fehler ab, damit keine alte Version startet.
+### Grenzen
+- Nur bash (Linux/macOS, unter Windows Git-Bash/WSL). Nur lokal getestet (Syntaxprüfung), nicht im echten Ablauf mit `git pull`.
