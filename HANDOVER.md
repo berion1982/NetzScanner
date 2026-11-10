@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.39.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.40.0 · **Datum:** 2026-11-10 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -20,15 +20,17 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Zugangsdaten** (I-020, `creds.go`): je Geräte-IP Benutzer/Passwort nur im RAM, nur Loopback, 15 Min Inaktivität, API ohne Passwort-Rückgabe.
 - **Login-Test** (I-022, 0.36.0, `internal/logintest`, `internal/web/logintest.go`): SSH (Passwort/kbd-interaktiv) und Web (HTTP-Basic) mit dem Zugang aus `credStore`. Ein Passwort-Versuch pro Klick, Hostkey/Zertifikat erst nach bestätigtem Fingerabdruck, Ergebnisse nur im RAM am Zugang.
 - **System-Infos** (I-023 Teil 1, 0.37.0, `logintest.SSHInfo`): nach SSH-Login über dieselbe Verbindung ein fester, lesender Befehl (Kernel, Hostname, os-release; ab 0.38.0 auch Modell, Firmware, Laufzeit, Schnittstellen); Anzeige im Detail-Panel, nur RAM. Ab 0.39.0 auch per SNMP (`scan/snmpinfo.go`, beim „Lesen“ im SNMP-Formular): Standort, Laufzeit, Modell/Firmware (ENTITY-MIB), Schnittstellen → `Host.SysInfo`.
+- **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
-Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0):
-1. **I-022 Rest** (optional): SNMPv3-Login-Test (eigene Auth-/Priv-Angaben nötig, vorhandenes SNMP-Formular nutzen), später LDAP/WinRM/SMB. Sonst I-023 Rest (Web-/Domänen-Infos) oder nächste offene Idee aus `IDEAS.md` (z. B. I-062 Drucker per IPP).
+Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0):
+1. **I-022 Rest** (optional): SNMPv3-Login-Test (eigene Auth-/Priv-Angaben nötig, vorhandenes SNMP-Formular nutzen), später LDAP/WinRM/SMB. Sonst I-023 Rest (Web-/Domänen-Infos) oder nächste offene Idee aus `IDEAS.md`.
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- IPP (0.40.0): An einem Netzwerkdrucker (Port 631) Scan starten – erscheint im Detail-Panel unter Banner „IPP: Modell · Firmware · Status · Füllstände“? Welche Felder fehlen (modellabhängig)? Drucker ohne IPP-Antwort: normaler Banner wie zuvor?
 - SNMP-System-Infos (0.39.0): An einem verwalteten Switch/Router im SNMP-Formular „Lesen“ – erscheinen im Detail-Panel Standort, Laufzeit und Schnittstellen (Zustand/MAC/Tempo)? Stimmt „Modell“ (ENTITY-MIB, Index-Wahl unbestätigt)? Ohne Infos darf die Topologie trotzdem funktionieren.
 - System-Infos (0.37.0/0.38.0): An einem Linux-Gerät mit SSH „SSH-Login testen + System-Infos lesen“ – erscheinen Kernel, Hostname, System, Modell, Laufzeit und die Schnittstellen mit MAC/IP? Bei Router/Switch ohne Unix-Shell: kommt der Hinweis „keine System-Infos lesbar“ und bleibt der Login „ok“?
 - Login-Test (0.36.0): An einem Gerät mit SSH und einem mit Web-Basic-Login (z. B. Router, NAS): Zugang merken, „SSH-/Web-Login testen“ – erscheint erst der Fingerabdruck zur Bestätigung (ohne Passwort), danach „ok“/„abgelehnt“? Falsches Passwort absichtlich nur **einmal** testen. Geräte mit nur Tastatur-interaktiv oder Formular-Login: kommt eine verständliche Meldung?

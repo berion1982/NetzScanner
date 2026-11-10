@@ -523,3 +523,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Ausschließlich lesende Abfragen standardisierter OIDs (kein SET). Bewusst nicht gelesen: `sysContact` (kann Personendaten enthalten) und Seriennummern. Fehlende Werte lassen nur die Zeile weg, die Topologie-Abfrage scheitert deshalb nicht.
 ### Grenzen
 - Welcher Eintrag der ENTITY-MIB als „Modell“ gilt, entscheidet nur der kleinste Index mit Inhalt – bei manchen Geräten ist das nicht das Hauptgerät (unbestätigt, im LAN prüfen). Web- und Domänen-Infos bleiben offen.
+
+## [0.40.0] – 2026-11-10
+### Hinzugefügt
+- **Drucker-Details per IPP** (I-062): Hat ein Gerät Port 631 offen, sendet der Scan eine einzige lesende IPP-Anfrage (`Get-Printer-Attributes`, ohne Login). Ergebnis (Modell, Firmware, UUID, Status, Meldungen, Füllstände) erscheint als Banner-Zeile „IPP: …“ im Detail-Panel. Standard-IPP, keine Einzelgeräte-Tabellen.
+### Grenzen
+- Welche Attribute ein Drucker liefert, ist modellabhängig (ungeprüft im echten LAN): Fehlendes wird weggelassen, bei Fehler/Timeout bleibt der normale Banner. Nur unverschlüsseltes IPP (Port 631); keine Seriennummer; Füllstand-Sonderwerte (unbekannt, genug vorhanden) erscheinen als „?“.
