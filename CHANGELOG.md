@@ -535,3 +535,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **SNMPv3-Login-Test** (I-022, Rest): Im Detail-Panel unter dem gemerkten Zugang neuer Knopf „SNMPv3-Login testen (UDP 161)“. Benutzer und Passwort des gemerkten Zugangs gelten als v3-Benutzer und Authentifizierungs-Passphrase; Auth-/Verschlüsselungs-Protokoll wählt man im Formular, die Verschlüsselungs-Passphrase wird nur für diesen Klick gesendet und nicht gespeichert. Genau **eine** lesende Anfrage (sysDescr, ohne Wiederholung, kein SET) pro Klick; Ergebnis „ok / abgelehnt / nicht testbar“ wie bei SSH und Web, nur im RAM, nur über Loopback. Das Gerät muss in der Scan-Liste stehen (UDP 161 sieht der TCP-Scan nicht).
 ### Grenzen
 - Viele Geräte schweigen bei falschem v3-Benutzer oder falscher Passphrase. Ein Timeout wird daher als „nicht testbar“ gemeldet, nicht als „abgelehnt“. Die Abgrenzung „abgelehnt“ vs. „keine Antwort“ ist **ungeprüft an echten Geräten**.
+
+## [0.42.0] – 2026-11-10
+### Hinzugefügt
+- **WinRM-Login-Test** (I-022, Rest): Hat ein Gerät Port 5985 offen, erscheint im Detail-Panel der Knopf „WinRM-Login testen (Port 5985)“. Pro Klick genau ein Versuch (NTLM, Nachrichten verschlüsselt) mit dem gemerkten Zugang; danach ein fester, rein lesender Befehl (`hostname`), der Computername wird als Info angezeigt. Domänenkonten als `DOMÄNE\benutzer` oder `benutzer@domäne`. Ergebnis „ok“/„abgelehnt“ (HTTP 401)/„nicht testbar“ steht wie bei den anderen Tests in der Liste; das Passwort erscheint nie in Meldungen und wird nicht gespeichert.
+### Grenzen
+- Nur WinRM über HTTP (5985, NTLM-verschlüsselt); HTTPS (5986) und Kerberos fehlen. LDAP und SMB sind weiter offen (brauchen neue Bibliotheken). Gegen einen echten Windows-Rechner ungeprüft – nur Fehlerauswertung und „Port zu“ sind per Test abgedeckt.
