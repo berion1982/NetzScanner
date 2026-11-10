@@ -541,3 +541,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **WinRM-Login-Test** (I-022, Rest): Hat ein Gerät Port 5985 offen, erscheint im Detail-Panel der Knopf „WinRM-Login testen (Port 5985)“. Pro Klick genau ein Versuch (NTLM, Nachrichten verschlüsselt) mit dem gemerkten Zugang; danach ein fester, rein lesender Befehl (`hostname`), der Computername wird als Info angezeigt. Domänenkonten als `DOMÄNE\benutzer` oder `benutzer@domäne`. Ergebnis „ok“/„abgelehnt“ (HTTP 401)/„nicht testbar“ steht wie bei den anderen Tests in der Liste; das Passwort erscheint nie in Meldungen und wird nicht gespeichert.
 ### Grenzen
 - Nur WinRM über HTTP (5985, NTLM-verschlüsselt); HTTPS (5986) und Kerberos fehlen. LDAP und SMB sind weiter offen (brauchen neue Bibliotheken). Gegen einen echten Windows-Rechner ungeprüft – nur Fehlerauswertung und „Port zu“ sind per Test abgedeckt.
+
+## [0.43.0] – 2026-11-10
+### Geändert
+- **WinRM-Login-Test liest jetzt Domänen-/Systeminfos** (I-023, Teil „Domäne“): Statt nur `hostname` läuft nach der Anmeldung ein einziger, fest einprogrammierter, rein lesender PowerShell-Befehl (CIM: Computername, Domäne bzw. Arbeitsgruppe, Hersteller/Modell, Windows-Version, Laufzeit). Die Felder erscheinen im Detail-Panel wie bei SSH/SNMP, nur im RAM. Es wird nichts geschrieben und nichts aus Eingaben in den Befehl eingesetzt.
+### Grenzen
+- Gegen einen echten Windows-Rechner ungeprüft (nur Parser-Tests). Ist PowerShell/CIM nicht nutzbar, bleibt der Login „ok“ mit dem Hinweis „keine System-Infos lesbar“. Web-Infos nach Login bleiben offen.
