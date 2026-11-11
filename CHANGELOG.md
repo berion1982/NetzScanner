@@ -630,3 +630,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.50.5] – 2026-11-10
 ### Behoben
 - **Jahreszeiten-Effekt unter Windows nicht einschaltbar** (Meldung Sascha): Verlangt das Betriebssystem reduzierte Bewegung (Windows: „Animationseffekte“ aus), war der Schalter gesperrt. Jetzt bleibt er bedienbar: Ohne eigene Wahl ist der Effekt dann aus, eine bewusste Wahl im Browser hat aber Vorrang. Hilfe-Text angepasst.
+
+## [0.50.6] – 2026-11-11
+### Hinzugefügt
+- **Programm-Icon** (I-082, Wunsch Sascha): Radar-/Netz-Symbol als Favicon im Browser-Tab (32 und 256 px, Apple-Touch-Icon 180 px) und als kleines Logo vor „NetzScanner“ in der Navigation. Die Bilder liegen in `internal/web/static/` und sind eingebettet (offline nutzbar). Hinweis: Das Icon in der Windows-`.exe` selbst ist noch nicht gesetzt.
