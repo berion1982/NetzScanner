@@ -37,6 +37,8 @@ func main() {
 	noSave := flag.Bool("no-save", false, "Eingaben nicht auf die Platte speichern (nur im Arbeitsspeicher)")
 	token := flag.String("token", "", "Zugangstoken fuer die Oberflaeche (mind. 8 Zeichen; auch per Umgebung NETZSCANNER_TOKEN). Ohne Angabe wird bei --listen ausserhalb von Loopback automatisch eines erzeugt")
 	noToken := flag.Bool("no-token", false, "Zugangstoken auch bei --listen ausserhalb von Loopback abschalten (NICHT empfohlen: jeder im Netz sieht alle Daten)")
+	// Browser automatisch oeffnen (I-083)
+	noBrowser := flag.Bool("no-browser", false, "Den Browser nach dem Start nicht automatisch oeffnen (bei --listen ausserhalb von Loopback passiert das nie)")
 	// Kommandozeilen-Modus ohne Browser (I-047)
 	scanTarget := flag.String("scan", "", "Kommandozeilen-Modus: Ziel scannen (z. B. 192.168.1.0/24), Ergebnis nach --out schreiben, kein Webserver")
 	scanOut := flag.String("out", "", "mit --scan: Ausgabedatei (.csv, .md, .html, .pdf); leer oder - = CSV nach stdout")
@@ -93,7 +95,18 @@ func main() {
 		// Einmalige Anzeige des Tokens (I-025): wird nirgends sonst ausgegeben oder gespeichert.
 		fmt.Printf("Zugangstoken: %s\nBrowser-Link:  http://<Adresse-dieses-Rechners>:%s/?token=%s\n", tok, listenPort(*listen), tok)
 	}
-	log.Fatal(http.ListenAndServe(*listen, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok})))
+	// Erst lauschen, dann den Browser starten: so ist der Server beim Aufruf schon erreichbar.
+	ln, err := net.Listen("tcp", *listen)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if shouldOpenBrowser(*noBrowser, *listen) {
+		if err := openBrowser("http://" + *listen); err != nil {
+			// Kein Abbruch: die Adresse steht oben in der Konsole.
+			fmt.Println("Hinweis:", err)
+		}
+	}
+	log.Fatal(http.Serve(ln, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok})))
 }
 
 // runMeshDump holt Zugangsdaten (Umgebung oder Abfrage am Terminal) und gibt die Mesh-Liste roh aus.
