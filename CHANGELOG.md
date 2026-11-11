@@ -640,3 +640,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Browser öffnet sich beim Start automatisch** (I-083, Wunsch Sascha): Linux per `xdg-open`, Windows per `rundll32 url.dll,FileProtocolHandler`, macOS per `open`. Nur bei lokaler Adresse (Loopback); bei `--listen 0.0.0.0` (Server/Handheld) nie. Abschaltbar mit `--no-browser`. Schlägt das Öffnen fehl, läuft das Programm weiter und zeigt einen Hinweis; die Adresse steht weiter in der Konsole. Der Server lauscht vor dem Start des Browsers bereits.
 ### Hinweis
 - Die Konsole selbst öffnet sich unter Windows weiterhin (Teil 2 von I-083, offen).
+
+## [0.52.0] – 2026-11-11
+### Hinzugefügt
+- **Windows ohne Konsolenfenster** (I-083 Teil 2, Wunsch Sascha): Die Windows-`.exe` wird als GUI-Programm gebaut (`-H=windowsgui`); beim Doppelklick öffnet sich nur der Browser. Wird sie aus cmd/PowerShell gestartet, hängt sie sich an deren Konsole an, sodass `--version`, `--scan`, `--diagnose` usw. weiter Ausgabe zeigen (Hinweis: cmd wartet dabei nicht auf das Programmende). Startfehler (z. B. Port belegt) erscheinen ohne Konsole als Meldungsfenster.
+- **Knopf „⏻ Beenden“** in der Navigation (`POST /api/shutdown`): beendet das Programm sauber (laufende Anfragen werden kurz abgewartet). Nur von diesem Rechner aus erlaubt, mit denselben CSRF-Schutz wie die übrigen schreibenden Aufrufe. Strg+C/SIGTERM beenden nun ebenfalls geordnet.
+### Geändert
+- Systembefehle (ping, tracert, arp, route, powershell) laufen unter Windows ohne aufblitzendes Konsolenfenster (`internal/scan/proc_windows.go`).

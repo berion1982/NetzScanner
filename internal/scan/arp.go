@@ -18,7 +18,7 @@ func ReadARP() map[string]string {
 		}
 	}
 	// Windows und macOS (und Linux-Fallback): "arp -a" auswerten.
-	out, err := exec.Command("arp", "-a").Output()
+	out, err := hidden(exec.Command("arp", "-a")).Output()
 	if err != nil {
 		return map[string]string{}
 	}

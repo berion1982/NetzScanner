@@ -12,6 +12,8 @@ nav{width:200px;flex:none;background:var(--panel);border-right:1px solid var(--l
 nav b{font-size:16px;margin-bottom:16px}
 nav button{all:unset;cursor:pointer;display:block;padding:8px 10px;border-radius:6px;color:var(--mut)}
 nav button:hover,nav button.on{background:#21262d;color:var(--txt)}
+nav .quit{margin-top:auto;color:var(--bad)}
+nav .quit+small{margin-top:8px}
 nav small{margin-top:auto;color:var(--mut);font-size:11px}
 nav small+small{margin-top:4px} /* zweite Zeile (Quellcode-Link) direkt unter der Version, nicht zusätzlich nach unten schieben */
 main{flex:1;min-width:0;padding:20px}
@@ -89,6 +91,7 @@ nav label.fx{margin-top:auto;color:var(--mut);font-size:11px;cursor:pointer;disp
 <nav><b><img src="favicon-32.png" alt="" width="20" height="20" style="vertical-align:-4px;border-radius:5px"> NetzScanner</b>
 <button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="find">Befunde</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
 <label class="fx" id="fxlabel" title="Dezente Jahreszeiten-Animation (Nordhalbkugel, nach Datum des Rechners)"><input type="checkbox" id="fxtoggle"> Jahreszeiten-Effekt</label>
+<button id="quit" class="quit" title="NetzScanner vollständig beenden (Programm schließt sich)">⏻ Beenden</button>
 <small id="ver">…</small> <small><a href="https://github.com/berion1982/NetzScanner" target="_blank" rel="noopener" title="Quellcode (Lizenz: AGPL v3)">Quellcode · AGPL</a></small></nav>
 <canvas id="seasonfx" aria-hidden="true"></canvas>
 <main>
@@ -1053,6 +1056,17 @@ document.getElementById("dpgo").addEventListener("click", () => {
 });
 fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
 poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
+// "Beenden" (I-083 Teil 2): Programm schliessen; noetig, wenn die Windows-Version ohne Konsolenfenster laeuft.
+document.getElementById("quit").onclick = () => {
+  if (!confirm("NetzScanner beenden? Ein laufender Scan wird abgebrochen.")) return;
+  fetch("/api/shutdown", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"})
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(x => {
+      if (!x.ok) { alert((x.j && x.j.error) || "Beenden nicht möglich."); return; }
+      document.body.innerHTML = '<p style="padding:40px;font:16px sans-serif;color:#e6edf3">NetzScanner wurde beendet. Du kannst diesen Tab schließen.</p>';
+    })
+    .catch(() => alert("Beenden nicht möglich."));
+};
 fetch("/api/version").then(r => r.json()).then(v => { document.getElementById("ver").textContent = "v" + v.version + " · Build " + v.buildDate; });
 
 // ---------------------------------------------------------------------------

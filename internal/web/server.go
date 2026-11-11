@@ -37,6 +37,7 @@ type Options struct {
 	Demo        bool   // Demo-Daten anzeigen, solange noch kein Scan lief
 	AllowPublic bool   // Scans oeffentlicher Adressen erlauben
 	DataFile    string // Datei fuer die zwischengespeicherten Eingaben (I-016); "" = nicht speichern
+	Shutdown    func() // Beendet das Programm (Knopf "Beenden", I-083 Teil 2); nil = Knopf ohne Wirkung
 	Token       string // Zugangstoken (I-025); "" = kein Zugriffsschutz (nur sinnvoll bei reinem Loopback)
 }
 
@@ -84,6 +85,7 @@ func NewHandler(opt Options) http.Handler {
 	sub, _ := fs.Sub(staticFiles, "static")
 	mux.Handle("/", http.FileServer(http.FS(sub)))
 
+	mux.HandleFunc("POST /api/shutdown", s.handleShutdown)
 	mux.HandleFunc("GET /api/hosts", s.handleHosts)
 	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)

@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/berion1982/netzscanner/internal/licenses"
 	"github.com/berion1982/netzscanner/internal/router"
@@ -22,6 +23,8 @@ import (
 )
 
 func main() {
+	// Windows (GUI-Build): an die Konsole des Aufrufers anhaengen, falls es eine gibt (I-083 Teil 2).
+	attachParentConsole()
 	showVersion := flag.Bool("version", false, "Version und Builddatum anzeigen")
 	// Lizenzhinweis (AGPL-3.0-or-later) und Lizenztexte der Fremdbibliotheken ausgeben
 	showLicenses := flag.Bool("licenses", false, "Lizenz des NetzScanners (AGPL v3) und der Fremdbibliotheken anzeigen")
@@ -98,7 +101,7 @@ func main() {
 	// Erst lauschen, dann den Browser starten: so ist der Server beim Aufruf schon erreichbar.
 	ln, err := net.Listen("tcp", *listen)
 	if err != nil {
-		log.Fatal(err)
+		fatal("Der Webserver konnte nicht starten (läuft NetzScanner schon?):\n" + err.Error())
 	}
 	if shouldOpenBrowser(*noBrowser, *listen) {
 		if err := openBrowser("http://" + *listen); err != nil {
@@ -106,7 +109,33 @@ func main() {
 			fmt.Println("Hinweis:", err)
 		}
 	}
-	log.Fatal(http.Serve(ln, web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok})))
+
+	// Sauberes Beenden: Strg+C, SIGTERM oder der "Beenden"-Knopf der Oberflaeche (I-083 Teil 2).
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	handler := web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok, Shutdown: stop})
+	srv := &http.Server{Handler: handler}
+	go func() {
+		<-ctx.Done()
+		// Laufende Anfragen kurz zu Ende bringen, dann hart schliessen (Live-Streams enden sonst nie).
+		sctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if srv.Shutdown(sctx) != nil {
+			_ = srv.Close()
+		}
+	}()
+	if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+		fatal(err.Error())
+	}
+	fmt.Println("NetzScanner beendet.")
+}
+
+// fatal meldet einen Startfehler: im Terminal als Text, unter Windows ohne
+// Konsole zusaetzlich als Meldungsfenster, und beendet das Programm.
+func fatal(msg string) {
+	fmt.Fprintln(os.Stderr, "Fehler:", msg)
+	showError(msg)
+	os.Exit(1)
 }
 
 // runMeshDump holt Zugangsdaten (Umgebung oder Abfrage am Terminal) und gibt die Mesh-Liste roh aus.

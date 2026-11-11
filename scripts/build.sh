@@ -31,6 +31,9 @@ for t in "${TARGETS[@]}"; do
   os="${t%/*}"; arch="${t#*/}"
   ext=""; [[ "$os" == "windows" ]] && ext=".exe"
   out="dist/netzscanner-${VERSION}-${os}-${arch}${ext}"
+  # Windows: GUI-Programm ohne Konsolenfenster (I-083 Teil 2); Ausgabe von --version/--scan
+  # erscheint trotzdem, wenn aus cmd/PowerShell gestartet (siehe cmd/netzscanner/console_windows.go).
+  flags="$LDFLAGS"; [[ "$os" == "windows" ]] && flags="$LDFLAGS -H=windowsgui"
   echo "-> $out"
-  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -ldflags "$LDFLAGS" -o "$out" ./cmd/netzscanner
+  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -ldflags "$flags" -o "$out" ./cmd/netzscanner
 done
