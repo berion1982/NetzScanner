@@ -651,3 +651,10 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.52.1] – 2026-11-11
 ### Behoben
 - **Navigation:** Der Haken „Jahreszeiten-Effekt“ stand seit dem Beenden-Knopf (0.52.0) mittig in der Navigationsleiste. Er sitzt wieder unten, jetzt direkt **unter** „⏻ Beenden“ und über der Versionsnummer (Meldung Sascha).
+
+## [0.53.0] – 2026-11-11
+### Hinzugefügt
+- **Beenden beim Schließen des Browser-Tabs** (I-084, Meldung Sascha): Schließt man den letzten NetzScanner-Tab, beendet sich das Programm nach 8 Sekunden (Neuladen mit F5 und weitere Tabs zählen mit, dann bleibt es an). Gilt nur, wenn NetzScanner den Browser selbst geöffnet hat. Abschalten mit `--keep-running`; mit `--no-browser` oder `--listen` außerhalb von Loopback ist die Automatik ohnehin aus.
+- **Warnung vor dem Schließen:** Läuft ein Scan oder liegen Ergebnisse im Speicher, fragt der Browser vor dem Schließen/Neuladen nach (Standardtext des Browsers, nicht änderbar). Ein eigenes Popup mit „Beenden“-Knopf ist technisch nicht möglich.
+### Hinweis
+- Stürzt der Browser ab oder wird er hart beendet, kommt kein Abmelde-Signal; dann bleibt das Programm aktiv, bis „Beenden“ geklickt wird (bewusst: lieber zu lange laufen als einen Scan verlieren).

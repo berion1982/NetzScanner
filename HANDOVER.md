@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.52.1 · **Datum:** 2026-11-11 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.53.0 · **Datum:** 2026-11-11 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -29,6 +29,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Detail-Panel ein-/ausklappen** (I-079, 0.50.2, `static/index.html`, `applyDetailFold`): Knopf im Panel, Zustand in `localStorage` (`detailFold`), CSS-Klasse `fold`. **Panelbreite** (I-080, 0.50.3, `applyDetailWide`): Randknopf (sticky, mittig) wechselt zwischen normal und `wide`, nur wenn für das Gerät ein Bericht in `diagCache` liegt; Start eines Berichts erweitert automatisch.
 - **Knopf-Design** (I-081, 0.50.4): globale Basisregeln `button`/`select` in `static/index.html`; neue Knöpfe brauchen keine eigene Gestaltung, Sonderfälle über Klassen mit höherer Spezifität.
 - **Browser-Autostart** (I-083 Teil 1, 0.51.0, `cmd/netzscanner/browser.go`): öffnet beim Start den Standardbrowser, nur bei Loopback, `--no-browser` schaltet ab. Teil 2 (0.52.0): Windows-Build mit `-H=windowsgui` (`scripts/build.sh`), `console_windows.go` (Anhängen an Eltern-Konsole, Meldungsfenster bei Startfehler), Knopf „Beenden“ (`web/shutdown.go`, `POST /api/shutdown`, nur Loopback), `scan/proc_windows.go` (`hidden()` gegen aufblitzende Fenster).
+- **Beenden beim Tab-Schließen** (I-084, 0.53.0, `web/session.go`, Tab-Verwaltung in `index.html`): Tabs melden sich per `/api/session/hello|bye` an/ab, nach dem letzten 8 s Wartezeit, dann `Options.Shutdown`. Nur wenn der Browser selbst geöffnet wurde (`AutoExit`), `--keep-running` schaltet ab.
 - **Programm-Icon** (I-082, 0.50.6): `static/icon-256.png`, `favicon-32.png`, `apple-touch-icon.png`, Links im Kopf von `index.html`, Logo in der Navigation. Exe-Icon (Windows `.syso`) offen.
 - **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung. Ab 0.49.1 (I-077) im Sommer zusätzlich Rasen unten und Blume neben der Versionsnummer.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
@@ -42,6 +43,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
 - Jahreszeiten-Effekt (0.50.5): Unter Windows Schalter unten links anklicken – startet die Animation jetzt? (War vorher gesperrt, vermutlich wegen „Animationseffekte“ aus; Ursache ist eine Annahme, nicht bestätigt.)
+- Tab schließen (0.53.0): Beendet sich NetzScanner unter Windows ~8 s nach dem Schließen des letzten Tabs (Task-Manager)? Bleibt es bei F5 und bei zwei Tabs an? Erscheint die Browser-Warnung bei laufendem Scan?
 - Windows ohne Konsole (0.52.0): Doppelklick auf die `.exe` → nur Browser, kein Fenster? Kein Aufblitzen bei Scan/Diagnose? „Beenden“ schließt das Programm (Task-Manager prüfen)? `netzscanner.exe --version` in PowerShell zeigt weiterhin Text? Antivirus-Meldungen bei GUI-Build?
 - Browser-Autostart (0.51.0): Öffnet sich unter Windows (Doppelklick/Konsole) und Linux der Browser von selbst? Meldet `--no-browser` ihn ab?
 - Icon (0.50.6): Erscheint es im Browser-Tab und in der Navigation (ggf. Cache leeren/Strg+F5)?

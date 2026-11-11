@@ -208,6 +208,7 @@ nav label.fx{margin-top:10px;color:var(--mut);font-size:11px;cursor:pointer;disp
  <h2>Lesezeichen für den Browser</h2><p>Im Export gibt es „Lesezeichen“: eine HTML-Datei mit den Web-Links der ausgewählten Geräte zum Importieren in Firefox oder Chrome/Edge (zwei Varianten: Ordner in der Lesezeichenleiste oder normaler Ordner „NetzScanner“). Enthalten sind nur URLs, keine Zugangsdaten. Ob die Leisten-Variante in beiden Browsern greift, ist noch nicht bestätigt.</p>
  <h2>Startoptionen und Fehlersuche</h2>
  <table class="ht"><tbody>
+ <tr><td><code>--keep-running</code></td><td>NetzScanner läuft weiter, auch wenn der Browser-Tab geschlossen wird. Ohne diese Option beendet es sich nach dem Schließen des letzten Tabs (nur wenn es den Browser selbst geöffnet hat). Läuft ein Scan, warnt der Browser vor dem Schließen.</td></tr>
  <tr><td><code>--no-browser</code></td><td>Verhindert, dass beim Start der Browser automatisch geöffnet wird. Bei <code>--listen</code> außerhalb von Loopback (Server, Handheld) wird nie ein Browser gestartet.</td></tr>
  <tr><td><code>--listen ADRESSE:PORT</code></td><td>Adresse des Webservers (Standard <code>127.0.0.1:8484</code>; für andere Rechner z. B. <code>0.0.0.0:8484</code>)</td></tr>
  <tr><td><code>--token TOKEN</code> · <code>--no-token</code></td><td>Zugangstoken (mind. 8 Zeichen, oder Umgebung <code>NETZSCANNER_TOKEN</code>). Bei <code>--listen</code> außerhalb von Loopback erzeugt der Scanner automatisch eines und zeigt es einmal in der Konsole an; Anmeldung im Browser über <code>/?token=…</code>. <code>--no-token</code> schaltet den Schutz ab (nicht empfohlen). Die Verbindung bleibt unverschlüsselt (HTTP)</td></tr>
@@ -1056,6 +1057,19 @@ document.getElementById("dpgo").addEventListener("click", () => {
 });
 fetch("/api/networks").then(r => r.json()).then(n => { if (n.length) { document.getElementById("target").value = n[0]; } });
 poll(); fetch("/api/scan").then(r => r.json()).then(s => { if (s.running) startPolling(); });
+// Tab-Verwaltung (I-084): Die Seite meldet sich beim Programm an und beim Schliessen ab.
+// Ist "autoExit" aktiv, beendet sich NetzScanner, wenn der letzte Tab zu ist (kurze Wartezeit fuer F5).
+const tabId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+let autoExit = false;
+const tabCall = (kind) => fetch("/api/session/" + kind, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: tabId})}).then(r => r.json());
+const tabHello = () => tabCall("hello").then(j => { autoExit = !!j.autoExit; }).catch(() => {});
+tabHello();
+// Abmelden beim Verlassen; sendBeacon wird auch beim Schliessen noch zugestellt.
+window.addEventListener("pagehide", () => navigator.sendBeacon("/api/session/bye", new Blob([JSON.stringify({id: tabId})], {type: "application/json"})));
+// Aus dem Zwischenspeicher zurueckgeholte Seite (Zurueck-Knopf): wieder anmelden.
+window.addEventListener("pageshow", e => { if (e.persisted) tabHello(); });
+// Warnung, solange etwas verloren ginge (laufender Scan oder Ergebnisse im Speicher). Der Text ist vom Browser vorgegeben.
+window.addEventListener("beforeunload", e => { if (autoExit && (running || hostsCache.length)) { e.preventDefault(); e.returnValue = ""; } });
 // "Beenden" (I-083 Teil 2): Programm schliessen; noetig, wenn die Windows-Version ohne Konsolenfenster laeuft.
 document.getElementById("quit").onclick = () => {
   if (!confirm("NetzScanner beenden? Ein laufender Scan wird abgebrochen.")) return;
