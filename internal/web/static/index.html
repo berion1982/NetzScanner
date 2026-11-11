@@ -205,6 +205,7 @@ nav label.fx{margin-top:auto;color:var(--mut);font-size:11px;cursor:pointer;disp
  <h2>Lesezeichen für den Browser</h2><p>Im Export gibt es „Lesezeichen“: eine HTML-Datei mit den Web-Links der ausgewählten Geräte zum Importieren in Firefox oder Chrome/Edge (zwei Varianten: Ordner in der Lesezeichenleiste oder normaler Ordner „NetzScanner“). Enthalten sind nur URLs, keine Zugangsdaten. Ob die Leisten-Variante in beiden Browsern greift, ist noch nicht bestätigt.</p>
  <h2>Startoptionen und Fehlersuche</h2>
  <table class="ht"><tbody>
+ <tr><td><code>--no-browser</code></td><td>Verhindert, dass beim Start der Browser automatisch geöffnet wird. Bei <code>--listen</code> außerhalb von Loopback (Server, Handheld) wird nie ein Browser gestartet.</td></tr>
  <tr><td><code>--listen ADRESSE:PORT</code></td><td>Adresse des Webservers (Standard <code>127.0.0.1:8484</code>; für andere Rechner z. B. <code>0.0.0.0:8484</code>)</td></tr>
  <tr><td><code>--token TOKEN</code> · <code>--no-token</code></td><td>Zugangstoken (mind. 8 Zeichen, oder Umgebung <code>NETZSCANNER_TOKEN</code>). Bei <code>--listen</code> außerhalb von Loopback erzeugt der Scanner automatisch eines und zeigt es einmal in der Konsole an; Anmeldung im Browser über <code>/?token=…</code>. <code>--no-token</code> schaltet den Schutz ab (nicht empfohlen). Die Verbindung bleibt unverschlüsselt (HTTP)</td></tr>
  <tr><td><code>--demo</code></td><td>Demo-Daten zum Ansehen der Oberfläche</td></tr>

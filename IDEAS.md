@@ -124,6 +124,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-080 | **Panelbreite per Randknopf** (Wunsch Sascha, 2026-11-10): Knopf mittig an der Kante des Detail-Panels, der die durch den Diagnose-Bericht erweiterte Breite verkleinert bzw. wieder erweitert (nur wenn ein Bericht existiert) | klein | S | **erledigt (0.50.3)** |
 | I-081 | **Einheitliches Knopf-Design** (Wunsch Sascha, 2026-11-10): helle Standard-Knöpfe/Auswahllisten dem dunklen Design angleichen | klein | S | **erledigt (0.50.4)** |
 | I-082 | **Programm-Icon** (Wunsch Sascha, 2026-11-11): Radar-/Netz-Icon als Favicon (32/256 px, Apple-Touch 180 px) und Logo in der Navigation. Offen: Icon in die Windows-`.exe` einbetten (braucht Ressourcen-Datei `.syso`) – nicht umgesetzt. | klein | S | **erledigt (0.50.6)**, Exe-Icon offen |
+| I-083 | **Browser automatisch öffnen** (Wunsch Sascha, 2026-11-11): Beim Start öffnet NetzScanner die Oberfläche im Standardbrowser (Linux `xdg-open`, Windows `rundll32`, macOS `open`), nur bei Loopback-Adresse, abschaltbar mit `--no-browser`. **Teil 2 (offen):** Windows-Exe ohne Konsolenfenster (`-H=windowsgui`) – braucht Ersatz für CLI-Ausgabe und einen „Beenden“-Weg (Knopf/Tray); vgl. I-041. | klein | S | **Teil 1 erledigt (0.51.0)**, Teil 2 offen |
 
 ## Vorschlag zur Reihenfolge (Claude, nicht verbindlich)
 1. I-005 (echter Scan) → I-040 (Auswahl) → I-021 (Namen) → I-030/I-031 (CSV, Tabelle) → I-032 (Lesezeichen)

@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.50.6 · **Datum:** 2026-11-11 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.51.0 · **Datum:** 2026-11-11 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -28,6 +28,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Web-Infos nach Login** (I-023 Rest, 0.50.0, `logintest.WebInfo`, `readInfo` bei Methode `web`): derselbe eine Basic-Versuch, danach Seitentitel, Server-Kennung, Realm, Generator aus der gelieferten Startseite (max. 64 KB). Nur RAM. I-023 damit vollständig.
 - **Detail-Panel ein-/ausklappen** (I-079, 0.50.2, `static/index.html`, `applyDetailFold`): Knopf im Panel, Zustand in `localStorage` (`detailFold`), CSS-Klasse `fold`. **Panelbreite** (I-080, 0.50.3, `applyDetailWide`): Randknopf (sticky, mittig) wechselt zwischen normal und `wide`, nur wenn für das Gerät ein Bericht in `diagCache` liegt; Start eines Berichts erweitert automatisch.
 - **Knopf-Design** (I-081, 0.50.4): globale Basisregeln `button`/`select` in `static/index.html`; neue Knöpfe brauchen keine eigene Gestaltung, Sonderfälle über Klassen mit höherer Spezifität.
+- **Browser-Autostart** (I-083 Teil 1, 0.51.0, `cmd/netzscanner/browser.go`): öffnet beim Start den Standardbrowser, nur bei Loopback, `--no-browser` schaltet ab. Teil 2 (Windows ohne Konsole, „Beenden“-Weg) offen.
 - **Programm-Icon** (I-082, 0.50.6): `static/icon-256.png`, `favicon-32.png`, `apple-touch-icon.png`, Links im Kopf von `index.html`, Logo in der Navigation. Exe-Icon (Windows `.syso`) offen.
 - **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung. Ab 0.49.1 (I-077) im Sommer zusätzlich Rasen unten und Blume neben der Versionsnummer.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
@@ -35,12 +36,14 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 
 ## Nächster Schritt
 Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil 1 in 0.37.0, Teil 2 in 0.38.0, Teil 3 SNMP in 0.39.0, I-062 in 0.40.0, I-022 SNMPv3 in 0.41.0, I-022 WinRM in 0.42.0, I-023 Domäne/WinRM in 0.43.0, I-072 Drucker/Scanner in 0.44.0, I-047 CLI-Modus in 0.45.0, I-022 LDAP in 0.46.0, I-022 SMB in 0.47.0 – I-022 damit vollständig, I-074 Diagnose-Knopf in 0.48.0):
-1. **I-075** (Rechte-Abfrage für Ping/Traceroute, nur falls nötig) oder nächste offene Idee aus `IDEAS.md` (z. B. I-054, Rest von I-013).
+1. **I-083 Teil 2** (Windows ohne Konsolenfenster + „Beenden“-Knopf) – auf Wunsch von Sascha.
+2. **I-075** (Rechte-Abfrage für Ping/Traceroute, nur falls nötig) oder nächste offene Idee aus `IDEAS.md` (z. B. I-054, Rest von I-013).
 
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
 - Jahreszeiten-Effekt (0.50.5): Unter Windows Schalter unten links anklicken – startet die Animation jetzt? (War vorher gesperrt, vermutlich wegen „Animationseffekte“ aus; Ursache ist eine Annahme, nicht bestätigt.)
+- Browser-Autostart (0.51.0): Öffnet sich unter Windows (Doppelklick/Konsole) und Linux der Browser von selbst? Meldet `--no-browser` ihn ab?
 - Icon (0.50.6): Erscheint es im Browser-Tab und in der Navigation (ggf. Cache leeren/Strg+F5)?
 - Knopf-Design (0.50.4): Sind in allen Reitern (Topologie, DHCP & Router, Befunde, Reservierungen, Hilfe, Vergleich) keine hellen Standard-Knöpfe/Listen mehr zu sehen? Wirkt etwas jetzt zu dunkel/schlecht lesbar?
 - Panelbreite (0.50.3): Erweitert sich das Panel beim Bericht, und der Randknopf (‹/›) stellt die normale Breite wieder her? Bleibt der Knopf beim Scrollen mittig sichtbar? Auch mit schmalem Fenster/Handheld prüfen.

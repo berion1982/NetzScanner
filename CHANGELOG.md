@@ -634,3 +634,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ## [0.50.6] – 2026-11-11
 ### Hinzugefügt
 - **Programm-Icon** (I-082, Wunsch Sascha): Radar-/Netz-Symbol als Favicon im Browser-Tab (32 und 256 px, Apple-Touch-Icon 180 px) und als kleines Logo vor „NetzScanner“ in der Navigation. Die Bilder liegen in `internal/web/static/` und sind eingebettet (offline nutzbar). Hinweis: Das Icon in der Windows-`.exe` selbst ist noch nicht gesetzt.
+
+## [0.51.0] – 2026-11-11
+### Hinzugefügt
+- **Browser öffnet sich beim Start automatisch** (I-083, Wunsch Sascha): Linux per `xdg-open`, Windows per `rundll32 url.dll,FileProtocolHandler`, macOS per `open`. Nur bei lokaler Adresse (Loopback); bei `--listen 0.0.0.0` (Server/Handheld) nie. Abschaltbar mit `--no-browser`. Schlägt das Öffnen fehl, läuft das Programm weiter und zeigt einen Hinweis; die Adresse steht weiter in der Konsole. Der Server lauscht vor dem Start des Browsers bereits.
+### Hinweis
+- Die Konsole selbst öffnet sich unter Windows weiterhin (Teil 2 von I-083, offen).
