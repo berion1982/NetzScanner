@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NetzScanner</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="256x256" href="icon-256.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--txt:#e6edf3;--mut:#9da7b3;--acc:#58a6ff;--cy:#39d0d8;--ok:#3fb950;--warn:#d29922;--bad:#f85149}
 *{box-sizing:border-box}
@@ -83,7 +86,7 @@ nav label.fx{margin-top:auto;color:var(--mut);font-size:11px;cursor:pointer;disp
 @media print{#seasonfx{display:none}}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
-<nav><b>▣ NetzScanner</b>
+<nav><b><img src="favicon-32.png" alt="" width="20" height="20" style="vertical-align:-4px;border-radius:5px"> NetzScanner</b>
 <button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="find">Befunde</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
 <label class="fx" id="fxlabel" title="Dezente Jahreszeiten-Animation (Nordhalbkugel, nach Datum des Rechners)"><input type="checkbox" id="fxtoggle"> Jahreszeiten-Effekt</label>
 <small id="ver">…</small> <small><a href="https://github.com/berion1982/NetzScanner" target="_blank" rel="noopener" title="Quellcode (Lizenz: AGPL v3)">Quellcode · AGPL</a></small></nav>

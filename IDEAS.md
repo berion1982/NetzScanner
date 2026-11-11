@@ -123,6 +123,7 @@ danach Status + Version eintragen und PR öffnen. Nichts löschen: Verworfenes b
 | I-079 | **Detail-Panel ein-/ausklappen** (Wunsch Sascha, 2026-11-10): Knopf, um die durch den Diagnose-Bericht verbreiterte Detail-Spalte wieder zu schmälern; sonst Verhalten unverändert | klein | S | **erledigt (0.50.2)** |
 | I-080 | **Panelbreite per Randknopf** (Wunsch Sascha, 2026-11-10): Knopf mittig an der Kante des Detail-Panels, der die durch den Diagnose-Bericht erweiterte Breite verkleinert bzw. wieder erweitert (nur wenn ein Bericht existiert) | klein | S | **erledigt (0.50.3)** |
 | I-081 | **Einheitliches Knopf-Design** (Wunsch Sascha, 2026-11-10): helle Standard-Knöpfe/Auswahllisten dem dunklen Design angleichen | klein | S | **erledigt (0.50.4)** |
+| I-082 | **Programm-Icon** (Wunsch Sascha, 2026-11-11): Radar-/Netz-Icon als Favicon (32/256 px, Apple-Touch 180 px) und Logo in der Navigation. Offen: Icon in die Windows-`.exe` einbetten (braucht Ressourcen-Datei `.syso`) – nicht umgesetzt. | klein | S | **erledigt (0.50.6)**, Exe-Icon offen |
 
 ## Vorschlag zur Reihenfolge (Claude, nicht verbindlich)
 1. I-005 (echter Scan) → I-040 (Auswahl) → I-021 (Namen) → I-030/I-031 (CSV, Tabelle) → I-032 (Lesezeichen)
