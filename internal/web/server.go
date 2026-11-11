@@ -37,13 +37,15 @@ type Options struct {
 	Demo        bool   // Demo-Daten anzeigen, solange noch kein Scan lief
 	AllowPublic bool   // Scans oeffentlicher Adressen erlauben
 	DataFile    string // Datei fuer die zwischengespeicherten Eingaben (I-016); "" = nicht speichern
+	AutoExit    bool   // Programm beendet sich, wenn der letzte Browser-Tab geschlossen wird (I-084); braucht Shutdown
 	Shutdown    func() // Beendet das Programm (Knopf "Beenden", I-083 Teil 2); nil = Knopf ohne Wirkung
 	Token       string // Zugangstoken (I-025); "" = kein Zugriffsschutz (nur sinnvoll bei reinem Loopback)
 }
 
 // server haelt den Zustand des (einen) laufenden bzw. letzten Scans.
 type server struct {
-	opt Options
+	opt  Options
+	sess sessionState // offene Browser-Seiten (I-084)
 
 	mu         sync.Mutex
 	running    bool
@@ -86,6 +88,8 @@ func NewHandler(opt Options) http.Handler {
 	mux.Handle("/", http.FileServer(http.FS(sub)))
 
 	mux.HandleFunc("POST /api/shutdown", s.handleShutdown)
+	mux.HandleFunc("POST /api/session/hello", s.handleSessionHello)
+	mux.HandleFunc("POST /api/session/bye", s.handleSessionBye)
 	mux.HandleFunc("GET /api/hosts", s.handleHosts)
 	mux.HandleFunc("POST /api/hosts/name", s.handleRename)
 	mux.HandleFunc("POST /api/hosts/user", s.handleUser)

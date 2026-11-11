@@ -42,6 +42,7 @@ func main() {
 	noToken := flag.Bool("no-token", false, "Zugangstoken auch bei --listen ausserhalb von Loopback abschalten (NICHT empfohlen: jeder im Netz sieht alle Daten)")
 	// Browser automatisch oeffnen (I-083)
 	noBrowser := flag.Bool("no-browser", false, "Den Browser nach dem Start nicht automatisch oeffnen (bei --listen ausserhalb von Loopback passiert das nie)")
+	keepRunning := flag.Bool("keep-running", false, "Programm laeuft weiter, auch wenn der Browser-Tab geschlossen wird (sonst beendet es sich dann, wenn es den Browser selbst geoeffnet hat)")
 	// Kommandozeilen-Modus ohne Browser (I-047)
 	scanTarget := flag.String("scan", "", "Kommandozeilen-Modus: Ziel scannen (z. B. 192.168.1.0/24), Ergebnis nach --out schreiben, kein Webserver")
 	scanOut := flag.String("out", "", "mit --scan: Ausgabedatei (.csv, .md, .html, .pdf); leer oder - = CSV nach stdout")
@@ -103,7 +104,8 @@ func main() {
 	if err != nil {
 		fatal("Der Webserver konnte nicht starten (läuft NetzScanner schon?):\n" + err.Error())
 	}
-	if shouldOpenBrowser(*noBrowser, *listen) {
+	openBrowserNow := shouldOpenBrowser(*noBrowser, *listen)
+	if openBrowserNow {
 		if err := openBrowser("http://" + *listen); err != nil {
 			// Kein Abbruch: die Adresse steht oben in der Konsole.
 			fmt.Println("Hinweis:", err)
@@ -113,7 +115,7 @@ func main() {
 	// Sauberes Beenden: Strg+C, SIGTERM oder der "Beenden"-Knopf der Oberflaeche (I-083 Teil 2).
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	handler := web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok, Shutdown: stop})
+	handler := web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok, Shutdown: stop, AutoExit: openBrowserNow && !*keepRunning})
 	srv := &http.Server{Handler: handler}
 	go func() {
 		<-ctx.Done()
