@@ -84,14 +84,14 @@ svg{width:100%;height:auto;display:block}
 line,.lnk{stroke:#3a4656;stroke-width:1.5;fill:none}
 .ht td{padding:6px 12px 6px 0;vertical-align:top;border-bottom:1px solid var(--line)}.help h2{margin-top:24px}.help{max-width:760px}code{background:#21262d;padding:1px 5px;border-radius:4px}
 #seasonfx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
-nav label.fx{margin-top:auto;color:var(--mut);font-size:11px;cursor:pointer;display:flex;gap:6px;align-items:center}nav label.fx+small{margin-top:6px}
+nav label.fx{margin-top:10px;color:var(--mut);font-size:11px;cursor:pointer;display:flex;gap:6px;align-items:center}nav label.fx+small{margin-top:6px}
 @media print{#seasonfx{display:none}}
 @media(max-width:800px){nav{display:none}}
 </style></head><body>
 <nav><b><img src="favicon-32.png" alt="" width="20" height="20" style="vertical-align:-4px;border-radius:5px"> NetzScanner</b>
 <button data-t="ov" class="on">Übersicht</button><button data-t="topo">Topologie</button><button data-t="dhcp">DHCP &amp; Router</button><button data-t="find">Befunde</button><button data-t="resv">Reservierungen</button><button data-t="help">Hilfe</button>
-<label class="fx" id="fxlabel" title="Dezente Jahreszeiten-Animation (Nordhalbkugel, nach Datum des Rechners)"><input type="checkbox" id="fxtoggle"> Jahreszeiten-Effekt</label>
 <button id="quit" class="quit" title="NetzScanner vollständig beenden (Programm schließt sich)">⏻ Beenden</button>
+<label class="fx" id="fxlabel" title="Dezente Jahreszeiten-Animation (Nordhalbkugel, nach Datum des Rechners)"><input type="checkbox" id="fxtoggle"> Jahreszeiten-Effekt</label>
 <small id="ver">…</small> <small><a href="https://github.com/berion1982/NetzScanner" target="_blank" rel="noopener" title="Quellcode (Lizenz: AGPL v3)">Quellcode · AGPL</a></small></nav>
 <canvas id="seasonfx" aria-hidden="true"></canvas>
 <main>
