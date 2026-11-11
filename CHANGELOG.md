@@ -647,3 +647,7 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Knopf „⏻ Beenden“** in der Navigation (`POST /api/shutdown`): beendet das Programm sauber (laufende Anfragen werden kurz abgewartet). Nur von diesem Rechner aus erlaubt, mit denselben CSRF-Schutz wie die übrigen schreibenden Aufrufe. Strg+C/SIGTERM beenden nun ebenfalls geordnet.
 ### Geändert
 - Systembefehle (ping, tracert, arp, route, powershell) laufen unter Windows ohne aufblitzendes Konsolenfenster (`internal/scan/proc_windows.go`).
+
+## [0.52.1] – 2026-11-11
+### Behoben
+- **Navigation:** Der Haken „Jahreszeiten-Effekt“ stand seit dem Beenden-Knopf (0.52.0) mittig in der Navigationsleiste. Er sitzt wieder unten, jetzt direkt **unter** „⏻ Beenden“ und über der Versionsnummer (Meldung Sascha).
