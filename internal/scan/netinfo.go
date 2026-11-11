@@ -114,7 +114,7 @@ func parseResolvConf(text string) (servers, domains []string) {
 // dadurch unabhaengig von der Sprache des Systems). Nur mit Testdaten geprueft.
 func windowsDNS() (servers, domains []string) {
 	run := func(script string) []string {
-		out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Output()
+		out, err := hidden(exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script)).Output()
 		if err != nil {
 			return nil
 		}

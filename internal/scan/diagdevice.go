@@ -245,7 +245,7 @@ func runDiagCommand(ctx context.Context, p func(string, ...any), c diagCommand, 
 	p("    $ %s %s", c.name, strings.Join(c.args, " "))
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, path, c.args...)
+	cmd := hidden(exec.CommandContext(ctx, path, c.args...))
 	if runtime.GOOS != "windows" {
 		cmd.Env = append(os.Environ(), "LC_ALL=C") // gleichbleibende Meldungen fuer die Fehlersuche
 	}

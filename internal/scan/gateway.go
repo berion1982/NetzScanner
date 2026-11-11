@@ -31,11 +31,11 @@ func DefaultGateway() string {
 	}
 	switch runtime.GOOS {
 	case "windows":
-		if out, err := exec.Command("route", "print", "-4", "0.0.0.0").Output(); err == nil {
+		if out, err := hidden(exec.Command("route", "print", "-4", "0.0.0.0")).Output(); err == nil {
 			return parseWindowsRoute(string(out))
 		}
 	case "darwin":
-		if out, err := exec.Command("route", "-n", "get", "default").Output(); err == nil {
+		if out, err := hidden(exec.Command("route", "-n", "get", "default")).Output(); err == nil {
 			return parseDarwinRoute(string(out))
 		}
 	}
