@@ -11,11 +11,12 @@
 ;   OUTFILE  Ausgabedatei (Setup-Programm)
 ;
 ; Eigenschaften:
-;  - Installation nur fuer den aktuellen Benutzer, KEINE Administratorrechte noetig
-;    (Ordner %LOCALAPPDATA%\Programs\NetzScanner, Eintraege unter HKCU).
+;  - Installation fuer ALLE Benutzer des Rechners (I-087): Ordner "C:\Program Files\NetzScanner",
+;    Eintraege unter HKLM, Startmenue/Desktop fuer alle. Dafuer braucht das Setup
+;    Administratorrechte (Windows fragt per UAC).
 ;  - Startmenue-Eintrag, optional Desktop-Verknuepfung.
 ;  - Eintrag unter "Apps & Features" mit Deinstallation.
-;  - Die Deinstallation laesst die Eingaben des Benutzers (eingaben.json) unberuehrt.
+;  - Die Deinstallation laesst die Eingaben der Benutzer (je Benutzer eingaben.json) unberuehrt.
 
 Unicode true
 !include "MUI2.nsh"
@@ -25,9 +26,9 @@ Unicode true
 
 Name "${APPNAME} ${VERSION}"
 OutFile "${OUTFILE}"
-InstallDir "$LOCALAPPDATA\Programs\${APPNAME}"
-InstallDirRegKey HKCU "Software\${APPNAME}" "InstallDir"   ; bei Update denselben Ordner vorschlagen
-RequestExecutionLevel user                                  ; kein UAC-Dialog
+InstallDir "$PROGRAMFILES64\${APPNAME}"
+InstallDirRegKey HKLM "Software\${APPNAME}" "InstallDir"   ; bei Update denselben Ordner vorschlagen
+RequestExecutionLevel admin                                 ; fuer alle Benutzer: UAC-Abfrage
 SetCompressor /SOLID lzma
 
 ; Dateieigenschaften des Setup-Programms
@@ -47,7 +48,10 @@ VIAddVersionKey "LegalCopyright" "AGPL-3.0-or-later"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-!define MUI_FINISHPAGE_RUN "$INSTDIR\netzscanner.exe"
+; Start ueber den Explorer, damit NetzScanner mit den normalen Rechten des Benutzers laeuft
+; und NICHT mit den Administratorrechten des Setups.
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_FUNCTION LaunchAsUser
 !define MUI_FINISHPAGE_RUN_TEXT "NetzScanner jetzt starten"
 !insertmacro MUI_PAGE_FINISH
 
@@ -55,6 +59,26 @@ VIAddVersionKey "LegalCopyright" "AGPL-3.0-or-later"
 !insertmacro MUI_UNPAGE_INSTFILES
 
 !insertmacro MUI_LANGUAGE "German"
+
+; Beim Start: 64-Bit-Registry und Eintraege/Verknuepfungen fuer alle Benutzer
+Function .onInit
+  SetRegView 64
+  SetShellVarContext all
+  ; Alte Einzelbenutzer-Installation (Setup 0.54/0.55) erkennen: sonst gaebe es zwei Eintraege
+  ReadRegStr $0 HKCU "Software\${APPNAME}" "InstallDir"
+  StrCmp $0 "" keineAlteInstallation
+  MessageBox MB_ICONINFORMATION|MB_OK "Es ist noch eine frühere Installation nur für Ihren Benutzer vorhanden ($0).$\nBitte nach dieser Installation unter „Apps & Features“ den älteren Eintrag „${APPNAME}“ deinstallieren."
+  keineAlteInstallation:
+FunctionEnd
+
+Function un.onInit
+  SetRegView 64
+  SetShellVarContext all
+FunctionEnd
+
+Function LaunchAsUser
+  Exec '"$WINDIR\explorer.exe" "$INSTDIR\netzscanner.exe"'
+FunctionEnd
 
 ; --- Programm (Pflicht) ------------------------------------------------------
 Section "NetzScanner (erforderlich)" SecMain
@@ -73,15 +97,15 @@ Section "NetzScanner (erforderlich)" SecMain
 
   ; Deinstallationsprogramm und Eintrag unter "Apps & Features"
   WriteUninstaller "$INSTDIR\uninstall.exe"
-  WriteRegStr HKCU "Software\${APPNAME}" "InstallDir" "$INSTDIR"
-  WriteRegStr HKCU "${UNINSTKEY}" "DisplayName" "${APPNAME}"
-  WriteRegStr HKCU "${UNINSTKEY}" "DisplayVersion" "${VERSION}"
-  WriteRegStr HKCU "${UNINSTKEY}" "Publisher" "${APPNAME}"
-  WriteRegStr HKCU "${UNINSTKEY}" "DisplayIcon" "$INSTDIR\netzscanner.ico"
-  WriteRegStr HKCU "${UNINSTKEY}" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "${UNINSTKEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegDWORD HKCU "${UNINSTKEY}" "NoModify" 1
-  WriteRegDWORD HKCU "${UNINSTKEY}" "NoRepair" 1
+  WriteRegStr HKLM "Software\${APPNAME}" "InstallDir" "$INSTDIR"
+  WriteRegStr HKLM "${UNINSTKEY}" "DisplayName" "${APPNAME}"
+  WriteRegStr HKLM "${UNINSTKEY}" "DisplayVersion" "${VERSION}"
+  WriteRegStr HKLM "${UNINSTKEY}" "Publisher" "${APPNAME}"
+  WriteRegStr HKLM "${UNINSTKEY}" "DisplayIcon" "$INSTDIR\netzscanner.ico"
+  WriteRegStr HKLM "${UNINSTKEY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "${UNINSTKEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegDWORD HKLM "${UNINSTKEY}" "NoModify" 1
+  WriteRegDWORD HKLM "${UNINSTKEY}" "NoRepair" 1
 SectionEnd
 
 ; --- Optional: Desktop-Verknuepfung ------------------------------------------
@@ -112,6 +136,6 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\${APPNAME}"
   Delete "$DESKTOP\${APPNAME}.lnk"
 
-  DeleteRegKey HKCU "${UNINSTKEY}"
-  DeleteRegKey HKCU "Software\${APPNAME}"
+  DeleteRegKey HKLM "${UNINSTKEY}"
+  DeleteRegKey HKLM "Software\${APPNAME}"
 SectionEnd
