@@ -684,3 +684,8 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - Das Anmelde-Cookie trägt je Token einen eigenen Namen, damit zwei Instanzen im selben Browser sich nicht überschreiben.
 ### Hinweis
 - Auf einem Terminalserver ungeprüft; Eingaben liegen weiter je Benutzer (`%APPDATA%\netzscanner`).
+
+## [0.58.0] – 2026-11-18
+### Geändert
+- **Kein fester Standardport mehr, Adresse nur mit Token** (I-089, Vorschlag Sascha): Ohne `--listen` wählt NetzScanner immer einen freien Port auf `127.0.0.1` (nicht mehr 8484 bzw. Ausweichen bei Belegung) und öffnet im Browser `http://127.0.0.1:PORT/TOKEN` (steht auch in der Konsole). Ohne das Token im Pfad antwortet der Server nur mit leerem 404, es gibt keine Anmeldeseite mehr. `127.0.0.1` ohne Port oder ein geratener Port läuft damit ins Leere; auf einem Terminalserver landet man nie auf der Sitzung eines anderen Benutzers. Nach der Anmeldung merkt sich der Browser sie per Cookie (je Instanz eigener Name); alte Lesezeichen mit festem Port funktionieren nicht mehr.
+- Mit ausdrücklichem `--listen` (z. B. Raspberry, Skripte) bleibt alles wie bisher, ebenso `--token`/`--no-token`. Die Anmeldeseite gibt es dort weiter.

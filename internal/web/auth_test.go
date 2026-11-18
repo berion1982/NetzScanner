@@ -89,3 +89,27 @@ func TestNewTokenUnique(t *testing.T) {
 		t.Fatalf("Token unbrauchbar: %q %q %v %v", a, b, err1, err2)
 	}
 }
+
+// Leiser Modus (I-089): Ohne Token im Pfad antwortet der Server nur mit leerem 404;
+// "/<Token>" meldet an (Cookie, Umleitung auf "/"), danach ist die Oberflaeche erreichbar.
+func TestQuietAuth(t *testing.T) {
+	h := NewHandler(Options{Demo: true, Token: "geheim-1234", QuietAuth: true})
+	for _, path := range []string{"/", "/api/hosts", "/index.html", "/falsch-1234", "/?token=falsch"} {
+		rec := get(h, path, nil)
+		if rec.Code != http.StatusNotFound || rec.Body.Len() != 0 {
+			t.Errorf("%s ohne Token: %d, Inhalt %q; erwartet leeres 404", path, rec.Code, rec.Body.String())
+		}
+	}
+	rec := get(h, "/geheim-1234", nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
+		t.Fatalf("Anmeldung per Pfad: %d -> %q", rec.Code, rec.Header().Get("Location"))
+	}
+	cookies := rec.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("Cookie erwartet, bekam %d", len(cookies))
+	}
+	rec = get(h, "/api/hosts", func(r *http.Request) { r.AddCookie(cookies[0]) })
+	if rec.Code != http.StatusOK {
+		t.Errorf("mit Cookie: %d, erwartet 200", rec.Code)
+	}
+}
