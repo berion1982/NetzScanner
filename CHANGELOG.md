@@ -658,3 +658,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Warnung vor dem Schließen:** Läuft ein Scan oder liegen Ergebnisse im Speicher, fragt der Browser vor dem Schließen/Neuladen nach (Standardtext des Browsers, nicht änderbar). Ein eigenes Popup mit „Beenden“-Knopf ist technisch nicht möglich.
 ### Hinweis
 - Stürzt der Browser ab oder wird er hart beendet, kommt kein Abmelde-Signal; dann bleibt das Programm aktiv, bis „Beenden“ geklickt wird (bewusst: lieber zu lange laufen als einen Scan verlieren).
+
+## [0.54.0] – 2026-11-18
+### Hinzugefügt
+- **Windows-Installer** (I-085, Wunsch Sascha): `scripts/build-installer.sh` baut mit NSIS (`installer/netzscanner.nsi`) je ein Setup `dist/netzscanner-setup-<Version>-windows-<amd64|arm64>.exe`. Installiert nur für den aktuellen Benutzer nach `%LOCALAPPDATA%\Programs\NetzScanner` (keine Administratorrechte), legt Startmenü-Eintrag und optional eine Desktop-Verknüpfung an, trägt NetzScanner unter „Apps & Features“ ein und bringt ein Deinstallationsprogramm mit. Lizenztexte werden mitinstalliert. Die Deinstallation lässt die gespeicherten Eingaben (`%APPDATA%\netzscanner\eingaben.json`) unberührt. Neues Icon-Datei `installer/netzscanner.ico` (aus dem Programm-Icon).
+### Hinweis
+- Das Setup ist nicht signiert: Windows SmartScreen kann beim ersten Start warnen („Weitere Informationen“ → „Trotzdem ausführen“). Unter echtem Windows noch ungeprüft. Läuft NetzScanner bei einem Update noch, bitte vorher „Beenden“ klicken.

@@ -18,6 +18,7 @@ Go, eine statische Binary, Web-UI eingebettet. Begründung: [docs/ADR-0001-sprac
 ```bash
 scripts/build.sh          # alle Plattformen -> dist/
 scripts/build.sh native   # nur aktuelle Plattform
+scripts/build-installer.sh   # Windows-Setup (braucht NSIS/makensis) -> dist/netzscanner-setup-*.exe
 ./dist/netzscanner --version
 ./dist/netzscanner --demo     # mit Demo-Daten ansehen
 ./dist/netzscanner            # startet die Oberfläche auf http://127.0.0.1:8484 und öffnet den Browser (abschaltbar: --no-browser); beendet sich beim Schließen des Browser-Tabs (abschaltbar: --keep-running), sonst mit dem Knopf „Beenden“ oder Strg+C. Die Windows-.exe öffnet kein Konsolenfenster
