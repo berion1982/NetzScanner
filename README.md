@@ -21,7 +21,7 @@ scripts/build.sh native   # nur aktuelle Plattform
 scripts/build-installer.sh   # Windows-Setup (braucht NSIS/makensis) -> dist/netzscanner-setup-*.exe
 ./dist/netzscanner --version
 ./dist/netzscanner --demo     # mit Demo-Daten ansehen
-./dist/netzscanner            # startet die Oberfläche auf http://127.0.0.1:8484 und öffnet den Browser (abschaltbar: --no-browser); beendet sich beim Schließen des Browser-Tabs (abschaltbar: --keep-running), sonst mit dem Knopf „Beenden“ oder Strg+C. Die Windows-.exe öffnet kein Konsolenfenster
+./dist/netzscanner            # startet die Oberfläche auf einem freien Port (Link `http://127.0.0.1:PORT/TOKEN`, steht in der Konsole) und öffnet den Browser (abschaltbar: --no-browser); beendet sich beim Schließen des Browser-Tabs (abschaltbar: --keep-running), sonst mit dem Knopf „Beenden“ oder Strg+C. Die Windows-.exe öffnet kein Konsolenfenster
 ./dist/netzscanner --listen 0.0.0.0:8484   # von anderen Rechnern erreichbar (z. B. Raspberry); zeigt ein Zugangstoken an
 ./dist/netzscanner --listen 0.0.0.0:8484 --token MeinGeheimesToken   # eigenes Token (oder Umgebung NETZSCANNER_TOKEN)
 ```

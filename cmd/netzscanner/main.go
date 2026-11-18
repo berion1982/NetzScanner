@@ -30,7 +30,7 @@ func main() {
 	showLicenses := flag.Bool("licenses", false, "Lizenz des NetzScanners (AGPL v3) und der Fremdbibliotheken anzeigen")
 	// Standard: nur lokal erreichbar (Sicherheit). Fuer Raspberry/headless
 	// bewusst oeffnen mit --listen 0.0.0.0:8484
-	listen := flag.String("listen", defaultListen, "Adresse:Port des Webservers (ohne Angabe: 127.0.0.1:8484, bei Belegung ein freier Port, mit Zugangstoken)")
+	listen := flag.String("listen", "", "feste Adresse:Port des Webservers (z. B. 0.0.0.0:8484). Ohne Angabe: freier Port auf 127.0.0.1 und Zugangstoken im Link")
 	demo := flag.Bool("demo", false, "Demo-Daten anzeigen (zum Ansehen der Oberflaeche)")
 	allowPublic := flag.Bool("allow-public", false, "Scans oeffentlicher IP-Adressen erlauben (nur mit Erlaubnis!)")
 	diagnoseRouter := flag.String("diagnose-router", "", "FRITZ!Box (IP): zeigt, welche TR-064-Dienste/Aktionen sie anbietet (ohne Zugangsdaten, nur lesend)")
@@ -103,14 +103,20 @@ func main() {
 		fatal("Der Webserver konnte nicht starten (läuft NetzScanner schon?):\n" + err.Error())
 	}
 	addr := ln.Addr().String() // tatsaechliche Adresse (bei Port 0 mit dem gewaehlten Port)
-	tok := resolveToken(*token, *noToken, addr, autoToken(explicitListen, *noToken, addr))
-	fmt.Printf("Oberflaeche: http://%s  (Strg+C beendet)\n", addr)
+	auto := autoToken(explicitListen, *noToken, addr)
+	tok := resolveToken(*token, *noToken, addr, auto)
 	link := "http://" + addr
+	if auto && tok != "" {
+		link += "/" + tok // Token als Pfad: ohne ihn antwortet der Server nicht (I-089)
+	}
+	fmt.Printf("Oberflaeche: %s  (Strg+C beendet)\n", link)
 	if tok != "" {
 		if web.IsLoopbackListen(addr) {
-			// Lokaler Betrieb: Der Link mit Token wird dem eigenen Browser uebergeben.
-			link += "/?token=" + tok
-			fmt.Printf("Zugangstoken: %s  (schützt vor anderen Benutzern dieses Rechners)\n", tok)
+			// Lokal mit eigenem --listen/--token: Link mit Token fuer den Browser.
+			// (Im Normalbetrieb "auto" steht das Token schon als Pfad im Link.)
+			if !auto {
+				link += "/?token=" + tok
+			}
 		} else {
 			// Einmalige Anzeige des Tokens (I-025): wird nirgends sonst ausgegeben oder gespeichert.
 			fmt.Printf("Zugangstoken: %s\nBrowser-Link:  http://<Adresse-dieses-Rechners>:%s/?token=%s\n", tok, listenPort(addr), tok)
@@ -127,7 +133,7 @@ func main() {
 	// Sauberes Beenden: Strg+C, SIGTERM oder der "Beenden"-Knopf der Oberflaeche (I-083 Teil 2).
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	handler := web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok, Shutdown: stop, AutoExit: openBrowserNow && !*keepRunning})
+	handler := web.NewHandler(web.Options{Demo: *demo, AllowPublic: *allowPublic, DataFile: *dataFile, Token: tok, QuietAuth: auto, Shutdown: stop, AutoExit: openBrowserNow && !*keepRunning})
 	srv := &http.Server{Handler: handler}
 	go func() {
 		<-ctx.Done()

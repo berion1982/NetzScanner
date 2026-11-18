@@ -85,7 +85,7 @@ func requestToken(r *http.Request, cookie string) string {
 
 // requireToken schuetzt den gesamten Handler. Ist token leer, passiert nichts
 // (reiner Loopback-Betrieb ohne --token).
-func requireToken(token string, next http.Handler) http.Handler {
+func requireToken(token string, quiet bool, next http.Handler) http.Handler {
 	if token == "" {
 		return next
 	}
@@ -104,10 +104,27 @@ func requireToken(token string, next http.Handler) http.Handler {
 			http.Redirect(w, r, u.String(), http.StatusSeeOther)
 			return
 		}
+		// 1b. Leiser Modus (I-089): Anmeldung ueber den Pfad "/<Token>" - der Link
+		// "http://127.0.0.1:PORT/<Token>" ist die einzige Adresse, die antwortet.
+		if quiet && r.Method == http.MethodGet && tokenOK(strings.TrimPrefix(r.URL.Path, "/"), token) {
+			http.SetCookie(w, &http.Cookie{
+				Name: cookie, Value: token, Path: "/",
+				HttpOnly: true, SameSite: http.SameSiteStrictMode,
+			})
+			w.Header().Set("Cache-Control", "no-store")
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 		// 2. Bereits angemeldet (Cookie oder Bearer-Header)?
 		if tokenOK(requestToken(r, cookie), token) {
 			w.Header().Set("Cache-Control", "no-store")
 			next.ServeHTTP(w, r)
+			return
+		}
+		// 3a. Leiser Modus: nichts verraten, kein Inhalt, keine Anmeldeseite.
+		if quiet {
+			w.Header().Set("Cache-Control", "no-store")
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		// 3. Nicht angemeldet: API bekommt JSON-Fehler, alles andere die Eingabeseite.

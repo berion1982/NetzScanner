@@ -1,11 +1,16 @@
-// Adresse und Port des Webservers (I-088, Mehrbenutzer-Betrieb).
+// Adresse und Port des Webservers (I-088/I-089, Mehrbenutzer-Betrieb).
 //
 // Auf einem Terminalserver teilen sich alle angemeldeten Benutzer dieselbe
-// Loopback-Adresse 127.0.0.1. Ein fester Port 8484 wuerde deshalb nur dem ersten
-// Benutzer gehoeren, und jeder andere Benutzer koennte dessen Oberflaeche
-// aufrufen. Darum gilt ohne ausdrueckliches --listen:
-//   - bevorzugt 127.0.0.1:8484, ist er belegt, ein freier Port (127.0.0.1:0),
-//   - ein zufaelliges Zugangstoken, das nur der eigene Browser-Aufruf kennt.
+// Loopback-Adresse 127.0.0.1. Ein fester Port wuerde deshalb nur dem ersten
+// Benutzer gehoeren und jeder koennte auf der Adresse eines anderen landen.
+// Darum gilt ohne ausdrueckliches --listen:
+//   - IMMER ein freier, vom System gewaehlter Port auf 127.0.0.1 (kein fester Standardport):
+//     "127.0.0.1" ohne Port oder ein geratener Port laeuft ins Leere,
+//   - ein zufaelliges Zugangstoken als Pfad im Link ("http://127.0.0.1:PORT/TOKEN"),
+//     ohne das der Server gar nicht antwortet (404 ohne Inhalt).
+//
+// Wer eine feste Adresse braucht (z. B. Raspberry, Skripte), gibt --listen an;
+// dann gilt das bisherige Verhalten.
 package main
 
 import (
@@ -14,25 +19,19 @@ import (
 	"github.com/berion1982/netzscanner/internal/web"
 )
 
-// defaultListen ist die bevorzugte Adresse ohne --listen.
-const defaultListen = "127.0.0.1:8484"
-
 // openListener oeffnet den Server-Port.
 //   - explicit (Nutzer gab --listen an): genau diese Adresse, Fehler wenn belegt.
-//   - sonst: erst defaultListen, bei Belegung ein freier Port auf 127.0.0.1.
+//   - sonst: ein freier Port auf 127.0.0.1 (Port 0 = das System waehlt).
 func openListener(explicit bool, addr string) (net.Listener, error) {
 	if explicit {
 		return net.Listen("tcp", addr)
-	}
-	if ln, err := net.Listen("tcp", defaultListen); err == nil {
-		return ln, nil
 	}
 	return net.Listen("tcp", "127.0.0.1:0")
 }
 
 // autoToken: ohne ausdrueckliches --listen (lokaler Normalbetrieb) wird auch bei
-// Loopback ein Token erzeugt, damit andere Benutzer desselben Rechners die
-// Oberflaeche nicht aufrufen koennen. --no-token schaltet das ab.
+// Loopback ein Token erzeugt und der Server antwortet nur mit diesem Token im Link.
+// --no-token schaltet das ab.
 func autoToken(explicitListen, disable bool, listen string) bool {
 	return !explicitListen && !disable && web.IsLoopbackListen(listen)
 }

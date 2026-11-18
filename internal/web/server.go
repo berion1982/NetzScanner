@@ -38,6 +38,7 @@ type Options struct {
 	AllowPublic bool   // Scans oeffentlicher Adressen erlauben
 	DataFile    string // Datei fuer die zwischengespeicherten Eingaben (I-016); "" = nicht speichern
 	AutoExit    bool   // Programm beendet sich, wenn der letzte Browser-Tab geschlossen wird (I-084); braucht Shutdown
+	QuietAuth   bool   // Ohne gueltiges Token antwortet der Server mit leerem 404, keine Anmeldeseite (I-089); Anmeldung per Pfad "/<Token>"
 	Shutdown    func() // Beendet das Programm (Knopf "Beenden", I-083 Teil 2); nil = Knopf ohne Wirkung
 	Token       string // Zugangstoken (I-025); "" = kein Zugriffsschutz (nur sinnvoll bei reinem Loopback)
 }
@@ -142,7 +143,7 @@ func NewHandler(opt Options) http.Handler {
 		})
 	})
 	// Aussen das Token (I-025), darunter der CSRF-Schutz fuer POST.
-	return requireToken(opt.Token, guardPost(mux))
+	return requireToken(opt.Token, opt.QuietAuth, guardPost(mux))
 }
 
 // guardPost schuetzt die schreibenden Aufrufe: Eine fremde Webseite im Browser

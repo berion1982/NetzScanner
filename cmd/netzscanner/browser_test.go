@@ -37,32 +37,35 @@ func TestBrowserCommand(t *testing.T) {
 	}
 }
 
-// Port-Suche (I-088): Ohne --listen weicht der Server auf einen freien Port aus, mit
-// ausdruecklichem --listen nicht; lokal gibt es dann ein Token, mit --listen/--no-token nicht.
+// Port (I-088/I-089): Ohne --listen immer ein freier Port auf 127.0.0.1 (nie ein fester
+// Standardport), mit ausdruecklichem --listen genau diese Adresse; lokal gibt es dann
+// ein Token, mit --listen/--no-token oder offener Adresse nicht (dort gilt I-025).
 func TestOpenListenerUndToken(t *testing.T) {
-	// Belegt den Standardport (falls er frei ist), damit der Ausweichpfad geprueft wird.
-	busy, err := net.Listen("tcp", defaultListen)
+	a, err := openListener(false, "0.0.0.0:8484")
 	if err != nil {
-		t.Skip("Standardport 8484 ist auf diesem Rechner schon belegt")
+		t.Fatal(err)
 	}
-	defer busy.Close()
-
-	ln, err := openListener(false, defaultListen)
+	defer a.Close()
+	b, err := openListener(false, "")
 	if err != nil {
-		t.Fatalf("ohne --listen muss ein freier Port gefunden werden: %v", err)
+		t.Fatal(err)
 	}
-	defer ln.Close()
-	if ln.Addr().String() == defaultListen {
-		t.Errorf("Ausweichport erwartet, bekam %s", ln.Addr())
+	defer b.Close()
+	ta, tb := a.Addr().(*net.TCPAddr), b.Addr().(*net.TCPAddr)
+	if !ta.IP.IsLoopback() || !tb.IP.IsLoopback() {
+		t.Errorf("nur Loopback erwartet: %s, %s", ta, tb)
 	}
-	if _, err := openListener(true, defaultListen); err == nil {
-		t.Error("mit ausdruecklichem --listen darf kein Ausweichen stattfinden")
+	if ta.Port == tb.Port || ta.Port == 8484 && tb.Port == 8484 {
+		t.Errorf("zwei Instanzen muessen verschiedene Ports bekommen: %d, %d", ta.Port, tb.Port)
+	}
+	if _, err := openListener(true, a.Addr().String()); err == nil {
+		t.Error("mit ausdruecklichem --listen: genau diese Adresse, Fehler wenn belegt")
 	}
 
 	if !autoToken(false, false, "127.0.0.1:5000") {
 		t.Error("Normalbetrieb lokal: Token erwartet")
 	}
 	if autoToken(true, false, "127.0.0.1:8484") || autoToken(false, true, "127.0.0.1:5000") || autoToken(false, false, "0.0.0.0:8484") {
-		t.Error("kein automatisches Token bei --listen, --no-token oder offener Adresse (dort gilt I-025)")
+		t.Error("kein automatisches Token bei --listen, --no-token oder offener Adresse")
 	}
 }
