@@ -670,3 +670,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Icon direkt in der Windows-`.exe`** (I-086, Wunsch Sascha): `netzscanner.exe` trägt jetzt das Programm-Icon (Explorer, Taskleiste, Verknüpfungen, Installer). Dafür liegen eingecheckte Ressourcendateien `cmd/netzscanner/rsrc_windows_amd64.syso` und `..._arm64.syso` im Repo, die Go beim Windows-Build automatisch einbindet. Neu erzeugen nur bei geändertem Icon: `scripts/make-winres.sh` (eigener Generator `scripts/winres/main.go`, nur Go-Standardbibliothek). Normale Builds brauchen nichts Zusätzliches.
 ### Hinweis
 - Unter echtem Windows noch ungeprüft (Icon im Explorer/Taskleiste; Windows-Icon-Cache kann alte Anzeige zeigen).
+
+## [0.56.0] – 2026-11-18
+### Geändert
+- **Installer installiert jetzt für alle Benutzer** (I-087, Wunsch Sascha): Ziel `C:\Program Files\NetzScanner`, Einträge unter HKLM, Startmenü und optionale Desktop-Verknüpfung für alle Benutzer. Das Setup verlangt dafür Administratorrechte (Windows fragt per UAC). „NetzScanner jetzt starten“ am Ende startet das Programm über den Explorer mit normalen Benutzerrechten, nicht als Administrator.
+- Eine frühere Einzelbenutzer-Installation (Setup 0.54/0.55, Ordner `%LOCALAPPDATA%\Programs\NetzScanner`) wird erkannt; das Setup weist darauf hin, den älteren Eintrag unter „Apps & Features“ zu deinstallieren. Sie wird nicht automatisch entfernt.
+- Die gespeicherten Eingaben bleiben je Benutzer unter `%APPDATA%\netzscanner` und werden bei der Deinstallation nicht gelöscht.
