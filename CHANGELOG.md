@@ -676,3 +676,11 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Installer installiert jetzt für alle Benutzer** (I-087, Wunsch Sascha): Ziel `C:\Program Files\NetzScanner`, Einträge unter HKLM, Startmenü und optionale Desktop-Verknüpfung für alle Benutzer. Das Setup verlangt dafür Administratorrechte (Windows fragt per UAC). „NetzScanner jetzt starten“ am Ende startet das Programm über den Explorer mit normalen Benutzerrechten, nicht als Administrator.
 - Eine frühere Einzelbenutzer-Installation (Setup 0.54/0.55, Ordner `%LOCALAPPDATA%\Programs\NetzScanner`) wird erkannt; das Setup weist darauf hin, den älteren Eintrag unter „Apps & Features“ zu deinstallieren. Sie wird nicht automatisch entfernt.
 - Die gespeicherten Eingaben bleiben je Benutzer unter `%APPDATA%\netzscanner` und werden bei der Deinstallation nicht gelöscht.
+
+## [0.57.0] – 2026-11-18
+### Geändert
+- **Mehrere Benutzer gleichzeitig** (I-088, Meldung Sascha): Auf einem Terminalserver konnte nur der erste Benutzer NetzScanner starten, weil alle Sitzungen den Port 8484 teilen. Ohne `--listen` nimmt NetzScanner jetzt bevorzugt `127.0.0.1:8484` und wählt bei Belegung selbst einen freien Port; der Browser wird mit dem passenden Link geöffnet, die tatsächliche Adresse steht in der Konsole.
+- **Zugangstoken auch lokal:** Weil sich alle Sitzungen eines Rechners dieselbe Loopback-Adresse teilen, könnte sonst jeder Benutzer die Oberfläche (inkl. Scan-Daten) eines anderen aufrufen. Ohne ausdrückliches `--listen` erzeugt NetzScanner deshalb ein Zufallstoken und übergibt es dem eigenen Browser im Link (`/?token=…`, danach Cookie). Mit `--listen` bleibt das Verhalten wie bisher; `--no-token` schaltet es ab. Hinweis: Ein selbst eingegebener Link ohne Token zeigt die Anmeldeseite.
+- Das Anmelde-Cookie trägt je Token einen eigenen Namen, damit zwei Instanzen im selben Browser sich nicht überschreiben.
+### Hinweis
+- Auf einem Terminalserver ungeprüft; Eingaben liegen weiter je Benutzer (`%APPDATA%\netzscanner`).

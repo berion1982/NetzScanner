@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.56.0 · **Datum:** 2026-11-18 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.57.0 · **Datum:** 2026-11-18 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -30,6 +30,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Knopf-Design** (I-081, 0.50.4): globale Basisregeln `button`/`select` in `static/index.html`; neue Knöpfe brauchen keine eigene Gestaltung, Sonderfälle über Klassen mit höherer Spezifität.
 - **Browser-Autostart** (I-083 Teil 1, 0.51.0, `cmd/netzscanner/browser.go`): öffnet beim Start den Standardbrowser, nur bei Loopback, `--no-browser` schaltet ab. Teil 2 (0.52.0): Windows-Build mit `-H=windowsgui` (`scripts/build.sh`), `console_windows.go` (Anhängen an Eltern-Konsole, Meldungsfenster bei Startfehler), Knopf „Beenden“ (`web/shutdown.go`, `POST /api/shutdown`, nur Loopback), `scan/proc_windows.go` (`hidden()` gegen aufblitzende Fenster).
 - **Windows-Installer** (I-085, 0.54.0): `scripts/build-installer.sh [amd64|arm64]` (braucht `makensis`, NSIS) + `installer/netzscanner.nsi`/`.ico` → `dist/netzscanner-setup-*.exe`. Für alle Benutzer (I-087, 0.56.0: `C:\Program Files`, HKLM, UAC, Start danach über Explorer ohne Admin), Startmenü, optional Desktop, „Apps & Features“, Deinstallation ohne Löschen der Eingaben. Unsigniert. Offen: Signatur, MSI/winget.
+- **Mehrbenutzer** (I-088, 0.57.0, `cmd/netzscanner/listen.go`): Ohne `--listen` erst 127.0.0.1:8484, sonst freier Port; dazu lokales Zufallstoken (Link `/?token=`), Cookie-Name je Token (`web/auth.go`). Mit `--listen` unverändert.
 - **Icon in der `.exe`** (I-086, 0.55.0): `cmd/netzscanner/rsrc_windows_*.syso` (eingecheckt, von Go automatisch gelinkt), neu erzeugen mit `scripts/make-winres.sh` (`scripts/winres/main.go`, nur Standardbibliothek). Nur nötig bei neuem Icon (`installer/netzscanner.ico`).
 - **Beenden beim Tab-Schließen** (I-084, 0.53.0, `web/session.go`, Tab-Verwaltung in `index.html`): Tabs melden sich per `/api/session/hello|bye` an/ab, nach dem letzten 8 s Wartezeit, dann `Options.Shutdown`. Nur wenn der Browser selbst geöffnet wurde (`AutoExit`), `--keep-running` schaltet ab.
 - **Programm-Icon** (I-082, 0.50.6): `static/icon-256.png`, `favicon-32.png`, `apple-touch-icon.png`, Links im Kopf von `index.html`, Logo in der Navigation. Exe-Icon (Windows `.syso`) offen.
@@ -45,6 +46,7 @@ Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
 - Jahreszeiten-Effekt (0.50.5): Unter Windows Schalter unten links anklicken – startet die Animation jetzt? (War vorher gesperrt, vermutlich wegen „Animationseffekte“ aus; Ursache ist eine Annahme, nicht bestätigt.)
+- Terminalserver (0.57.0): Zwei Benutzer gleichzeitig – bekommt der zweite einen freien Port und öffnet sich der Browser mit Token-Link? Kann Benutzer B die Oberfläche von A NICHT öffnen (Anmeldeseite)? Läuft die Auto-Beenden-Funktion je Sitzung?
 - Exe-Icon (0.55.0): Zeigt `netzscanner.exe` im Explorer, in der Taskleiste und im Task-Manager das Radar-Icon? (Icon-Cache ggf. leeren/Neustart.)
 - Installer (0.54.0/0.56.0): Setup unter Windows ausführen (UAC-Abfrage, SmartScreen-Hinweis?), Programm unter `C:\Program Files\NetzScanner`, Verknüpfungen für andere Benutzerkonten sichtbar? Start am Ende ohne Administratorrechte? Hinweis bei früherer Einzelbenutzer-Installation?, Startmenü/Desktop-Verknüpfung mit Icon, Start, Eintrag in „Apps & Features“, Deinstallation (Eingaben bleiben), Update über eine bestehende Installation (laufende `.exe` gesperrt?).
 - Tab schließen (0.53.0): Beendet sich NetzScanner unter Windows ~8 s nach dem Schließen des letzten Tabs (Task-Manager)? Bleibt es bei F5 und bei zwei Tabs an? Erscheint die Browser-Warnung bei laufendem Scan?

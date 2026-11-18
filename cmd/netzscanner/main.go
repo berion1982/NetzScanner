@@ -30,7 +30,7 @@ func main() {
 	showLicenses := flag.Bool("licenses", false, "Lizenz des NetzScanners (AGPL v3) und der Fremdbibliotheken anzeigen")
 	// Standard: nur lokal erreichbar (Sicherheit). Fuer Raspberry/headless
 	// bewusst oeffnen mit --listen 0.0.0.0:8484
-	listen := flag.String("listen", "127.0.0.1:8484", "Adresse:Port des Webservers")
+	listen := flag.String("listen", defaultListen, "Adresse:Port des Webservers (ohne Angabe: 127.0.0.1:8484, bei Belegung ein freier Port, mit Zugangstoken)")
 	demo := flag.Bool("demo", false, "Demo-Daten anzeigen (zum Ansehen der Oberflaeche)")
 	allowPublic := flag.Bool("allow-public", false, "Scans oeffentlicher IP-Adressen erlauben (nur mit Erlaubnis!)")
 	diagnoseRouter := flag.String("diagnose-router", "", "FRITZ!Box (IP): zeigt, welche TR-064-Dienste/Aktionen sie anbietet (ohne Zugangsdaten, nur lesend)")
@@ -49,6 +49,9 @@ func main() {
 	scanFormat := flag.String("format", "", "mit --scan: csv, csv-excel, md, html oder pdf (Standard: aus der Dateiendung)")
 	scanPorts := flag.String("ports", "", "mit --scan: Portliste wie in der Oberflaeche (leer = Standardports)")
 	flag.Parse()
+	// War --listen ausdruecklich angegeben? (Dann keine Port-Suche, kein automatisches Token.)
+	explicitListen := false
+	flag.Visit(func(f *flag.Flag) { explicitListen = explicitListen || f.Name == "listen" })
 	if *noSave || *demo { // Demo-Daten sind erfunden: nie speichern
 
 		*dataFile = ""
@@ -93,20 +96,29 @@ func main() {
 	if *dataFile != "" && !*demo {
 		fmt.Println("Eingaben werden gespeichert in:", *dataFile, "(abschaltbar mit --no-save)")
 	}
-	tok := resolveToken(*token, *noToken, *listen)
-	fmt.Printf("Oberflaeche: http://%s  (Strg+C beendet)\n", *listen)
-	if tok != "" {
-		// Einmalige Anzeige des Tokens (I-025): wird nirgends sonst ausgegeben oder gespeichert.
-		fmt.Printf("Zugangstoken: %s\nBrowser-Link:  http://<Adresse-dieses-Rechners>:%s/?token=%s\n", tok, listenPort(*listen), tok)
-	}
-	// Erst lauschen, dann den Browser starten: so ist der Server beim Aufruf schon erreichbar.
-	ln, err := net.Listen("tcp", *listen)
+	// Erst lauschen (ggf. mit freiem Port), dann Token/Adresse bestimmen und den Browser starten:
+	// so ist der Server beim Aufruf schon erreichbar und die Adresse stimmt.
+	ln, err := openListener(explicitListen, *listen)
 	if err != nil {
 		fatal("Der Webserver konnte nicht starten (läuft NetzScanner schon?):\n" + err.Error())
 	}
-	openBrowserNow := shouldOpenBrowser(*noBrowser, *listen)
+	addr := ln.Addr().String() // tatsaechliche Adresse (bei Port 0 mit dem gewaehlten Port)
+	tok := resolveToken(*token, *noToken, addr, autoToken(explicitListen, *noToken, addr))
+	fmt.Printf("Oberflaeche: http://%s  (Strg+C beendet)\n", addr)
+	link := "http://" + addr
+	if tok != "" {
+		if web.IsLoopbackListen(addr) {
+			// Lokaler Betrieb: Der Link mit Token wird dem eigenen Browser uebergeben.
+			link += "/?token=" + tok
+			fmt.Printf("Zugangstoken: %s  (schützt vor anderen Benutzern dieses Rechners)\n", tok)
+		} else {
+			// Einmalige Anzeige des Tokens (I-025): wird nirgends sonst ausgegeben oder gespeichert.
+			fmt.Printf("Zugangstoken: %s\nBrowser-Link:  http://<Adresse-dieses-Rechners>:%s/?token=%s\n", tok, listenPort(addr), tok)
+		}
+	}
+	openBrowserNow := shouldOpenBrowser(*noBrowser, addr)
 	if openBrowserNow {
-		if err := openBrowser("http://" + *listen); err != nil {
+		if err := openBrowser(link); err != nil {
 			// Kein Abbruch: die Adresse steht oben in der Konsole.
 			fmt.Println("Hinweis:", err)
 		}
@@ -163,10 +175,12 @@ func runMeshDump(host string) {
 // resolveToken bestimmt das Zugangstoken (I-025):
 //  1. --token oder Umgebung NETZSCANNER_TOKEN (mind. web.MinTokenLen Zeichen),
 //  2. sonst bei --listen ausserhalb von Loopback ein Zufallstoken,
-//  3. sonst (nur lokal) keines. --no-token schaltet es bei offenem Listen ab.
+//  3. sonst (nur lokal) keines, ausser auto: ohne ausdrueckliches --listen (Normalbetrieb)
+//     bekommt auch der lokale Betrieb ein Zufallstoken (I-088, Mehrbenutzer-Rechner).
+//     --no-token schaltet es bei offenem Listen ab.
 //
 // Ein zu kurzes Token oder ein Fehler beim Zufall beendet das Programm.
-func resolveToken(flagTok string, disable bool, listen string) string {
+func resolveToken(flagTok string, disable bool, listen string, auto bool) string {
 	tok := flagTok
 	if tok == "" {
 		tok = os.Getenv("NETZSCANNER_TOKEN")
@@ -177,7 +191,7 @@ func resolveToken(flagTok string, disable bool, listen string) string {
 		}
 		return tok
 	}
-	if web.IsLoopbackListen(listen) {
+	if web.IsLoopbackListen(listen) && !auto {
 		return ""
 	}
 	if disable {
