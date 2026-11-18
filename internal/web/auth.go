@@ -18,6 +18,7 @@ package web
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
 	"net"
@@ -58,17 +59,25 @@ func IsLoopbackListen(addr string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
+// cookieName liefert je Token einen eigenen Cookie-Namen. Cookies gelten fuer den Host,
+// nicht fuer den Port: Laufen zwei NetzScanner-Instanzen (verschiedene Ports, I-088)
+// im selben Browser, wuerden sie sich sonst gegenseitig das Cookie ueberschreiben.
+func cookieName(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return tokenCookie + "_" + hex.EncodeToString(h[:4])
+}
+
 // tokenOK vergleicht zeitkonstant, damit Antwortzeiten nichts verraten.
 func tokenOK(given, want string) bool {
 	return given != "" && subtle.ConstantTimeCompare([]byte(given), []byte(want)) == 1
 }
 
 // requestToken liest das Token aus Bearer-Header oder Cookie (nicht aus der URL).
-func requestToken(r *http.Request) string {
+func requestToken(r *http.Request, cookie string) string {
 	if a := r.Header.Get("Authorization"); strings.HasPrefix(a, "Bearer ") {
 		return strings.TrimSpace(strings.TrimPrefix(a, "Bearer "))
 	}
-	if c, err := r.Cookie(tokenCookie); err == nil {
+	if c, err := r.Cookie(cookie); err == nil {
 		return c.Value
 	}
 	return ""
@@ -80,11 +89,12 @@ func requireToken(token string, next http.Handler) http.Handler {
 	if token == "" {
 		return next
 	}
+	cookie := cookieName(token)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 1. Anmeldung per "/?token=...": Cookie setzen, Token aus der URL entfernen.
 		if r.Method == http.MethodGet && tokenOK(r.URL.Query().Get("token"), token) {
 			http.SetCookie(w, &http.Cookie{
-				Name: tokenCookie, Value: token, Path: "/",
+				Name: cookie, Value: token, Path: "/",
 				HttpOnly: true, SameSite: http.SameSiteStrictMode,
 			})
 			q := r.URL.Query()
@@ -95,7 +105,7 @@ func requireToken(token string, next http.Handler) http.Handler {
 			return
 		}
 		// 2. Bereits angemeldet (Cookie oder Bearer-Header)?
-		if tokenOK(requestToken(r), token) {
+		if tokenOK(requestToken(r, cookie), token) {
 			w.Header().Set("Cache-Control", "no-store")
 			next.ServeHTTP(w, r)
 			return
