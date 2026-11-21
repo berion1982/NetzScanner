@@ -695,3 +695,8 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 - **Seriennummer auslesen** (I-090, Wunsch Sascha): Drei lesende, allgemeine Quellen. (1) SNMP **Printer-MIB** `prtGeneralSerialNumber`, (2) SNMP **ENTITY-MIB** `entPhysicalSerialNum` als Fallback (auch Switches/NAS) – erscheint als Zeile „Seriennummer (SNMP)“ im Detail-Panel nach „Lesen“ im SNMP-Formular. (3) **IPP**: `printer-device-id` (IEEE 1284, Schlüssel `SN`/`SERN`) → „Seriennr. …“ im IPP-Banner bei Port 631.
 - Fehlt der Wert, bleibt die Zeile weg. Wie viele Geräte die Nummer tatsächlich herausgeben, ist modellabhängig und **im echten LAN ungeprüft**. Nicht umgesetzt: Web-Statusseiten (herstellerabhängiges Parsing).
 - Hinweis: Das IPP-Banner steht im Scan-Ergebnis und damit in Exporten; die SNMP-Zeile liegt nur im RAM. Eine Option „Seriennummern in Exporten ausblenden“ gibt es noch nicht.
+
+## [0.59.1] – 2026-11-21
+### Behoben
+- **Seriennummer/Systeminfos von Druckern fehlten** (Meldung Sascha zu I-090): Die SNMP-Abfrage verwarf alle gelesenen Infos, wenn das Gerät weder MAC-Tabelle noch LLDP hat (Drucker, viele andere Geräte) – sie galt dann als „fehlgeschlagen“. Jetzt bleiben die Systeminfos (Seriennummer, Modell, Firmware …) erhalten und erscheinen im Detail-Panel; die Meldung weist darauf hin. Solche Geräte werden **nicht** zum Switch (kein Rollenwechsel, keine Topologie-Änderung).
+- Weiter ungeprüft im LAN: IPP-Weg (nur wenn der Drucker `printer-device-id` mit `SN`/`SERN` liefert) und ob die Printer-MIB den Wert füllt.

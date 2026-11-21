@@ -221,7 +221,7 @@ func (s *server) viewLocked() []model.Host {
 			hosts[i].Uplink, hosts[i].UplinkPort, hosts[i].UplinkShared = l.Uplink, l.Port, l.Shared
 		}
 		if sw, ok := s.snmpSwitch[hosts[i].IP]; ok {
-			if hosts[i].Role == "" {
+			if hosts[i].Role == "" && !sw.InfoOnly { // Geraete ohne MAC-Tabelle (Drucker) sind keine Switches
 				hosts[i].Role = "switch"
 			}
 			hosts[i].SysInfo = sw.Info // System-Infos laut SNMP (I-023)
