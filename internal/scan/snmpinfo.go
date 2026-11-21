@@ -7,8 +7,8 @@ package scan
 //   - Ausschliesslich lesende GET-/Walk-Anfragen auf feste, standardisierte OIDs
 //     (SNMPv2-MIB, IF-MIB, ENTITY-MIB). Es wird nichts geschrieben (kein SET).
 //   - Alles ist optional: Fehlt ein Wert, fehlt nur die Zeile - die Abfrage scheitert deshalb nicht.
-//   - Bewusst NICHT gelesen: sysContact (kann Namen/E-Mail einer Person enthalten) und
-//     Seriennummern.
+//   - Bewusst NICHT gelesen: sysContact (kann Namen/E-Mail einer Person enthalten).
+//   - Seriennummer (I-090): zuerst Printer-MIB (Drucker), sonst ENTITY-MIB (Switches, NAS ...).
 //   - Texte werden mit sanitize() bereinigt; Anzahl der Schnittstellen ist begrenzt.
 
 import (
@@ -31,6 +31,8 @@ const (
 	oidEntModelName   = "1.3.6.1.2.1.47.1.1.1.1.13" // ENTITY-MIB: entPhysicalModelName.<Index>
 	oidEntFirmwareRev = "1.3.6.1.2.1.47.1.1.1.1.9"  // ENTITY-MIB: entPhysicalFirmwareRev.<Index>
 	oidEntSoftwareRev = "1.3.6.1.2.1.47.1.1.1.1.10" // ENTITY-MIB: entPhysicalSoftwareRev.<Index>
+	oidPrtSerial      = "1.3.6.1.2.1.43.5.1.1.17"   // Printer-MIB: prtGeneralSerialNumber.<hrDeviceIndex>
+	oidEntSerialNum   = "1.3.6.1.2.1.47.1.1.1.1.11" // ENTITY-MIB: entPhysicalSerialNum.<Index>
 	maxInfoIfaces     = 32                          // Schutz: hoechstens so viele Schnittstellen anzeigen
 )
 
@@ -57,6 +59,14 @@ func querySystemInfo(g *gosnmp.GoSNMP) []model.InfoField {
 	add("Modell (SNMP)", firstNonEmpty(walkStrings(g, oidEntModelName)))
 	add("Firmware (SNMP)", firstNonEmpty(walkStrings(g, oidEntFirmwareRev)))
 	add("Software (SNMP)", firstNonEmpty(walkStrings(g, oidEntSoftwareRev)))
+
+	// Seriennummer (I-090): Drucker melden sie in der Printer-MIB, andere Geraete oft in der ENTITY-MIB.
+	// Leere Werte (viele Geraete tragen dort nichts ein) lassen die Zeile einfach weg.
+	serial := firstNonEmpty(walkStrings(g, oidPrtSerial))
+	if serial == "" {
+		serial = firstNonEmpty(walkStrings(g, oidEntSerialNum))
+	}
+	add("Seriennummer (SNMP)", serial)
 
 	// Schnittstellen: Name, Zustand, MAC, Geschwindigkeit.
 	names := walkStrings(g, oidIfName)
