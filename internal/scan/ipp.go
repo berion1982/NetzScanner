@@ -26,7 +26,7 @@ import (
 // ippAttrs sind die angefragten Attribute (Namen laut IPP-Standard, kein Geraetewissen).
 var ippAttrs = []string{
 	"printer-make-and-model", "printer-firmware-string-version", "printer-uuid",
-	"printer-state", "printer-state-reasons", "marker-names", "marker-levels",
+	"printer-device-id", "printer-state", "printer-state-reasons", "marker-names", "marker-levels",
 }
 
 // ippStates ordnet den Wert von "printer-state" (RFC 8011) einem Text zu.
@@ -200,6 +200,9 @@ func describeIPP(a map[string][]ippValue) string {
 	if u := strings.TrimPrefix(first("printer-uuid"), "urn:uuid:"); u != "" {
 		parts = append(parts, "UUID "+u)
 	}
+	if sn := ippSerial(first("printer-device-id")); sn != "" {
+		parts = append(parts, "Seriennr. "+sn)
+	}
 	if v := a["printer-state"]; len(v) > 0 {
 		if s, ok := ippStates[v[0].num]; ok {
 			parts = append(parts, "Status "+s)
@@ -243,4 +246,21 @@ func ippMarkers(names, levels []ippValue) string {
 		}
 	}
 	return strings.Join(out, ", ")
+}
+
+// ippSerial holt die Seriennummer aus der IEEE-1284-Geraete-ID ("printer-device-id", z. B.
+// "MFG:X;MDL:Y;SN:12345;"). Der Standard kennt die Schluessel SN und SERN (je nach Hersteller);
+// fehlt beides, ist die Antwort leer. Reine Textlogik ohne Netzwerk.
+func ippSerial(deviceID string) string {
+	for _, field := range strings.Split(deviceID, ";") {
+		key, val, ok := strings.Cut(field, ":")
+		if !ok {
+			continue
+		}
+		switch strings.ToUpper(strings.TrimSpace(key)) {
+		case "SN", "SERN", "SERIALNUMBER":
+			return cleanIPPText(val)
+		}
+	}
+	return ""
 }

@@ -689,3 +689,9 @@ Das Builddatum wird beim Build automatisch eingesetzt (`NetzScanner --version`).
 ### Geändert
 - **Kein fester Standardport mehr, Adresse nur mit Token** (I-089, Vorschlag Sascha): Ohne `--listen` wählt NetzScanner immer einen freien Port auf `127.0.0.1` (nicht mehr 8484 bzw. Ausweichen bei Belegung) und öffnet im Browser `http://127.0.0.1:PORT/TOKEN` (steht auch in der Konsole). Ohne das Token im Pfad antwortet der Server nur mit leerem 404, es gibt keine Anmeldeseite mehr. `127.0.0.1` ohne Port oder ein geratener Port läuft damit ins Leere; auf einem Terminalserver landet man nie auf der Sitzung eines anderen Benutzers. Nach der Anmeldung merkt sich der Browser sie per Cookie (je Instanz eigener Name); alte Lesezeichen mit festem Port funktionieren nicht mehr.
 - Mit ausdrücklichem `--listen` (z. B. Raspberry, Skripte) bleibt alles wie bisher, ebenso `--token`/`--no-token`. Die Anmeldeseite gibt es dort weiter.
+
+## [0.59.0] – 2026-11-21
+### Hinzugefügt
+- **Seriennummer auslesen** (I-090, Wunsch Sascha): Drei lesende, allgemeine Quellen. (1) SNMP **Printer-MIB** `prtGeneralSerialNumber`, (2) SNMP **ENTITY-MIB** `entPhysicalSerialNum` als Fallback (auch Switches/NAS) – erscheint als Zeile „Seriennummer (SNMP)“ im Detail-Panel nach „Lesen“ im SNMP-Formular. (3) **IPP**: `printer-device-id` (IEEE 1284, Schlüssel `SN`/`SERN`) → „Seriennr. …“ im IPP-Banner bei Port 631.
+- Fehlt der Wert, bleibt die Zeile weg. Wie viele Geräte die Nummer tatsächlich herausgeben, ist modellabhängig und **im echten LAN ungeprüft**. Nicht umgesetzt: Web-Statusseiten (herstellerabhängiges Parsing).
+- Hinweis: Das IPP-Banner steht im Scan-Ergebnis und damit in Exporten; die SNMP-Zeile liegt nur im RAM. Eine Option „Seriennummern in Exporten ausblenden“ gibt es noch nicht.

@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.57.0 · **Datum:** 2026-11-18 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.59.0 · **Datum:** 2026-11-21 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -36,6 +36,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Programm-Icon** (I-082, 0.50.6): `static/icon-256.png`, `favicon-32.png`, `apple-touch-icon.png`, Links im Kopf von `index.html`, Logo in der Navigation. Exe-Icon (Windows `.syso`) offen.
 - **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung. Ab 0.49.1 (I-077) im Sommer zusätzlich Rasen unten und Blume neben der Versionsnummer.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
+- **Seriennummer** (I-090, 0.59.0): SNMP Printer-MIB/ENTITY-MIB (`scan/snmpinfo.go`, Zeile „Seriennummer (SNMP)“) und IPP `printer-device-id` (`scan/ipp.go`, `ippSerial`, im IPP-Banner).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt
@@ -45,6 +46,7 @@ Reihenfolge (erledigt u. a.: I-025 0.24.0 … I-022 Teil 1 in 0.36.0, I-023 Teil
 Pro Chat genau **eine** Idee, danach `/clear`.
 
 ## Noch im LAN zu prüfen (Sascha)
+- Seriennummer (0.59.0): Drucker/Switch per SNMP „Lesen“ → Zeile „Seriennummer (SNMP)"? Drucker mit Port 631 → „Seriennr." im IPP-Banner? Wie viele Geräte liefern sie überhaupt (modellabhängig)?
 - Jahreszeiten-Effekt (0.50.5): Unter Windows Schalter unten links anklicken – startet die Animation jetzt? (War vorher gesperrt, vermutlich wegen „Animationseffekte“ aus; Ursache ist eine Annahme, nicht bestätigt.)
 - Terminalserver (0.57.0/0.58.0): Zwei Benutzer gleichzeitig – bekommt jeder einen eigenen Port und öffnet sich der Browser mit dem Link `…/<Token>`? Antwortet `127.0.0.1` ohne Port bzw. ein fremder Port/ohne Token wirklich nicht (leere Seite)? Läuft die Auto-Beenden-Funktion je Sitzung?
 - Exe-Icon (0.55.0): Zeigt `netzscanner.exe` im Explorer, in der Taskleiste und im Task-Manager das Radar-Icon? (Icon-Cache ggf. leeren/Neustart.)
