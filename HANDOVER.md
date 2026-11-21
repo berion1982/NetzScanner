@@ -1,6 +1,6 @@
 # HANDOVER – Übergabe für die nächste Claude-Sitzung
 
-**Stand:** v0.59.0 · **Datum:** 2026-11-21 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
+**Stand:** v0.59.1 · **Datum:** 2026-11-21 · Scan im echten LAN (FritzBox), Export und Router-Login von Sascha bestätigt.
 Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HANDOVER-Verlauf.md`.
 
 ## Entscheidungen (von Sascha bestätigt)
@@ -36,7 +36,7 @@ Ausführlicher Verlauf (alte Fassung dieser Datei, nichts gelöscht): `docs/HAND
 - **Programm-Icon** (I-082, 0.50.6): `static/icon-256.png`, `favicon-32.png`, `apple-touch-icon.png`, Links im Kopf von `index.html`, Logo in der Navigation. Exe-Icon (Windows `.syso`) offen.
 - **Jahreszeiten-Effekt** (I-076, 0.49.0, `static/index.html`, Funktion `seasonFx`): Canvas-Animation nach Monat (Nordhalbkugel), Schalter in der Navigation, Wahl in `localStorage`, aus bei reduzierter Bewegung. Ab 0.49.1 (I-077) im Sommer zusätzlich Rasen unten und Blume neben der Versionsnummer.
 - **Drucker per IPP** (I-062, 0.40.0, `scan/ipp.go`): bei offenem Port 631 eine lesende `Get-Printer-Attributes`-Anfrage; Ergebnis als Banner „IPP: …“ (Modell, Firmware, UUID, Status, Füllstände).
-- **Seriennummer** (I-090, 0.59.0): SNMP Printer-MIB/ENTITY-MIB (`scan/snmpinfo.go`, Zeile „Seriennummer (SNMP)“) und IPP `printer-device-id` (`scan/ipp.go`, `ippSerial`, im IPP-Banner).
+- **Seriennummer** (I-090, 0.59.0): SNMP Printer-MIB/ENTITY-MIB (`scan/snmpinfo.go`, Zeile „Seriennummer (SNMP)“) und IPP `printer-device-id` (`scan/ipp.go`, `ippSerial`, im IPP-Banner). Ab 0.59.1 bleiben SNMP-Infos auch bei Geräten ohne MAC-Tabelle/LLDP erhalten (`SwitchInfo.InfoOnly`, kein Switch).
 - **Doku:** README, CHANGELOG, IDEAS, CLAUDE.md, ADR-0001, `docs/design/`.
 
 ## Nächster Schritt

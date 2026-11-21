@@ -82,6 +82,9 @@ type SwitchInfo struct {
 	Descr  string
 	Vendor string
 	Info   []model.InfoField // System-Infos (I-023), nur im RAM
+	// InfoOnly: Das Geraet hat per SNMP geantwortet, liefert aber weder MAC-Tabelle noch LLDP
+	// (z. B. Drucker). Es zaehlt dann nicht als Switch; nur die Systeminfos werden angezeigt.
+	InfoOnly bool
 }
 
 // NormMAC macht aus "AA:BB:CC:00:11:22", "aa-bb-..." usw. "aabbcc001122" ("" bei Unsinn).

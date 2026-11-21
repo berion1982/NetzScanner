@@ -126,6 +126,12 @@ func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 		sr := snmpSwitchResult{IP: ip, Name: d.SysName, Vendor: d.Vendor, Entries: len(d.FDB), LLDP: len(d.LLDP)}
 		if err != nil {
 			sr.Error = err.Error()
+			// Antwortet das Geraet, hat aber keine MAC-Tabelle/LLDP (z. B. Drucker), behalten wir
+			// trotzdem die Systeminfos (u. a. Seriennummer), aber ohne es zum Switch zu machen.
+			if d.SysDescr != "" || d.SysName != "" || len(d.Info) > 0 {
+				info[ip] = scan.SwitchInfo{Name: d.SysName, Descr: d.SysDescr, Vendor: d.Vendor, Info: d.Info, InfoOnly: true}
+				sr.Error += " – Systeminfos wurden trotzdem gelesen (Detail-Panel)"
+			}
 		} else {
 			data = append(data, d)
 			info[ip] = scan.SwitchInfo{Name: d.SysName, Descr: d.SysDescr, Vendor: d.Vendor, Info: d.Info}
@@ -133,7 +139,18 @@ func (s *server) handleSNMP(w http.ResponseWriter, r *http.Request) {
 		res.Switches = append(res.Switches, sr)
 	}
 	if len(data) == 0 {
-		writeJSON(w, http.StatusOK, res) // alle fehlgeschlagen: nichts aendern, Gruende anzeigen
+		// Keine Topologie-Daten: Zuordnung bleibt unveraendert, nur reine Systeminfos uebernehmen.
+		if len(info) > 0 {
+			s.mu.Lock()
+			if s.snmpSwitch == nil {
+				s.snmpSwitch = map[string]scan.SwitchInfo{}
+			}
+			for ip, si := range info {
+				s.snmpSwitch[ip] = si
+			}
+			s.mu.Unlock()
+		}
+		writeJSON(w, http.StatusOK, res) // alle fehlgeschlagen: Gruende anzeigen
 		return
 	}
 
